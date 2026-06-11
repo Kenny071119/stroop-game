@@ -407,10 +407,10 @@
   var START_WINDOW = 2000;
   /* 档位表：minQ=触发题数, shrink=每题缩时, floor=时限下限ms, bg=背景干扰概率 */
   var TIERS = [
-    { minQ: 0,  shrink: 0.97, floor: 1000, bg: 0   },
-    { minQ: 10, shrink: 0.95, floor: 800,  bg: 0   },
-    { minQ: 20, shrink: 0.94, floor: 650,  bg: 0.5 },
-    { minQ: 30, shrink: 0.93, floor: 550,  bg: 0.8 }
+    { minQ: 0,  shrink: 0.975, floor: 1100, bg: 0    },
+    { minQ: 10, shrink: 0.96,  floor: 900,  bg: 0    },
+    { minQ: 15, shrink: 0.95,  floor: 750,  bg: 0.4  },
+    { minQ: 25, shrink: 0.94,  floor: 600,  bg: 0.75 }
   ];
   /* 五种题色的压暗背景变体（混入 18% 题色，保证字色对比度） */
   var BG_TINTS = ['#40232D', '#40392A', '#1E344D', '#273B2A', '#322C49'];
@@ -435,6 +435,23 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var wordEl = $('word'), barEl = $('timer-bar');
+
+  /* ---- 设备指纹：每台设备一个随机 ID，存在浏览器里 ---- */
+  function deviceId() {
+    try {
+      var v = localStorage.getItem('sg_device');
+      if (!v) {
+        v = 'd' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        localStorage.setItem('sg_device', v);
+      }
+      return v;
+    } catch (e) {
+      if (!window.__sgDevice) window.__sgDevice = 'd' + Math.random().toString(36).slice(2, 10);
+      return window.__sgDevice;
+    }
+  }
+  /* 昵称跨局记忆 */
+  try { state.myName = localStorage.getItem('sg_name') || ''; } catch (e) {}
 
   /* ---- 音效 ---- */
   var audioCtx = null;
@@ -585,13 +602,14 @@
     if (!name) { tip.textContent = '先填个昵称'; return; }
     if (state.score <= 0) { tip.textContent = '0 分就不上榜了吧'; return; }
     state.myName = name;
+    try { localStorage.setItem('sg_name', name); } catch (e) {}
     var btn = $('btn-submit');
     btn.disabled = true;
     btn.textContent = '上传中…';
     fetch(SB_URL + '/rest/v1/scores', {
       method: 'POST',
       headers: SB_HEADERS,
-      body: JSON.stringify({ name: name, score: state.score })
+      body: JSON.stringify({ name: name, score: state.score, device_id: deviceId() })
     }).then(function (res) {
       if (res.ok) {
         state.submitted = true;
@@ -614,35 +632,54 @@
     $('board-screen').classList.remove('hidden');
     var list = $('board-list');
     list.innerHTML = '<div id="board-status">加载中…</div>';
-    fetch(SB_URL + '/rest/v1/scores?select=name,score&order=score.desc&limit=200', {
+    fetch(SB_URL + '/rest/v1/scores?select=name,score,device_id&order=score.desc&limit=500', {
       headers: SB_HEADERS
     }).then(function (res) { return res.json(); }).then(function (rows) {
-      // 同名去重，保留最高分
-      var bestByName = {};
+      // 每台设备只取最高分一条（老数据无 device_id 则按名字归并）
+      var best = {};
       rows.forEach(function (r) {
-        if (!(r.name in bestByName) || r.score > bestByName[r.name]) bestByName[r.name] = r.score;
+        var key = r.device_id || ('n:' + r.name);
+        if (!(key in best) || r.score > best[key].score) {
+          best[key] = { name: r.name, score: r.score, key: key };
+        }
       });
-      var ranked = Object.keys(bestByName).map(function (n) {
-        return { name: n, score: bestByName[n] };
-      }).sort(function (a, b) { return b.score - a.score; }).slice(0, 50);
+      var ranked = Object.keys(best).map(function (k) { return best[k]; })
+        .sort(function (a, b) { return b.score - a.score; });
 
       if (!ranked.length) {
         list.innerHTML = '<div id="board-status">还没有人上榜，抢个第一？</div>';
         return;
       }
-      var html = '';
-      ranked.forEach(function (r, i) {
-        var cls = 'row' + (i < 3 ? ' top' + (i + 1) : '') +
-          (r.name === state.myName ? ' me' : '');
-        html += '<div class="' + cls + '">' +
-          '<div class="rank">' + (i + 1) + '</div>' +
+
+      var myKey = deviceId();
+      var myIdx = -1;
+      for (var i = 0; i < ranked.length; i++) {
+        if (ranked[i].key === myKey) { myIdx = i; break; }
+      }
+
+      var TOP_N = 20;
+      var show = ranked.slice(0, TOP_N);
+      function rowHTML(entry, rank) {
+        var cls = 'row' + (rank <= 3 ? ' top' + rank : '') +
+          (entry.key === myKey ? ' me' : '');
+        return '<div class="' + cls + '">' +
+          '<div class="rank">' + rank + '</div>' +
           '<div class="nm"></div>' +
-          '<div class="sc">' + r.score + '</div></div>';
-      });
+          '<div class="sc">' + entry.score + '</div></div>';
+      }
+      var html = '';
+      show.forEach(function (r, i) { html += rowHTML(r, i + 1); });
+      var names = show.map(function (r) { return r.name; });
+      if (myIdx >= TOP_N) {
+        html += '<div class="row" style="justify-content:center;color:var(--ink-dim)">⋯</div>';
+        html += rowHTML(ranked[myIdx], myIdx + 1);
+        names.push('');           // 占位：省略号行没有 .nm，不会被选中
+        names[names.length - 1] = ranked[myIdx].name;
+      }
       list.innerHTML = html;
       // 昵称用 textContent 注入，防止注入攻击
       var nms = list.querySelectorAll('.nm');
-      ranked.forEach(function (r, i) { nms[i].textContent = r.name; });
+      nms.forEach(function (el, i) { el.textContent = names[i] || ''; });
     }).catch(function () {
       list.innerHTML = '<div id="board-status">加载失败，检查网络后重试</div>';
     });
