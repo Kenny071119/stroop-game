@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>数学错题分析</title>
+<title>错题录入整理</title>
 <style>
   :root {
     --bg: #0F1320;
@@ -188,54 +188,85 @@
   }
   .backup textarea { min-height: 120px; margin: 8px 0; }
 
-  /* ===== 题目勾选列表（第二步）===== */
-  .q-item {
+  /* ===== 题号勾选网格（第二步）===== */
+  .q-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qchip {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-soft);
+    user-select: none;
+  }
+  .qchip-main {
+    padding: 9px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .qchip.checked { border-color: var(--bad); }
+  .qchip.checked .qchip-main { background: var(--bad); color: #fff; }
+  .qchip-eye {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    padding: 0 9px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink-dim);
+    border-left: 1px solid var(--line);
+  }
+  .qchip.checked .qchip-eye { border-left-color: rgba(255,255,255,.3); }
+  .q-peek {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .q-peek .peek-num { font-weight: 700; color: var(--brand); margin-right: 6px; }
+
+  /* ===== 我的错题集 ===== */
+  .col-item {
+    display: flex;
     gap: 10px;
+    align-items: flex-start;
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: 10px;
     margin-bottom: 8px;
     background: var(--bg-soft);
-    cursor: pointer;
   }
-  .q-item.checked { border-color: var(--bad); background: rgba(255,77,79,.08); }
-  .q-check { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--bad); }
-  .q-num {
+  .col-num {
     flex-shrink: 0;
-    min-width: 24px;
+    min-width: 44px;
     height: 24px;
     line-height: 24px;
     text-align: center;
     font-size: 12px;
     font-weight: 700;
-    color: var(--ink);
-    background: var(--card);
+    color: #fff;
+    background: var(--bad);
     border-radius: 6px;
   }
-  .q-text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-
-  /* ===== 错误答案填写（第三步）===== */
-  .ans-form {
-    padding: 12px;
+  .col-text { flex: 1; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .col-remove {
+    flex-shrink: 0;
+    width: 24px; height: 24px; line-height: 22px;
+    text-align: center;
+    color: var(--ink-dim);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    background: var(--bg-soft);
-  }
-  .af-q {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
+    border-radius: 50%;
+    cursor: pointer;
     font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 10px;
-    white-space: pre-wrap;
-    word-break: break-word;
   }
-  .ans-form .field { margin-bottom: 8px; }
-  .ans-form .field:last-child { margin-bottom: 0; }
+  .col-empty { font-size: 13px; color: var(--ink-dim); }
   .uploader { display: flex; flex-direction: column; gap: 10px; }
   .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .upload-btn-main { padding: 22px 12px; }
@@ -400,8 +431,8 @@
 <body>
 <div id="app">
   <header>
-    <h1>📐 数学错题分析</h1>
-    <p>三步走：①上传卷子识别题目 → ②勾选做错的题 → ③填错误答案，自动分析知识点、错误类型并汇总薄弱点。</p>
+    <h1>📝 错题录入整理</h1>
+    <p>上传卷子 → 识别拆题 → 勾选做错的题，自动收拢成「我的错题集」。（本版只做录入整理，暂不做分析）</p>
   </header>
 
   <!-- API Key（本地测试用） -->
@@ -458,38 +489,36 @@
     </div>
   </section>
 
-  <!-- 第二步：勾选做错的题 -->
+  <!-- 第二步：勾选做错的题（只显示题号） -->
   <section class="card" id="step2" style="display:none;">
     <div class="card-title"><span>② 勾选做错的题</span><span class="badge-source" id="sel-count">已选 0 题</span></div>
-    <div class="step-desc">下面是识别出的题目。<b>勾选你做错的题</b>（做对的不用管），然后点底部按钮进入下一步。</div>
-    <div id="q-list"></div>
+    <div class="step-desc">点题号即可<b>勾选/取消</b>做错的题（做对的不用管）。点右侧 👁 可展开看该题内容。</div>
+    <div id="q-grid" class="q-grid"></div>
+    <div id="q-peek" class="q-peek" style="display:none;"></div>
     <div class="row" style="margin-top:12px;">
-      <button class="btn-primary" id="btn-to-step3" disabled>下一步：填写错误答案</button>
       <button class="btn-ghost" id="btn-restart">重新上传</button>
     </div>
   </section>
 
-  <!-- 第三步：填写错误答案 -->
-  <section class="card" id="step3" style="display:none;">
-    <div class="card-title"><span>③ 填写你的错误答案</span></div>
-    <div class="step-desc">为每道错题填上你<b>当时填/选的错误答案</b>（正确答案可填可不填，填了分析更准）。</div>
-    <div id="answer-forms"></div>
-    <div class="row" style="margin-top:12px;">
-      <button class="btn-primary" id="btn-analyze">开始分析这些错题</button>
+  <!-- 我的错题集 -->
+  <section class="card" id="collection" style="display:none;">
+    <div class="card-title">
+      <span>📒 我的错题集</span>
+      <button class="btn-ghost btn-sm" id="btn-copy">复制全部</button>
     </div>
+    <div class="step-desc">勾选的错题按题号收拢在这里。点每条的 × 可移出。</div>
+    <div id="collection-list"></div>
   </section>
 
-  <!-- 分析结果 -->
-  <section id="results"></section>
-
-  <!-- 汇总 -->
+  <!-- 分析区域（本版隐藏，后续接入）-->
+  <section id="results" style="display:none;"></section>
   <section class="card" id="summary-card" style="display:none;">
-    <div class="card-title"><span>④ 薄弱点汇总</span></div>
+    <div class="card-title"><span>薄弱点汇总</span></div>
     <div id="summary-body"></div>
   </section>
 
   <footer>
-    错题分析工具 · 单页版 · AI 分析接口已预留
+    错题录入整理 · 单页版 · 分析功能后续接入
   </footer>
 </div>
 
@@ -694,36 +723,45 @@ const $ = (id) => document.getElementById(id);
 let questions = [];          // 拆出的题目 [{ id, num, text }]
 let selected = new Set();    // 勾选为「做错」的题目 id
 
-/* 第二步：渲染题目勾选列表 */
-function renderQuestionList() {
-  const card = $('step2'), list = $('q-list');
+/* 第二步：渲染题号勾选网格（只显示题号） */
+function renderQuestionChips() {
+  const card = $('step2'), grid = $('q-grid');
   if (!questions.length) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  list.innerHTML = questions.map(q => `
-    <label class="q-item${selected.has(q.id) ? ' checked' : ''}" data-id="${q.id}">
-      <input type="checkbox" class="q-check" data-id="${q.id}" ${selected.has(q.id) ? 'checked' : ''}>
-      <span class="q-num">${esc(q.num)}</span>
-      <span class="q-text">${esc(q.text)}</span>
-    </label>`).join('');
+  grid.innerHTML = questions.map(q => `
+    <div class="qchip${selected.has(q.id) ? ' checked' : ''}" data-id="${q.id}">
+      <span class="qchip-main" data-act="select" data-id="${q.id}">第${esc(q.num)}题</span>
+      <span class="qchip-eye" data-act="peek" data-id="${q.id}">👁</span>
+    </div>`).join('');
   updateSelCount();
 }
 
 function updateSelCount() {
   $('sel-count').textContent = `已选 ${selected.size} 题`;
-  $('btn-to-step3').disabled = selected.size === 0;
 }
 
-/* 第三步：为每道错题渲染答案输入 */
-function renderAnswerForms() {
-  const card = $('step3'), root = $('answer-forms');
-  const chosen = questions.filter(q => selected.has(q.id));
+/* 展开某题内容到预览区 */
+function peekQuestion(id) {
+  const q = questions.find(x => x.id === id);
+  const box = $('q-peek');
+  if (!q) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = `<span class="peek-num">第${esc(q.num)}题</span>${esc(q.text)}`;
+}
+
+/* 我的错题集：把勾选的题按题号收拢 */
+function renderCollection() {
+  const card = $('collection'), list = $('collection-list');
+  const chosen = questions
+    .filter(q => selected.has(q.id))
+    .sort((a, b) => (parseInt(a.num, 10) || 0) - (parseInt(b.num, 10) || 0));
   if (!chosen.length) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  root.innerHTML = chosen.map(q => `
-    <div class="ans-form" data-id="${q.id}">
-      <div class="af-q"><span class="q-num">${esc(q.num)}</span><span>${esc(q.text)}</span></div>
-      <input type="text" class="field af-wrong" data-id="${q.id}" placeholder="我当时填/选的错误答案（必填）" spellcheck="false">
-      <input type="text" class="field af-right" data-id="${q.id}" placeholder="正确答案（可不填）" spellcheck="false">
+  list.innerHTML = chosen.map(q => `
+    <div class="col-item" data-id="${q.id}">
+      <span class="col-num">第${esc(q.num)}题</span>
+      <span class="col-text">${esc(q.text)}</span>
+      <span class="col-remove" data-id="${q.id}" title="移出错题集">×</span>
     </div>`).join('');
 }
 
@@ -900,68 +938,65 @@ function loadQuestions(rawText) {
     alert('没有识别到题目，请检查图片是否清晰，或改用粘贴文字。');
     return;
   }
-  $('step3').style.display = 'none';
-  $('results').innerHTML = '';
-  $('summary-card').style.display = 'none';
-  renderQuestionList();
+  $('q-peek').style.display = 'none';
+  renderQuestionChips();
+  renderCollection();
   $('step2').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* ---- 第二步：勾选错题 ---- */
-$('q-list').addEventListener('change', (e) => {
-  if (!e.target.classList.contains('q-check')) return;
+/* ---- 第二步：点题号勾选 / 点 👁 预览 ---- */
+$('q-grid').addEventListener('click', (e) => {
+  const act = e.target.getAttribute('data-act');
   const id = Number(e.target.getAttribute('data-id'));
-  if (e.target.checked) selected.add(id); else selected.delete(id);
-  const item = e.target.closest('.q-item');
-  if (item) item.classList.toggle('checked', e.target.checked);
-  updateSelCount();
+  if (!act || !id) return;
+  if (act === 'select') {
+    if (selected.has(id)) selected.delete(id); else selected.add(id);
+    const chip = e.target.closest('.qchip');
+    if (chip) chip.classList.toggle('checked', selected.has(id));
+    updateSelCount();
+    renderCollection();
+  } else if (act === 'peek') {
+    peekQuestion(id);
+    $('q-peek').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 });
 
+/* ---- 我的错题集：移出某题 ---- */
+$('collection-list').addEventListener('click', (e) => {
+  if (!e.target.classList.contains('col-remove')) return;
+  const id = Number(e.target.getAttribute('data-id'));
+  selected.delete(id);
+  const chip = $('q-grid').querySelector(`.qchip[data-id="${id}"]`);
+  if (chip) chip.classList.remove('checked');
+  updateSelCount();
+  renderCollection();
+});
+
+/* ---- 复制整本错题集 ---- */
+$('btn-copy').addEventListener('click', async () => {
+  const chosen = questions
+    .filter(q => selected.has(q.id))
+    .sort((a, b) => (parseInt(a.num, 10) || 0) - (parseInt(b.num, 10) || 0));
+  if (!chosen.length) { alert('错题集还是空的'); return; }
+  const text = chosen.map(q => `第${q.num}题：${q.text}`).join('\n\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = $('btn-copy'); const o = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => { btn.textContent = o; }, 1500);
+  } catch (err) {
+    alert('复制失败，请手动选择文本。\n\n' + text);
+  }
+});
+
+/* ---- 重新上传：清空一切 ---- */
 $('btn-restart').addEventListener('click', () => {
   images = []; questions = []; selected = new Set();
   renderPreviews();
+  $('q-peek').style.display = 'none';
   $('step2').style.display = 'none';
-  $('step3').style.display = 'none';
-  $('results').innerHTML = '';
-  $('summary-card').style.display = 'none';
+  $('collection').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-$('btn-to-step3').addEventListener('click', () => {
-  if (!selected.size) return;
-  renderAnswerForms();
-  $('step3').scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-
-/* ---- 第三步：填错误答案 → 分析 ---- */
-$('btn-analyze').addEventListener('click', async () => {
-  const chosen = questions.filter(q => selected.has(q.id));
-  if (!chosen.length) { alert('请先在第②步勾选做错的题'); return; }
-
-  const problems = chosen.map(q => {
-    const wrongEl = document.querySelector(`.af-wrong[data-id="${q.id}"]`);
-    const rightEl = document.querySelector(`.af-right[data-id="${q.id}"]`);
-    return {
-      num: q.num,
-      question: q.text,
-      wrongAnswer: (wrongEl ? wrongEl.value : '').trim(),
-      rightAnswer: (rightEl ? rightEl.value : '').trim(),
-    };
-  });
-  if (problems.every(p => !p.wrongAnswer)) {
-    if (!confirm('你还没有填写任何错误答案，仍要只按题目内容分析吗？')) return;
-  }
-
-  $('results').innerHTML = `<div class="status"><span class="spinner"></span>正在分析 ${problems.length} 道错题…</div>`;
-  $('summary-card').style.display = 'none';
-  $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  try {
-    const analyses = await analyzeProblems(problems);
-    renderResults(analyses);
-    renderSummary(analyses);
-  } catch (err) {
-    $('results').innerHTML = `<div class="status">分析失败：${esc(err.message || err)}</div>`;
-  }
 });
 
 /* =========================================================================
@@ -1046,8 +1081,12 @@ function extractJSON(text) {
 function createImageRecognizer(config) {
   // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-vl-ocr', name:'...' }
   // qwen-vl-ocr 以内置 OCR 能力为主，提示词给一句「读出图中所有文字」即可。
-  const OCR_PROMPT = '请识别并输出这张试卷图片中的全部题目文字，保留每道题的题号和换行，' +
-    '逐题输出，不要翻译、不要解释、不要添加任何 HTML 或 markdown 标记。';
+  const OCR_PROMPT =
+    '请识别这张试卷图片，只提取题目的纯文字内容，按题号分开、逐题一行输出。' +
+    '严格要求：只输出题目本身的文字；' +
+    '不要输出任何 HTML 标签（如 <h2> <p> <div>）、代码符号（如 ``` 反引号）、markdown 标记（如 # * **）；' +
+    '不要输出页眉页脚、学校班级姓名、标题、分值、装饰性文字；' +
+    '不要翻译、不要解释、不要补充答案。每道题前保留它原本的题号。';
 
   async function callVisionModel(image) {
     const resp = await fetch(config.endpoint, {
