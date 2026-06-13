@@ -1070,23 +1070,50 @@ function extractJSON(text) {
 
 /* =========================================================================
  *  7. 识图：通义千问 qwen-vl-ocr（阿里云百炼 OpenAI 兼容模式）
- *  qwen-vl-ocr 兼容模式调用方式：messages[0].content 里放一段 OCR 指令文本
- *  + 一个 image_url（base64 dataURL），并可在该 image_url 同级带上
- *  min_pixels / max_pixels 控制识别分辨率。返回 content 即识别文字。
+ *  注意：qwen-vl-ocr 的识别结果常带文字坐标，返回形如
+ *    {"pos_list":[{"rotate_rect":[x,y,w,h,angle],"text":"这一行的文字"}, ...]}
+ *  我们用 extractOcrText() 把其中每行的 text 抽出来拼成纯文字，丢掉坐标。
  *
  *  约定（与 recognizeImage 一致）：
  *    输入  image = { file: File, dataURL: 'data:image/...;base64,xxxx' }
- *    输出  Promise<string>  —— 识别出的题目纯文字
+ *    输出  Promise<string>  —— 识别出的题目纯文字（逐行）
  * ------------------------------------------------------------------------- */
+
+/* 从 qwen-vl-ocr 返回里抽取纯文字：
+ * - 若是带坐标的 JSON（pos_list/rotate_rect），取每项的 text 字段按行拼接；
+ * - 若本身就是纯文本，原样返回。 */
+function extractOcrText(content) {
+  const raw = String(content == null ? '' : content).trim();
+  if (!raw) return '';
+  const jsonStr = (raw.match(/\{[\s\S]*\}|\[[\s\S]*\]/) || [null])[0];
+  if (jsonStr && /pos_list|rotate_rect|"text"\s*:|"word/i.test(jsonStr)) {
+    try {
+      const lines = collectTextLines(JSON.parse(jsonStr));
+      if (lines.length) return lines.join('\n');
+    } catch (_) { /* 解析失败则按纯文本处理 */ }
+  }
+  return raw;
+}
+
+/* 递归收集对象/数组里的文字字段（text/word/value/content/ocr），保持出现顺序 */
+function collectTextLines(node, out = []) {
+  if (node == null) return out;
+  if (Array.isArray(node)) { node.forEach(n => collectTextLines(n, out)); return out; }
+  if (typeof node === 'object') {
+    const t = node.text ?? node.word ?? node.value ?? node.content ?? node.ocr;
+    if (typeof t === 'string' && t.trim()) out.push(t.trim());
+    for (const k of Object.keys(node)) {
+      if (node[k] && typeof node[k] === 'object') collectTextLines(node[k], out);
+    }
+  }
+  return out;
+}
+
 function createImageRecognizer(config) {
   // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-vl-ocr', name:'...' }
-  // qwen-vl-ocr 以内置 OCR 能力为主，提示词给一句「读出图中所有文字」即可。
   const OCR_PROMPT =
-    '请识别这张试卷图片，只提取题目的纯文字内容，按题号分开、逐题一行输出。' +
-    '严格要求：只输出题目本身的文字；' +
-    '不要输出任何 HTML 标签（如 <h2> <p> <div>）、代码符号（如 ``` 反引号）、markdown 标记（如 # * **）；' +
-    '不要输出页眉页脚、学校班级姓名、标题、分值、装饰性文字；' +
-    '不要翻译、不要解释、不要补充答案。每道题前保留它原本的题号。';
+    '请识别这张试卷图片中的全部文字，按图中的行/题逐行输出纯文本，每道题前保留它原本的题号。' +
+    '只要文字本身，不要输出任何坐标、HTML 标签、代码符号或 markdown 标记，也不要解释或补充答案。';
 
   async function callVisionModel(image) {
     const resp = await fetch(config.endpoint, {
@@ -1111,7 +1138,8 @@ function createImageRecognizer(config) {
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 120));
     const data = await resp.json();
-    return data.choices?.[0]?.message?.content ?? data.output ?? '';
+    const content = data.choices?.[0]?.message?.content ?? data.output ?? '';
+    return extractOcrText(content);            // 抽出纯文字，丢掉坐标
   }
 
   return {
