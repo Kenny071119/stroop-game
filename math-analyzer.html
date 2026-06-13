@@ -122,9 +122,21 @@
   }
   .btn-sm { padding: 8px 12px; font-size: 13px; }
 
-  /* ===== 拍照 / 上传图片 ===== */
+  /* ===== 上传图片 ===== */
+  .tip-scan {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #FAD27A;
+    background: rgba(250,173,20,.10);
+    border: 1px solid rgba(250,173,20,.3);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .tip-scan b { color: var(--warn); }
   .uploader { display: flex; flex-direction: column; gap: 10px; }
   .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .upload-btn-main { padding: 22px 12px; }
   .upload-btn {
     flex: 1;
     min-width: 130px;
@@ -287,23 +299,22 @@
 <div id="app">
   <header>
     <h1>📐 数学错题分析</h1>
-    <p>拍照或粘贴错题（题目 / 我的答案 / 正确答案），自动分析知识点、错误类型，并汇总薄弱环节。</p>
+    <p>上传扫描好的题目图片（或粘贴文字），自动分析知识点、错误类型，并汇总薄弱环节。</p>
   </header>
 
-  <!-- 拍照 / 上传图片 -->
+  <!-- 上传扫描图片（主推入口） -->
   <section class="card">
     <div class="card-title">
-      <span>① 拍照 / 上传题目图片</span>
+      <span>① 上传题目图片</span>
       <span class="badge-source" id="recog-source"></span>
+    </div>
+    <div class="tip-scan">
+      💡 建议：先用<b>「扫描全能王」</b>把题目扫描清晰、裁切干净后再上传，识别效果最好。
     </div>
     <div class="uploader">
       <div class="upload-actions">
-        <label class="upload-btn">
-          <span class="ico">📷</span><span>拍照</span>
-          <input type="file" id="file-camera" accept="image/*" capture="environment">
-        </label>
-        <label class="upload-btn">
-          <span class="ico">🖼️</span><span>从相册选择</span>
+        <label class="upload-btn upload-btn-main">
+          <span class="ico">🖼️</span><span>选择 / 上传扫描图片</span>
           <input type="file" id="file-album" accept="image/*" multiple>
         </label>
       </div>
@@ -318,10 +329,10 @@
     </div>
   </section>
 
-  <!-- 输入 -->
+  <!-- 粘贴文字（备用入口） -->
   <section class="card">
     <div class="card-title">
-      <span>② 粘贴 / 编辑错题</span>
+      <span>② 粘贴文字（备用）</span>
       <button class="btn-ghost btn-sm" id="btn-sample">填入示例</button>
     </div>
     <textarea id="input" placeholder="支持从作业帮等扫描后直接粘贴。每道题之间用空行隔开，例如：
@@ -663,7 +674,7 @@ $('input').addEventListener('input', () => {
   renderParsed(lastParsed);
 });
 
-/* ---- 拍照 / 上传图片 ---- */
+/* ---- 上传图片 ---- */
 let images = [];           // [{ id, file, dataURL }]
 let imgSeq = 0;
 $('recog-source').textContent = RECOGNIZER.name;
@@ -701,7 +712,6 @@ $('preview-list').addEventListener('click', (e) => {
   }
 });
 
-$('file-camera').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
 $('file-album').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
 
 $('btn-recognize').addEventListener('click', async () => {
