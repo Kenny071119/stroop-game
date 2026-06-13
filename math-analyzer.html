@@ -38,9 +38,36 @@
     padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
   }
 
+  /* ===== 模式切换 ===== */
+  .mode-switch {
+    display: inline-flex;
+    gap: 3px;
+    padding: 3px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .mode-btn {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-dim);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 16px;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .mode-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, #5C9BFF, #6A6CFF);
+    box-shadow: 0 3px 10px rgba(76,141,255,.35);
+  }
+
   /* ===== 顶部 ===== */
   header {
-    padding: 28px 4px 18px;
+    padding: 24px 4px 18px;
   }
   header h1 {
     font-size: 26px;
@@ -507,13 +534,17 @@
 <body>
 <div id="app">
   <header>
+    <div class="mode-switch" id="mode-switch">
+      <button class="mode-btn" data-mode="app">🚀 正式版</button>
+      <button class="mode-btn" data-mode="test">🛠 测试版</button>
+    </div>
     <h1>📝 错题学习助手</h1>
-    <p>上传卷子 → 勾选做错的题 → 对每道题「问 AI」说说哪里不懂，AI 一步步引导你，最后总结你的薄弱点。</p>
+    <p id="app-sub">上传卷子 → 勾选做错的题 → 对每道题「问 AI」说说哪里不懂，AI 一步步引导你，最后总结你的薄弱点。</p>
   </header>
 
-  <!-- API Key（本地测试用） -->
-  <section class="card">
-    <div class="warn-banner">⚠️ 本版本仅供本地测试，请勿部署成公开网址或分享，key 会暴露。</div>
+  <!-- API Key（仅「测试版」显示） -->
+  <section class="card" id="settings-card">
+    <div class="warn-banner">⚠️ 测试版：key 直接暴露在浏览器，仅供本地自测，请勿部署成公开网址或分享。正式版请用「🚀 正式版」模式 + 后端。</div>
     <div class="card-title">
       <span>⚙️ 通义千问 API Key</span>
       <span class="badge-source" id="key-status"></span>
@@ -603,7 +634,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v9（界面美化版）
+    错题学习助手 · 单页版 · v10（正式版/测试版切换）
   </footer>
 </div>
 
@@ -1437,10 +1468,17 @@ function createImageRecognizer(config) {
 }
 
 /* =========================================================================
- *  8. 把 API Key 接上引擎（本地测试）
- *  Key 只存在内存变量 qwen.apiKey 里，不写 localStorage；刷新即清空。
- *  填了 Key → 切到通义千问真实调用；留空 → 回退本地示例（mock）。
+ *  8. 模式（正式版 / 测试版）+ 引擎接线
+ *
+ *  ▸ 测试版(test)：显示设置卡，用户自己填 Key/模型/接口（key 暴露在浏览器，仅自测）。
+ *  ▸ 正式版(app) ：隐藏设置卡，前端只调你自己的后端，Key 藏在后端，用户零输入。
+ *
+ *  >>> 正式版上线只需一步：把 PROD_API_BASE 填成你的后端地址即可 <<<
+ *  例如：'https://你的域名/api/compatible-mode/v1'（后端负责加 Key 并转发到百炼）。
+ *  留空时，正式版用本地示例(mock) 跑，方便先看“用户零输入”的干净界面。
  * ------------------------------------------------------------------------- */
+const PROD_API_BASE = '';   // ← 部署后端后填这里
+
 const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
@@ -1448,28 +1486,60 @@ const qwen = {
   ocrModel: 'qwen-vl-max-latest',
 };
 
+let MODE = 'app';   // 'app' 正式版 | 'test' 测试版
+
+/* 按当前模式决定：用真实接口还是本地示例 */
 function refreshEngines() {
-  if (qwen.apiKey) {
-    const ep = qwen.base + '/chat/completions';
-    ANALYZER   = createAIAnalyzer({ endpoint: ep, apiKey: qwen.apiKey, model: qwen.textModel, name: '通义千问·' + qwen.textModel });
-    RECOGNIZER = createImageRecognizer({ endpoint: ep, apiKey: qwen.apiKey, model: qwen.ocrModel, name: '通义千问·' + qwen.ocrModel });
-    TUTOR      = createTutor({ endpoint: ep, apiKey: qwen.apiKey, model: qwen.textModel });
-    $('key-status').textContent = '已启用通义千问';
+  let ep = null, key = '';
+  if (MODE === 'test') {
+    if (qwen.apiKey) { ep = qwen.base.replace(/\/+$/, '') + '/chat/completions'; key = qwen.apiKey; }
+  } else { // app 正式版：走后端（后端持有 Key），前端不带 Key
+    if (PROD_API_BASE) { ep = PROD_API_BASE.replace(/\/+$/, '') + '/chat/completions'; key = ''; }
+  }
+  if (ep) {
+    ANALYZER   = createAIAnalyzer({ endpoint: ep, apiKey: key, model: qwen.textModel, name: 'AI 分析' });
+    RECOGNIZER = createImageRecognizer({ endpoint: ep, apiKey: key, model: qwen.ocrModel, name: 'AI 识图' });
+    TUTOR      = createTutor({ endpoint: ep, apiKey: key, model: qwen.textModel });
+    if (MODE === 'test') $('key-status').textContent = '已启用通义千问';
   } else {
     ANALYZER = mockAnalyzer;
     RECOGNIZER = mockRecognizer;
     TUTOR = mockTutor;
-    $('key-status').textContent = '未填写 · 用本地示例';
+    if (MODE === 'test') $('key-status').textContent = '未填写 · 用本地示例';
   }
   $('recog-source').textContent = RECOGNIZER.name;
 }
+
+/* 切换模式：显示/隐藏设置卡、更新网址参数、重连引擎 */
+function applyMode(mode) {
+  MODE = (mode === 'test') ? 'test' : 'app';
+  $('settings-card').style.display = (MODE === 'test') ? 'block' : 'none';
+  [...document.querySelectorAll('.mode-btn')].forEach(b =>
+    b.classList.toggle('active', b.getAttribute('data-mode') === MODE));
+  $('app-sub').textContent = (MODE === 'test')
+    ? '🛠 测试版：自己填 Key 调真实模型，用于本地调试。'
+    : '上传卷子 → 勾选做错的题 → 对每道题「问 AI」说说哪里不懂，AI 一步步引导你，最后总结你的薄弱点。';
+  // 同步到网址，方便分享/记住当前模式
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('mode', MODE);
+    history.replaceState(null, '', u);
+  } catch (_) {}
+  refreshEngines();
+}
+
+$('mode-switch').addEventListener('click', (e) => {
+  const m = e.target.getAttribute('data-mode');
+  if (m) applyMode(m);
+});
 
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
 $('text-model').addEventListener('input', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-max'; refreshEngines(); });
 $('ocr-model').addEventListener('input', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-max-latest'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
-refreshEngines();   // 初始化来源标签（默认本地示例）
+// 初始模式：网址 ?mode=test 进测试版，否则默认正式版
+applyMode(new URLSearchParams(location.search).get('mode') === 'test' ? 'test' : 'app');
 </script>
 </body>
 </html>
