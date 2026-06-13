@@ -234,15 +234,51 @@
 
   /* ===== 我的错题集 ===== */
   .col-item {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
     padding: 12px;
     border: 1px solid var(--line);
     border-radius: 10px;
     margin-bottom: 8px;
     background: var(--bg-soft);
   }
+  .col-row { display: flex; gap: 10px; align-items: flex-start; }
+
+  /* ===== 问AI 辅导 ===== */
+  .col-actions { margin-top: 10px; }
+  .btn-ask {
+    background: var(--brand-soft);
+    color: #9CC1FF;
+    border: 1px solid #2c4a78;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .chat { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .chat-log {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  .chat-empty { font-size: 12px; color: var(--ink-dim); }
+  .chat-msg {
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 8px 11px;
+    border-radius: 10px;
+    max-width: 88%;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .chat-msg.user { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 3px; }
+  .chat-msg.assistant { align-self: flex-start; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-bottom-left-radius: 3px; }
+  .chat-msg.pending { color: var(--ink-dim); }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input-row .chat-input { flex: 1; }
+  .chat-send { padding: 10px 16px; flex-shrink: 0; }
   .col-num {
     flex-shrink: 0;
     min-width: 44px;
@@ -431,8 +467,8 @@
 <body>
 <div id="app">
   <header>
-    <h1>📝 错题录入整理</h1>
-    <p>上传卷子 → 识别拆题 → 勾选做错的题，自动收拢成「我的错题集」。（本版只做录入整理，暂不做分析）</p>
+    <h1>📝 错题学习助手</h1>
+    <p>上传卷子 → 勾选做错的题 → 对每道题「问 AI」说说哪里不懂，AI 一步步引导你，最后总结你的薄弱点。</p>
   </header>
 
   <!-- API Key（本地测试用） -->
@@ -504,17 +540,21 @@
     </div>
   </section>
 
-  <!-- 我的错题集 -->
+  <!-- 我的错题集 + 问AI -->
   <section class="card" id="collection" style="display:none;">
     <div class="card-title">
       <span>📒 我的错题集</span>
       <button class="btn-ghost btn-sm" id="btn-copy">复制全部</button>
     </div>
-    <div class="step-desc">勾选的错题按题号收拢在这里。点每条的 × 可移出。</div>
+    <div class="step-desc">每道错题点「💬 问 AI」说说自己<b>哪里不懂</b>，AI 会一步步引导你想出来。聊完点下面「总结我的薄弱点」。</div>
     <div id="collection-list"></div>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn-primary" id="btn-summarize">总结我的薄弱点</button>
+    </div>
+    <div id="weak-summary" class="advice" style="display:none;margin-top:12px;"></div>
   </section>
 
-  <!-- 分析区域（本版隐藏，后续接入）-->
+  <!-- 旧版自动分析区域（保留隐藏，暂不使用）-->
   <section id="results" style="display:none;"></section>
   <section class="card" id="summary-card" style="display:none;">
     <div class="card-title"><span>薄弱点汇总</span></div>
@@ -522,7 +562,7 @@
   </section>
 
   <footer>
-    错题录入整理 · 单页版 · v5（默认 qwen-vl-max-latest）
+    错题学习助手 · 单页版 · v6（问AI辅导版）
   </footer>
 </div>
 
@@ -726,6 +766,74 @@ async function recognizeImage(image) {
 }
 
 /* =========================================================================
+ *  3c. 问AI 辅导（引导式）+ 薄弱点总结
+ *  TUTOR.reply(question, history) → 老师对这道题的下一句引导（字符串）
+ *  TUTOR.summarize(items)         → 根据孩子问过的内容总结薄弱点（字符串）
+ *  未填 Key 时用 mockTutor 顶着；填了 Key 由 createTutor 调通义千问。
+ * ========================================================================= */
+const mockTutor = {
+  name: '本地示例辅导',
+  async reply(question, history) {
+    await new Promise(r => setTimeout(r, 500));
+    return '（本地示例·未接 AI）先别急着要答案～\n你能说说这道题你读到哪一步就卡住了吗？' +
+      '比如：要求的是什么？已知哪些条件？\n试着说说你的想法，我再给你下一步提示。' +
+      '（填入上方 API Key 后，这里会变成通义千问的真实引导。）';
+  },
+  async summarize(items) {
+    await new Promise(r => setTimeout(r, 500));
+    const nums = items.map(i => '第' + i.num + '题').join('、');
+    return '（本地示例·未接 AI）你这次就 ' + nums + ' 提了问。\n' +
+      '从提问看，常见卡点可能是：1) 不知道第一步从哪下手；2) 运算/符号处理。\n' +
+      '建议：每题先用一句话说清「求什么、已知什么」再动笔。\n' +
+      '（填入 API Key 后，这里会用通义千问根据你真实的提问来总结。）';
+  },
+};
+
+function createTutor(config) {
+  // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-plus' }
+  const TUTOR_SYS =
+    '你是一位耐心、爱鼓励的中小学数学老师，正在一对一帮助一个学生弄懂他做错的题。' +
+    '请用“引导式”教学：先弄清他到底卡在哪，用提问和小提示一步步带他自己想出来；' +
+    '不要一上来就给出完整解题过程或最终答案；每次只推进一小步，话要简短、亲切、口语化。' +
+    '只有当学生连续卡住、或明确说“直接告诉我答案”时，才循序给出关键步骤。';
+  const SUM_SYS =
+    '你是学习分析助手。下面是一个学生针对自己的错题向老师提出的问题/对话。' +
+    '请只根据“学生提出的问题、暴露出的困惑”，总结他的薄弱知识点和常见卡点（3-5 条，简短直白），' +
+    '最后给一两句具体的学习建议。用中文要点输出，不要复述对话原文，不要客套。';
+
+  async function chat(messages) {
+    const resp = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+      body: JSON.stringify({ model: config.model, messages, temperature: 0.6 }),
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 120));
+    const data = await resp.json();
+    return (data.choices?.[0]?.message?.content ?? data.output ?? '').trim();
+  }
+
+  return {
+    name: '通义千问·' + config.model,
+    async reply(question, history) {
+      const msgs = [
+        { role: 'system', content: TUTOR_SYS + '\n\n【本题】' + question },
+        ...history.map(m => ({ role: m.role, content: m.content })),
+      ];
+      return chat(msgs);
+    },
+    async summarize(items) {
+      const transcript = items.map(it => {
+        const asks = it.messages.filter(m => m.role === 'user').map(m => '  学生问：' + m.content).join('\n');
+        return `【第${it.num}题】${it.question}\n${asks}`;
+      }).join('\n\n');
+      return chat([{ role: 'system', content: SUM_SYS }, { role: 'user', content: transcript }]);
+    },
+  };
+}
+
+let TUTOR = mockTutor;   // 当前辅导引擎（refreshEngines 里按 Key 切换）
+
+/* =========================================================================
  *  4. UI 渲染
  * ========================================================================= */
 const $ = (id) => document.getElementById(id);
@@ -733,6 +841,8 @@ const $ = (id) => document.getElementById(id);
 /* 流程状态 */
 let questions = [];          // 拆出的题目 [{ id, num, text }]
 let selected = new Set();    // 勾选为「做错」的题目 id
+let chats = {};              // 每道错题的问AI对话 { [id]: [{role:'user'|'assistant', content}] }
+let openChats = new Set();   // 当前展开了对话框的题目 id
 
 /* 第二步：渲染题号勾选网格（只显示题号） */
 function renderQuestionChips() {
@@ -760,20 +870,38 @@ function peekQuestion(id) {
   box.innerHTML = `<span class="peek-num">第${esc(q.num)}题</span>${esc(q.text)}`;
 }
 
-/* 我的错题集：把勾选的题按题号收拢 */
+/* 我的错题集：把勾选的题按题号收拢，每题带「问AI」对话 */
 function renderCollection() {
   const card = $('collection'), list = $('collection-list');
   const chosen = questions
     .filter(q => selected.has(q.id))
     .sort((a, b) => (parseInt(a.num, 10) || 0) - (parseInt(b.num, 10) || 0));
-  if (!chosen.length) { card.style.display = 'none'; return; }
+  if (!chosen.length) { card.style.display = 'none'; $('weak-summary').style.display = 'none'; return; }
   card.style.display = 'block';
   list.innerHTML = chosen.map(q => `
     <div class="col-item" data-id="${q.id}">
-      <span class="col-num">第${esc(q.num)}题</span>
-      <span class="col-text">${esc(q.text)}</span>
-      <span class="col-remove" data-id="${q.id}" title="移出错题集">×</span>
+      <div class="col-row">
+        <span class="col-num">第${esc(q.num)}题</span>
+        <span class="col-text">${esc(q.text)}</span>
+        <span class="col-remove" data-id="${q.id}" title="移出错题集">×</span>
+      </div>
+      <div class="col-actions">
+        <button class="btn-ask" data-id="${q.id}">💬 问 AI（说说哪里不懂）</button>
+      </div>
+      <div class="chat" data-id="${q.id}" style="display:${openChats.has(q.id) ? 'block' : 'none'}">
+        <div class="chat-log" data-id="${q.id}">${renderChatLog(q.id)}</div>
+        <div class="chat-input-row">
+          <input class="chat-input field" data-id="${q.id}" placeholder="例如：我不懂为什么要移项 / 这题第一步怎么想？" spellcheck="false">
+          <button class="chat-send" data-id="${q.id}">发送</button>
+        </div>
+      </div>
     </div>`).join('');
+}
+
+function renderChatLog(id) {
+  const msgs = chats[id] || [];
+  if (!msgs.length) return `<div class="chat-empty">说说你哪里不懂，AI 会一步步引导你想出来～</div>`;
+  return msgs.map(m => `<div class="chat-msg ${m.role === 'user' ? 'user' : 'assistant'}">${esc(m.content)}</div>`).join('');
 }
 
 function renderResults(analyses) {
@@ -959,6 +1087,9 @@ $('btn-paste-split').addEventListener('click', () => {
 function loadQuestions(rawText) {
   questions = splitQuestions(rawText);
   selected = new Set();
+  chats = {};
+  openChats = new Set();
+  $('weak-summary').style.display = 'none';
   if (!questions.length) {
     alert('没有识别到题目，请检查图片是否清晰，或改用粘贴文字。');
     return;
@@ -986,15 +1117,76 @@ $('q-grid').addEventListener('click', (e) => {
   }
 });
 
-/* ---- 我的错题集：移出某题 ---- */
+/* ---- 我的错题集：移出 / 问AI / 发送 ---- */
 $('collection-list').addEventListener('click', (e) => {
-  if (!e.target.classList.contains('col-remove')) return;
-  const id = Number(e.target.getAttribute('data-id'));
-  selected.delete(id);
-  const chip = $('q-grid').querySelector(`.qchip[data-id="${id}"]`);
-  if (chip) chip.classList.remove('checked');
-  updateSelCount();
-  renderCollection();
+  const t = e.target;
+  const id = Number(t.getAttribute('data-id'));
+  if (!id) return;
+  if (t.classList.contains('col-remove')) {
+    selected.delete(id);
+    openChats.delete(id);
+    const chip = $('q-grid').querySelector(`.qchip[data-id="${id}"]`);
+    if (chip) chip.classList.remove('checked');
+    updateSelCount();
+    renderCollection();
+  } else if (t.classList.contains('btn-ask')) {
+    if (openChats.has(id)) openChats.delete(id); else openChats.add(id);
+    const item = t.closest('.col-item');
+    const panel = item && item.querySelector('.chat');
+    if (panel) panel.style.display = openChats.has(id) ? 'block' : 'none';
+    if (openChats.has(id) && panel) panel.querySelector('.chat-input').focus();
+  } else if (t.classList.contains('chat-send')) {
+    sendChat(id);
+  }
+});
+
+/* 回车发送 */
+$('collection-list').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.classList.contains('chat-input')) {
+    e.preventDefault();
+    sendChat(Number(e.target.getAttribute('data-id')));
+  }
+});
+
+/* 发送一条提问给 AI（引导式辅导） */
+async function sendChat(id) {
+  const item = $('collection-list').querySelector(`.col-item[data-id="${id}"]`);
+  if (!item) return;
+  const input = item.querySelector('.chat-input');
+  const log = item.querySelector('.chat-log');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  const q = questions.find(x => x.id === id);
+  if (!chats[id]) chats[id] = [];
+  chats[id].push({ role: 'user', content: text });
+  input.value = '';
+  log.innerHTML = renderChatLog(id) + `<div class="chat-msg assistant pending"><span class="spinner"></span>老师思考中…</div>`;
+  log.scrollTop = log.scrollHeight;
+  try {
+    const reply = await TUTOR.reply(q.text, chats[id]);
+    chats[id].push({ role: 'assistant', content: reply || '（没有返回内容）' });
+  } catch (err) {
+    chats[id].push({ role: 'assistant', content: '（出错了：' + (err.message || err) + '）' });
+  }
+  log.innerHTML = renderChatLog(id);
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ---- 总结薄弱点：根据孩子问过的内容总结 ---- */
+$('btn-summarize').addEventListener('click', async () => {
+  const items = questions
+    .filter(q => selected.has(q.id) && chats[q.id] && chats[q.id].some(m => m.role === 'user'))
+    .map(q => ({ num: q.num, question: q.text, messages: chats[q.id] }));
+  if (!items.length) { alert('先对至少一道错题「问 AI」说说哪里不懂，再来总结～'); return; }
+  const box = $('weak-summary');
+  box.style.display = 'block';
+  box.innerHTML = `<span class="spinner"></span>正在根据你问的内容总结…`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    box.textContent = await TUTOR.summarize(items);
+  } catch (err) {
+    box.textContent = '总结失败：' + (err.message || err);
+  }
 });
 
 /* ---- 复制整本错题集 ---- */
@@ -1016,11 +1208,12 @@ $('btn-copy').addEventListener('click', async () => {
 
 /* ---- 重新上传：清空一切 ---- */
 $('btn-restart').addEventListener('click', () => {
-  images = []; questions = []; selected = new Set();
+  images = []; questions = []; selected = new Set(); chats = {}; openChats = new Set();
   renderPreviews();
   $('q-peek').style.display = 'none';
   $('step2').style.display = 'none';
   $('collection').style.display = 'none';
+  $('weak-summary').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
@@ -1193,10 +1386,12 @@ function refreshEngines() {
     const ep = qwen.base + '/chat/completions';
     ANALYZER   = createAIAnalyzer({ endpoint: ep, apiKey: qwen.apiKey, model: qwen.textModel, name: '通义千问·' + qwen.textModel });
     RECOGNIZER = createImageRecognizer({ endpoint: ep, apiKey: qwen.apiKey, model: qwen.ocrModel, name: '通义千问·' + qwen.ocrModel });
+    TUTOR      = createTutor({ endpoint: ep, apiKey: qwen.apiKey, model: qwen.textModel });
     $('key-status').textContent = '已启用通义千问';
   } else {
     ANALYZER = mockAnalyzer;
     RECOGNIZER = mockRecognizer;
+    TUTOR = mockTutor;
     $('key-status').textContent = '未填写 · 用本地示例';
   }
   $('recog-source').textContent = RECOGNIZER.name;
