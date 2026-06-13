@@ -478,6 +478,10 @@
       <div class="row">
         <button class="btn-primary" id="btn-recognize" disabled>识别并拆分题目</button>
       </div>
+      <details class="backup" id="ocr-debug" style="display:none;">
+        <summary>🔧 识别原文（排查用，点开看模型到底返回了啥）</summary>
+        <pre id="ocr-debug-pre" style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:var(--ink-dim);background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:220px;overflow:auto;margin-top:8px;"></pre>
+      </details>
       <details class="backup">
         <summary>没有图片？点这里粘贴卷子文字</summary>
         <textarea id="paste-input" placeholder="把卷子文字粘贴到这里，每道题最好带题号（如 1. 2. 3.），系统会自动拆题。"></textarea>
@@ -518,7 +522,7 @@
   </section>
 
   <footer>
-    错题录入整理 · 单页版 · 分析功能后续接入
+    错题录入整理 · 单页版 · v3（坐标修复+调试版）
   </footer>
 </div>
 
@@ -692,6 +696,7 @@ const mockRecognizer = {
     // 占位：不做真实 OCR，模拟一张整卷的识别结果（含 HTML 噪声，用于演示清理+拆题）。
     // image.file / image.dataURL 此处未使用，接入真模型时才会用到。
     await new Promise(r => setTimeout(r, 600));
+    LAST_OCR_RAW = '[本地示例] 模拟一张整卷的识别结果';
     return [
       '```html',
       '<h2>七年级数学单元测验</h2>',
@@ -708,6 +713,7 @@ const mockRecognizer = {
 
 /* 当前启用的识图器（接读图 AI 后改这里即可） */
 let RECOGNIZER = mockRecognizer;
+let LAST_OCR_RAW = '';   // 上一次模型返回的原始内容（调试用）
 
 /* recognizeImage：UI 唯一调用入口，永远返回「识别出的题目文字」字符串 */
 async function recognizeImage(image) {
@@ -920,7 +926,21 @@ $('btn-recognize').addEventListener('click', async () => {
   }
   btn.innerHTML = original;
   btn.disabled = false;
-  loadQuestions(texts.join('\n\n'));
+
+  const merged = texts.join('\n\n');
+  // 调试：把模型原始返回 + 抽取后的文字显示出来，方便排查
+  $('ocr-debug').style.display = 'block';
+  $('ocr-debug-pre').textContent =
+    '【模型原始返回】\n' + (LAST_OCR_RAW || '(空)') +
+    '\n\n【抽取后用于拆题的文字】\n' + (merged || '(空)');
+
+  // 若抽取后仍是坐标/没拆出题目，提示换识图模型
+  if (/rotate_rect|pos_list/.test(merged) || !merged.trim()) {
+    alert('这次识别没能拿到纯文字（多半是 qwen-vl-ocr 返回了坐标）。\n' +
+          '建议把上方「识图模型」改成 qwen-vl-max-latest 再试一次。\n' +
+          '（可点开「识别原文」查看模型到底返回了什么）');
+  }
+  loadQuestions(merged);
 });
 
 /* 备用：粘贴文字拆题 */
@@ -1139,6 +1159,7 @@ function createImageRecognizer(config) {
     if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 120));
     const data = await resp.json();
     const content = data.choices?.[0]?.message?.content ?? data.output ?? '';
+    LAST_OCR_RAW = typeof content === 'string' ? content : JSON.stringify(content);  // 存原文供调试
     return extractOcrText(content);            // 抽出纯文字，丢掉坐标
   }
 
