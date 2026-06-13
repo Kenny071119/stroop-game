@@ -22,7 +22,11 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { min-height: 100%; }
   body {
-    background: var(--bg);
+    background:
+      radial-gradient(900px 480px at 100% -8%, rgba(146,84,222,.16), transparent 60%),
+      radial-gradient(900px 520px at -10% 0%, rgba(76,141,255,.18), transparent 55%),
+      linear-gradient(180deg, #121829 0%, #0F1320 38%);
+    background-attachment: fixed;
     color: var(--ink);
     font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     line-height: 1.5;
@@ -36,37 +40,58 @@
 
   /* ===== 顶部 ===== */
   header {
-    padding: 24px 4px 16px;
+    padding: 28px 4px 18px;
   }
   header h1 {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: .5px;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    background: linear-gradient(95deg, #7DB1FF 0%, #A98BFF 55%, #FF9EC8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   header p {
-    font-size: 13px;
+    font-size: 13.5px;
     color: var(--ink-dim);
-    margin-top: 6px;
+    margin-top: 8px;
+    max-width: 92%;
   }
 
   /* ===== 通用卡片 ===== */
   .card {
-    background: var(--card);
+    position: relative;
+    background: linear-gradient(180deg, #222942 0%, #1B2133 100%);
     border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 16px;
+    border-radius: 16px;
+    padding: 18px;
     margin-bottom: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    animation: rise .34s ease both;
   }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   .card-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink-dim);
-    letter-spacing: 1px;
-    margin-bottom: 10px;
+    position: relative;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: .3px;
+    margin-bottom: 12px;
+    padding-left: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
   }
+  .card-title::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 2px; bottom: 2px;
+    width: 4px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--brand), var(--purple));
+  }
+  .card-title > span:first-child { flex: 1; }
 
   /* ===== 输入区 ===== */
   textarea {
@@ -113,13 +138,18 @@
     color: #fff;
   }
   button:active { transform: scale(.98); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-primary { background: var(--brand); flex: 1; }
+  button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+  .btn-primary {
+    background: linear-gradient(135deg, #5C9BFF 0%, #4C8DFF 60%, #6A6CFF 100%);
+    box-shadow: 0 6px 16px rgba(76,141,255,.34);
+    flex: 1;
+  }
   .btn-ghost {
-    background: transparent;
+    background: rgba(255,255,255,.03);
     border: 1px solid var(--line);
     color: var(--ink-dim);
   }
+  .btn-ghost:hover { border-color: var(--brand); color: var(--ink); }
   .btn-sm { padding: 8px 12px; font-size: 13px; }
 
   /* ===== API Key / 警告 ===== */
@@ -278,7 +308,13 @@
   .chat-msg.pending { color: var(--ink-dim); }
   .chat-input-row { display: flex; gap: 8px; }
   .chat-input-row .chat-input { flex: 1; }
-  .chat-send { padding: 10px 16px; flex-shrink: 0; }
+  .chat-send {
+    padding: 10px 16px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #5C9BFF, #6A6CFF);
+    box-shadow: 0 4px 12px rgba(76,141,255,.3);
+    border-radius: 10px;
+  }
   .col-num {
     flex-shrink: 0;
     min-width: 44px;
@@ -305,7 +341,7 @@
   .col-empty { font-size: 13px; color: var(--ink-dim); }
   .uploader { display: flex; flex-direction: column; gap: 10px; }
   .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-  .upload-btn-main { padding: 22px 12px; }
+  .upload-btn-main { padding: 26px 12px; }
   .upload-btn {
     flex: 1;
     min-width: 130px;
@@ -313,17 +349,19 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: var(--bg-soft);
-    border: 1px dashed var(--line);
-    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(76,141,255,.10), rgba(146,84,222,.08));
+    border: 1.5px dashed #3a4668;
+    border-radius: 12px;
     color: var(--ink);
     font-size: 14px;
     font-weight: 600;
     padding: 16px 12px;
     cursor: pointer;
+    transition: border-color .15s, background .15s;
   }
+  .upload-btn:hover { border-color: var(--brand); }
   .upload-btn:active { transform: scale(.99); }
-  .upload-btn .ico { font-size: 18px; }
+  .upload-btn .ico { font-size: 20px; }
   .upload-btn input[type=file] {
     position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
   }
@@ -448,11 +486,13 @@
 
   .badge-source {
     font-size: 11px;
-    font-weight: 500;
-    color: var(--ink-dim);
-    border: 1px solid var(--line);
+    font-weight: 600;
+    color: #9CC1FF;
+    background: rgba(76,141,255,.12);
+    border: 1px solid rgba(76,141,255,.25);
     border-radius: 20px;
-    padding: 2px 8px;
+    padding: 3px 9px;
+    white-space: nowrap;
   }
 
   footer {
@@ -550,6 +590,7 @@
     <div id="collection-list"></div>
     <div class="row" style="margin-top:14px;">
       <button class="btn-primary" id="btn-summarize">总结我的薄弱点</button>
+      <button class="btn-ghost" id="btn-copy-summary" style="display:none;flex:0 0 auto;">📋 复制总结</button>
     </div>
     <div id="weak-summary" class="advice" style="display:none;margin-top:12px;"></div>
   </section>
@@ -562,7 +603,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v8（约束词加强版）
+    错题学习助手 · 单页版 · v9（界面美化版）
   </footer>
 </div>
 
@@ -1189,12 +1230,28 @@ $('btn-summarize').addEventListener('click', async () => {
   if (!items.length) { alert('先对至少一道错题「问 AI」说说哪里不懂，再来总结～'); return; }
   const box = $('weak-summary');
   box.style.display = 'block';
+  $('btn-copy-summary').style.display = 'none';
   box.innerHTML = `<span class="spinner"></span>正在根据你问的内容总结…`;
   box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   try {
     box.textContent = await TUTOR.summarize(items);
+    $('btn-copy-summary').style.display = 'inline-block';
   } catch (err) {
     box.textContent = '总结失败：' + (err.message || err);
+  }
+});
+
+/* 复制总结 */
+$('btn-copy-summary').addEventListener('click', async () => {
+  const text = $('weak-summary').textContent || '';
+  if (!text.trim()) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = $('btn-copy-summary'); const o = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => { btn.textContent = o; }, 1500);
+  } catch (err) {
+    alert('复制失败，请手动选择文本。\n\n' + text);
   }
 });
 
