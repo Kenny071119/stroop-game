@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>数学错题分析</title>
+<style>
+  :root {
+    --bg: #0F1320;
+    --bg-soft: #1A1F30;
+    --card: #1E2435;
+    --ink: #EDEFF6;
+    --ink-dim: #8A90A6;
+    --line: #2C3245;
+    --brand: #4C8DFF;
+    --brand-soft: #1d3357;
+    --good: #52C41A;
+    --bad: #FF4D4F;
+    --warn: #FAAD14;
+    --purple: #9254DE;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  #app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+
+  /* ===== 顶部 ===== */
+  header {
+    padding: 24px 4px 16px;
+  }
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: .5px;
+  }
+  header p {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 6px;
+  }
+
+  /* ===== 通用卡片 ===== */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-dim);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ===== 输入区 ===== */
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.6;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--brand); }
+  textarea::placeholder { color: #5B617A; }
+
+  .hint {
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    line-height: 1.7;
+  }
+  .hint code {
+    background: var(--bg-soft);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--brand);
+    font-size: 12px;
+  }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: opacity .15s, transform .05s;
+    color: #fff;
+  }
+  button:active { transform: scale(.98); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--brand); flex: 1; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+  }
+  .btn-sm { padding: 8px 12px; font-size: 13px; }
+
+  /* ===== 解析后的题目预览 ===== */
+  .parsed-item {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: var(--bg-soft);
+  }
+  .parsed-item .pi-q { font-size: 14px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
+  .parsed-item .pi-ans { font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .pi-ans .wrong { color: var(--bad); }
+  .pi-ans .right { color: var(--good); }
+  .pi-ans .label { color: var(--ink-dim); margin-right: 4px; }
+  .parsed-empty { font-size: 13px; color: var(--ink-dim); }
+
+  /* ===== 分析结果 ===== */
+  .result-q {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .ans-line { font-size: 13px; margin-bottom: 4px; }
+  .ans-line .label { color: var(--ink-dim); display: inline-block; min-width: 56px; }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .tag {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .tag-kp { background: var(--brand-soft); color: #9CC1FF; }
+  .tag-err {
+    color: #fff;
+  }
+  .err-concept { background: #b13a3c; }   /* 概念不清 */
+  .err-read    { background: #b8860b; }   /* 审题失误 */
+  .err-calc    { background: #2f7d32; }   /* 计算错误 */
+  .err-method  { background: #6a3aa3; }   /* 方法没想到 */
+
+  .reason {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .reason b { color: var(--ink); font-weight: 600; }
+
+  /* ===== 汇总薄弱点 ===== */
+  .summary-block { margin-bottom: 16px; }
+  .summary-block:last-child { margin-bottom: 0; }
+  .summary-h { font-size: 13px; font-weight: 600; color: var(--ink-dim); margin-bottom: 10px; }
+  .bar-item { margin-bottom: 10px; }
+  .bar-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .bar-head .count { color: var(--ink-dim); }
+  .bar-track { height: 8px; background: var(--bg-soft); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
+
+  .advice {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 4px;
+    white-space: pre-wrap;
+  }
+
+  /* ===== 状态/加载 ===== */
+  .status {
+    font-size: 13px;
+    color: var(--ink-dim);
+    text-align: center;
+    padding: 24px 0;
+  }
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--line);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    vertical-align: -3px;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .badge-source {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: #4B5066;
+    padding: 16px 0 4px;
+  }
+  a { color: var(--brand); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>📐 数学错题分析</h1>
+    <p>粘贴错题（题目 / 我的答案 / 正确答案），自动分析知识点、错误类型，并汇总薄弱环节。</p>
+  </header>
+
+  <!-- 输入 -->
+  <section class="card">
+    <div class="card-title">
+      <span>① 粘贴错题</span>
+      <button class="btn-ghost btn-sm" id="btn-sample">填入示例</button>
+    </div>
+    <textarea id="input" placeholder="支持从作业帮等扫描后直接粘贴。每道题之间用空行隔开，例如：
+
+题目：计算 (-3)² + (-2)³
+我的答案：9 - 6 = 3
+正确答案：9 - 8 = 1
+
+题目：解方程 2x + 5 = 3x - 1
+我的答案：x = 4
+正确答案：x = 6"></textarea>
+    <div class="hint">
+      识别字段（中英冒号均可）：<code>题目</code> / <code>我的答案</code>(错误答案) / <code>正确答案</code>。
+      题目之间用<b>空行</b>分隔。字段缺失也能解析，仅题目也可以。
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn-primary" id="btn-analyze">开始分析</button>
+      <button class="btn-ghost" id="btn-clear">清空</button>
+    </div>
+  </section>
+
+  <!-- 解析预览 -->
+  <section class="card" id="parsed-card" style="display:none;">
+    <div class="card-title"><span>已识别题目</span><span id="parsed-count" class="badge-source"></span></div>
+    <div id="parsed-list"></div>
+  </section>
+
+  <!-- 分析结果 -->
+  <section id="results"></section>
+
+  <!-- 汇总 -->
+  <section class="card" id="summary-card" style="display:none;">
+    <div class="card-title"><span>② 薄弱点汇总</span></div>
+    <div id="summary-body"></div>
+  </section>
+
+  <footer>
+    错题分析工具 · 单页版 · AI 分析接口已预留
+  </footer>
+</div>
+
+<script>
+/* =========================================================================
+ *  数学错题分析工具
+ *  结构：解析输入 → 调用分析器(analyzeProblems) → 渲染结果 + 汇总
+ *
+ *  >>> AI 接入说明 <<<
+ *  真正的分析由 analyzeProblems() 完成。当前内置一个本地启发式 mock
+ *  分析器（mockAnalyzer），保证 UI 立即可用。后面接入国内可直连的模型时，
+ *  只需实现 createAIAnalyzer() 里的 callModel()，并把 ANALYZER 指向它即可，
+ *  UI / 解析 / 渲染 / 汇总都不用改。详见文件底部的「AI 接入位」。
+ * ========================================================================= */
+
+/* ---- 错误类型定义（与汇总、配色一一对应）---- */
+const ERROR_TYPES = {
+  concept: { label: '概念不清', cls: 'err-concept', color: '#b13a3c' },
+  read:    { label: '审题失误', cls: 'err-read',    color: '#b8860b' },
+  calc:    { label: '计算错误', cls: 'err-calc',    color: '#2f7d32' },
+  method:  { label: '方法没想到', cls: 'err-method', color: '#6a3aa3' },
+};
+
+/* =========================================================================
+ *  1. 解析：把粘贴的纯文本拆成结构化题目数组
+ *  返回 [{ question, wrongAnswer, rightAnswer, raw }]
+ * ========================================================================= */
+function parseInput(text) {
+  if (!text || !text.trim()) return [];
+  // 用一个或多个空行分块
+  const blocks = text.replace(/\r\n/g, '\n').split(/\n\s*\n+/);
+  const fieldMap = [
+    { key: 'question',    re: /^(?:题目|原题|题|question|q)\s*[:：]\s*/i },
+    { key: 'wrongAnswer', re: /^(?:我的答案|错误答案|我的解答|错答|my\s*answer|wrong)\s*[:：]\s*/i },
+    { key: 'rightAnswer', re: /^(?:正确答案|标准答案|参考答案|答案|correct|right|answer)\s*[:：]\s*/i },
+  ];
+
+  const problems = [];
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) continue;
+
+    const p = { question: '', wrongAnswer: '', rightAnswer: '', raw: block.trim() };
+    let current = null;       // 当前正在填充的字段（用于多行内容续行）
+    let matchedAny = false;
+
+    for (const line of lines) {
+      let matched = false;
+      for (const f of fieldMap) {
+        if (f.re.test(line)) {
+          const val = line.replace(f.re, '').trim();
+          p[f.key] = p[f.key] ? p[f.key] + '\n' + val : val;
+          current = f.key;
+          matched = true;
+          matchedAny = true;
+          break;
+        }
+      }
+      if (!matched) {
+        // 续行：接到当前字段；若还没有任何字段，则视为题目
+        if (current) p[current] += '\n' + line;
+        else { p.question = p.question ? p.question + '\n' + line : line; current = 'question'; }
+      }
+    }
+    // 完全没有任何字段标记时，整块当作题目
+    if (!matchedAny && !p.question) p.question = block.trim();
+    if (p.question || p.wrongAnswer || p.rightAnswer) problems.push(p);
+  }
+  return problems;
+}
+
+/* =========================================================================
+ *  2. Mock 分析器（本地启发式，无需联网）
+ *     输入题目数组，返回每题的分析。接口与未来的 AI 分析器保持一致。
+ * ========================================================================= */
+const mockAnalyzer = {
+  name: '本地示例分析',
+  async analyze(problems) {
+    // 知识点关键词词典（命中即标注）
+    const KP = [
+      [/(负数|相反数|绝对值|有理数|\(-)/, '有理数运算'],
+      [/(乘方|平方|立方|\^|²|³|次方|幂)/, '乘方与幂运算'],
+      [/(方程|解方程|未知数|=.*x|x.*=)/i, '一元一次/二次方程'],
+      [/(不等式|≥|≤|>|<)/, '不等式'],
+      [/(分式|分数|\/|÷|约分|通分)/, '分式与分数运算'],
+      [/(函数|y\s*=|f\(x\)|图象|斜率|截距)/i, '函数'],
+      [/(三角形|角|周长|面积|勾股|相似|全等)/, '几何图形'],
+      [/(概率|可能性|频率)/, '概率统计'],
+      [/(因式分解|提取公因式|公式法|十字相乘)/, '因式分解'],
+      [/(根号|√|开方|二次根式)/, '二次根式'],
+      [/(百分|比例|比|倍)/, '比与比例'],
+    ];
+
+    return problems.map((p) => {
+      const text = `${p.question} ${p.wrongAnswer} ${p.rightAnswer}`;
+      // —— 知识点 ——
+      let kps = KP.filter(([re]) => re.test(text)).map(([, name]) => name);
+      if (!kps.length) kps = ['综合运算'];
+      kps = [...new Set(kps)].slice(0, 3);
+
+      // —— 错误类型（启发式猜测）——
+      let errType = 'method';
+      const w = p.wrongAnswer || '', r = p.rightAnswer || '';
+      const numW = (w.match(/-?\d+(\.\d+)?/g) || []);
+      const numR = (r.match(/-?\d+(\.\d+)?/g) || []);
+      if (w && r && Math.abs(w.length - r.length) <= 3 && numW.length && numR.length
+          && numW.length === numR.length && w.replace(/\s/g,'') !== r.replace(/\s/g,'')) {
+        errType = 'calc';                       // 形态接近、数值不同 → 计算错误
+      } else if (/[<>≥≤]|负|正负|符号/.test(text)) {
+        errType = 'concept';                    // 涉及符号/正负 → 概念不清
+      } else if (!w) {
+        errType = 'method';                     // 没写答案 → 方法没想到
+      } else if (numW.length !== numR.length) {
+        errType = 'read';                       // 用到的数不一致 → 审题失误
+      } else {
+        errType = 'calc';
+      }
+
+      const reason = buildMockReason(errType, kps);
+      return { problem: p, knowledgePoints: kps, errorType: errType, reason };
+    });
+  }
+};
+
+function buildMockReason(errType, kps) {
+  const kp = kps[0] || '本题';
+  const map = {
+    concept: `从错误答案看，对「${kp}」的核心概念理解可能存在偏差（如符号、定义、性质用错）。建议回到课本，重新梳理该知识点的定义与适用条件。`,
+    read:    `错误答案与正确答案使用的条件/数据不一致，疑似审题时漏看或看错条件。建议读题时圈出关键数字与限定词。`,
+    calc:    `解题思路方向正确，但在「${kp}」的具体计算步骤上出错（如符号、进位、约分）。建议放慢计算、分步验算。`,
+    method:  `未找到正确的解题切入点，属于「${kp}」的方法/模型没想到。建议归纳该题型的通用解法并配套练习。`,
+  };
+  return map[errType] + '（本条由本地示例分析生成，接入 AI 后将给出更精准的逐题诊断。）';
+}
+
+/* =========================================================================
+ *  3. 当前启用的分析器（接 AI 后改这里即可）
+ * ========================================================================= */
+let ANALYZER = mockAnalyzer;
+
+/* analyzeProblems：UI 唯一调用入口，永远返回统一结构：
+ *   [{ problem, knowledgePoints:[...], errorType:'concept|read|calc|method', reason }] */
+async function analyzeProblems(problems) {
+  return ANALYZER.analyze(problems);
+}
+
+/* =========================================================================
+ *  4. UI 渲染
+ * ========================================================================= */
+const $ = (id) => document.getElementById(id);
+let lastParsed = [];
+
+function renderParsed(problems) {
+  const card = $('parsed-card'), list = $('parsed-list');
+  if (!problems.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  $('parsed-count').textContent = `${problems.length} 题`;
+  list.innerHTML = problems.map((p, i) => `
+    <div class="parsed-item">
+      <div class="pi-q">${i + 1}. ${esc(p.question) || '<span class="parsed-empty">（无题目文字）</span>'}</div>
+      <div class="pi-ans">
+        ${p.wrongAnswer ? `<span><span class="label">我的</span><span class="wrong">${esc(p.wrongAnswer)}</span></span>` : ''}
+        ${p.rightAnswer ? `<span><span class="label">正确</span><span class="right">${esc(p.rightAnswer)}</span></span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function renderResults(analyses) {
+  const root = $('results');
+  root.innerHTML = analyses.map((a, i) => {
+    const et = ERROR_TYPES[a.errorType] || ERROR_TYPES.method;
+    const p = a.problem;
+    return `
+    <section class="card">
+      <div class="card-title"><span>第 ${i + 1} 题</span><span class="badge-source">${esc(ANALYZER.name)}</span></div>
+      <div class="result-q">${esc(p.question) || '（无题目文字）'}</div>
+      ${p.wrongAnswer ? `<div class="ans-line"><span class="label">我的答案</span><span style="color:var(--bad)">${esc(p.wrongAnswer)}</span></div>` : ''}
+      ${p.rightAnswer ? `<div class="ans-line"><span class="label">正确答案</span><span style="color:var(--good)">${esc(p.rightAnswer)}</span></div>` : ''}
+      <div class="tag-row">
+        ${a.knowledgePoints.map(k => `<span class="tag tag-kp">${esc(k)}</span>`).join('')}
+        <span class="tag tag-err ${et.cls}">${et.label}</span>
+      </div>
+      <div class="reason"><b>诊断：</b>${esc(a.reason)}</div>
+    </section>`;
+  }).join('');
+}
+
+function renderSummary(analyses) {
+  const card = $('summary-card'), body = $('summary-body');
+  if (!analyses.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const total = analyses.length;
+
+  // 错误类型统计
+  const errCount = {};
+  for (const a of analyses) errCount[a.errorType] = (errCount[a.errorType] || 0) + 1;
+  const errBars = Object.keys(ERROR_TYPES)
+    .map(k => ({ k, n: errCount[k] || 0 }))
+    .filter(x => x.n > 0)
+    .sort((a, b) => b.n - a.n)
+    .map(({ k, n }) => {
+      const t = ERROR_TYPES[k];
+      return barHTML(t.label, n, total, t.color);
+    }).join('');
+
+  // 知识点统计
+  const kpCount = {};
+  for (const a of analyses) for (const k of a.knowledgePoints) kpCount[k] = (kpCount[k] || 0) + 1;
+  const kpEntries = Object.entries(kpCount).sort((a, b) => b[1] - a[1]);
+  const maxKp = kpEntries.length ? kpEntries[0][1] : 1;
+  const kpBars = kpEntries.map(([k, n]) => barHTML(k, n, maxKp, 'var(--brand)')).join('');
+
+  // 学习建议
+  const topErr = Object.entries(errCount).sort((a, b) => b[1] - a[1])[0];
+  const topKp = kpEntries[0];
+  const advice = buildAdvice(topErr, topKp, total);
+
+  body.innerHTML = `
+    <div class="summary-block">
+      <div class="summary-h">错误类型分布</div>
+      ${errBars || '<div class="parsed-empty">暂无</div>'}
+    </div>
+    <div class="summary-block">
+      <div class="summary-h">高频知识点（按出现次数）</div>
+      ${kpBars || '<div class="parsed-empty">暂无</div>'}
+    </div>
+    <div class="summary-block">
+      <div class="summary-h">学习建议</div>
+      <div class="advice">${esc(advice)}</div>
+    </div>`;
+}
+
+function barHTML(label, n, denom, color) {
+  const pct = Math.round((n / denom) * 100);
+  return `
+    <div class="bar-item">
+      <div class="bar-head"><span>${esc(label)}</span><span class="count">${n} 题</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+}
+
+function buildAdvice(topErr, topKp, total) {
+  if (!topErr) return '暂无足够数据生成建议。';
+  const errLabel = ERROR_TYPES[topErr[0]].label;
+  const lines = [];
+  lines.push(`本次共分析 ${total} 道错题，最突出的问题是「${errLabel}」（${topErr[1]} 题）。`);
+  const tips = {
+    concept: '说明对基础概念的理解还不牢固。建议先回归课本/笔记，逐条复述定义和性质，再做对应的基础题巩固。',
+    read:    '说明审题环节容易出问题。建议养成读题画关键词的习惯，做完后回头核对题目要求是否答全。',
+    calc:    '说明思路大多正确，主要丢分在计算。建议放慢计算节奏、分步书写并养成验算习惯，专项练习口算与符号处理。',
+    method:  '说明部分题型缺少解题思路。建议按题型整理「通法模板」，配套 2-3 道同类题强化，遇到生题先回忆同类做法。',
+  };
+  lines.push(tips[topErr[0]]);
+  if (topKp && topKp[1] >= 2) lines.push(`知识点上，「${topKp[0]}」出现 ${topKp[1]} 次，是当前最薄弱的环节，建议优先专项突破。`);
+  return lines.join('\n');
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* =========================================================================
+ *  5. 交互绑定
+ * ========================================================================= */
+$('input').addEventListener('input', () => {
+  lastParsed = parseInput($('input').value);
+  renderParsed(lastParsed);
+});
+
+$('btn-analyze').addEventListener('click', async () => {
+  lastParsed = parseInput($('input').value);
+  renderParsed(lastParsed);
+  if (!lastParsed.length) {
+    $('results').innerHTML = '<div class="status">没有识别到题目，请检查粘贴内容。</div>';
+    $('summary-card').style.display = 'none';
+    return;
+  }
+  $('results').innerHTML = `<div class="status"><span class="spinner"></span>正在分析 ${lastParsed.length} 道题…</div>`;
+  $('summary-card').style.display = 'none';
+  try {
+    const analyses = await analyzeProblems(lastParsed);
+    renderResults(analyses);
+    renderSummary(analyses);
+    $('summary-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (err) {
+    $('results').innerHTML = `<div class="status">分析失败：${esc(err.message || err)}</div>`;
+  }
+});
+
+$('btn-clear').addEventListener('click', () => {
+  $('input').value = '';
+  lastParsed = [];
+  renderParsed([]);
+  $('results').innerHTML = '';
+  $('summary-card').style.display = 'none';
+  $('input').focus();
+});
+
+$('btn-sample').addEventListener('click', () => {
+  $('input').value =
+`题目：计算 (-3)² + (-2)³
+我的答案：9 - 6 = 3
+正确答案：9 - 8 = 1
+
+题目：解方程 2x + 5 = 3x - 1
+我的答案：2x - 3x = -1 - 5，得 x = 4
+正确答案：x = 6
+
+题目：已知一次函数 y = 2x + 1，求 x = 3 时 y 的值
+我的答案：y = 2 × 3 = 6
+正确答案：y = 2 × 3 + 1 = 7
+
+题目：因式分解 x² - 4
+我的答案：x(x - 4)
+正确答案：(x + 2)(x - 2)`;
+  lastParsed = parseInput($('input').value);
+  renderParsed(lastParsed);
+});
+
+/* =========================================================================
+ *  6. >>> AI 接入位 <<<
+ *  接入国内可直连模型时，实现下面的 callModel 并取消注释最后一行即可。
+ *  约定：每题让模型只输出严格 JSON，字段：
+ *    { knowledgePoints: string[], errorType: 'concept'|'read'|'calc'|'method', reason: string }
+ * ------------------------------------------------------------------------- */
+function createAIAnalyzer(config) {
+  // config 示例: { endpoint:'https://...', apiKey:'...', model:'...', name:'AI 分析' }
+  const SYS_PROMPT =
+    '你是中小学数学错题分析助手。根据题目、学生错误答案、正确答案，判断：' +
+    '1) 本题考查的知识点(knowledgePoints, 1-3个简短名词)；' +
+    '2) 错误类型(errorType)，只能从 concept(概念不清)/read(审题失误)/calc(计算错误)/method(方法没想到) 中选一个；' +
+    '3) 简短诊断(reason, 50字内)。只输出 JSON，不要解释。';
+
+  async function callModel(problem) {
+    const userMsg =
+      `题目：${problem.question}\n我的答案：${problem.wrongAnswer}\n正确答案：${problem.rightAnswer}`;
+    // ↓↓↓ 在这里发起对你所选模型的请求（fetch），解析出 JSON 后返回 ↓↓↓
+    const resp = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+      body: JSON.stringify({
+        model: config.model,
+        // 多数国内模型兼容 OpenAI 风格的 messages；如不同请按你所用模型调整
+        messages: [
+          { role: 'system', content: SYS_PROMPT },
+          { role: 'user', content: userMsg },
+        ],
+        temperature: 0.2,
+      }),
+    });
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content ?? data.output ?? '';
+    return JSON.parse(extractJSON(content));
+  }
+
+  return {
+    name: config.name || 'AI 分析',
+    async analyze(problems) {
+      const out = [];
+      for (const p of problems) {
+        try {
+          const r = await callModel(p);
+          out.push({
+            problem: p,
+            knowledgePoints: Array.isArray(r.knowledgePoints) ? r.knowledgePoints : [String(r.knowledgePoints || '综合')],
+            errorType: ERROR_TYPES[r.errorType] ? r.errorType : 'method',
+            reason: r.reason || '',
+          });
+        } catch (e) {
+          // 单题失败时回退到本地分析，保证整体不中断
+          const [fallback] = await mockAnalyzer.analyze([p]);
+          fallback.reason = '（AI 调用失败，已回退本地分析）' + fallback.reason;
+          out.push(fallback);
+        }
+      }
+      return out;
+    },
+  };
+}
+
+// 从模型返回中容错提取 JSON 片段
+function extractJSON(text) {
+  const m = String(text).match(/\{[\s\S]*\}/);
+  return m ? m[0] : '{}';
+}
+
+// 接入示例（填好后取消注释即可切换到 AI）：
+// ANALYZER = createAIAnalyzer({
+//   endpoint: 'https://你的模型地址/v1/chat/completions',
+//   apiKey: '你的KEY',
+//   model: '你的模型名',
+//   name: 'AI 分析',
+// });
+</script>
+</body>
+</html>
