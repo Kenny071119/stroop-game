@@ -480,7 +480,7 @@
     </div>
     <input type="password" id="api-key" class="field" placeholder="粘贴阿里云百炼 API Key（sk-...）" autocomplete="off" spellcheck="false">
     <div class="model-row">
-      <label>分析模型<input type="text" id="text-model" class="field" value="qwen-plus" spellcheck="false"></label>
+      <label>分析模型<input type="text" id="text-model" class="field" value="qwen3.7-max" spellcheck="false"></label>
       <label>识图模型<input type="text" id="ocr-model" class="field" value="qwen-vl-max-latest" spellcheck="false"></label>
     </div>
     <label style="font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:5px;margin-top:10px;">
@@ -562,7 +562,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v6（问AI辅导版）
+    错题学习助手 · 单页版 · v7（分析默认 qwen3.7-max）
   </footer>
 </div>
 
@@ -1377,7 +1377,7 @@ function createImageRecognizer(config) {
 const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
-  textModel: 'qwen-plus',
+  textModel: 'qwen3.7-max',
   ocrModel: 'qwen-vl-max-latest',
 };
 
@@ -1398,7 +1398,7 @@ function refreshEngines() {
 }
 
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
-$('text-model').addEventListener('input', (e) => { qwen.textModel = e.target.value.trim() || 'qwen-plus'; refreshEngines(); });
+$('text-model').addEventListener('input', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-max'; refreshEngines(); });
 $('ocr-model').addEventListener('input', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-max-latest'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
