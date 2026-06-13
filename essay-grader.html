@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>作文批改 · 中文作文智能点评</title>
+<style>
+  :root {
+    --bg: #F4F6FB;
+    --card: #FFFFFF;
+    --ink: #1F2430;
+    --ink-soft: #5A6273;
+    --ink-dim: #9099AC;
+    --line: #E6EAF2;
+    --brand: #3B6EF5;
+    --brand-soft: #EAF0FF;
+    --good: #2BB673;
+    --warn: #F5A623;
+    --bad: #EB5757;
+    --gold: #F2B705;
+    --shadow: 0 6px 24px rgba(31,36,48,.07);
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+                 "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+  }
+
+  /* ---------- Header ---------- */
+  header { text-align: center; margin-bottom: 18px; }
+  header h1 {
+    font-size: 22px; font-weight: 700; letter-spacing: .5px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  header h1 .dot { color: var(--brand); }
+  header p { color: var(--ink-dim); font-size: 13px; margin-top: 6px; }
+
+  /* ---------- Card ---------- */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  /* ---------- Input ---------- */
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;            /* 16px 防止 iOS 聚焦缩放 */
+    line-height: 1.8;
+    color: var(--ink);
+    resize: vertical;
+    font-family: inherit;
+    background: #FCFDFF;
+    transition: border-color .15s;
+  }
+  textarea:focus { outline: none; border-color: var(--brand); background: #fff; }
+  textarea::placeholder { color: var(--ink-dim); }
+
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; gap: 10px; flex-wrap: wrap;
+  }
+  .counter { font-size: 13px; color: var(--ink-dim); }
+  .counter b { color: var(--ink-soft); font-weight: 600; }
+  .actions { display: flex; gap: 10px; }
+  button {
+    font-family: inherit; cursor: pointer; border: none;
+    border-radius: 10px; font-size: 15px; font-weight: 600;
+    padding: 11px 18px; transition: transform .08s, opacity .15s, background .15s;
+  }
+  button:active { transform: scale(.97); }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-ghost { background: var(--brand-soft); color: var(--brand); }
+  .link-sample {
+    background: none; color: var(--ink-dim); font-weight: 500; font-size: 13px;
+    padding: 6px 2px;
+  }
+
+  /* ---------- Result ---------- */
+  #result { display: none; }
+  #result.show { display: block; animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Score hero */
+  .score-hero {
+    display: flex; align-items: center; gap: 18px;
+  }
+  .ring {
+    --val: 0;
+    width: 96px; height: 96px; flex: none; border-radius: 50%;
+    background: conic-gradient(var(--ring-color) calc(var(--val) * 1%), var(--line) 0);
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .ring::before {
+    content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--card);
+  }
+  .ring .num { position: relative; font-size: 30px; font-weight: 800; line-height: 1; }
+  .ring .num small { font-size: 12px; font-weight: 600; color: var(--ink-dim); }
+  .score-meta h2 { font-size: 19px; margin-bottom: 4px; }
+  .grade-tag {
+    display: inline-block; font-size: 13px; font-weight: 700; color: #fff;
+    padding: 2px 12px; border-radius: 999px; margin-bottom: 8px;
+  }
+  .score-meta p { font-size: 13.5px; color: var(--ink-soft); }
+
+  /* Dimensions */
+  .dims { margin-top: 6px; }
+  .dim { margin: 14px 0; }
+  .dim-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 14px; margin-bottom: 6px;
+  }
+  .dim-top .name { font-weight: 600; }
+  .dim-top .name span { color: var(--ink-dim); font-weight: 400; font-size: 12px; margin-left: 4px; }
+  .dim-top .val { font-variant-numeric: tabular-nums; color: var(--ink-soft); font-size: 13px; }
+  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 999px; width: 0; transition: width .7s cubic-bezier(.2,.8,.2,1); }
+
+  /* Section title */
+  .sec-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sec-title::before {
+    content: ""; width: 4px; height: 16px; border-radius: 2px; background: var(--brand);
+  }
+
+  /* Paragraph comments */
+  .para {
+    border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; margin-bottom: 12px;
+    background: #FCFDFF;
+  }
+  .para-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 13px;
+  }
+  .para-idx {
+    background: var(--brand-soft); color: var(--brand); font-weight: 700;
+    border-radius: 6px; padding: 1px 8px; font-size: 12px;
+  }
+  .para-meta { color: var(--ink-dim); }
+  .para-quote {
+    font-size: 13.5px; color: var(--ink-soft); margin-bottom: 8px;
+    border-left: 3px solid var(--line); padding-left: 10px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .para-cmt { font-size: 14px; }
+  .para-cmt .pill {
+    display: inline-block; font-size: 12px; font-weight: 600; border-radius: 6px;
+    padding: 1px 7px; margin: 0 6px 4px 0;
+  }
+  .pill.ok { background: #E6F7EF; color: var(--good); }
+  .pill.tip { background: #FEF3E0; color: #C77F00; }
+
+  /* Suggestions */
+  .sug-list { list-style: none; }
+  .sug-list li {
+    position: relative; padding: 9px 0 9px 28px; font-size: 14.5px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .sug-list li:last-child { border-bottom: none; }
+  .sug-list li::before {
+    content: ""; position: absolute; left: 6px; top: 16px;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--brand);
+  }
+  .sug-list li.good::before { background: var(--good); }
+  .sug-list li b { color: var(--ink); }
+
+  .empty-good { text-align: center; color: var(--good); font-weight: 600; padding: 10px 0; }
+
+  footer {
+    text-align: center; color: var(--ink-dim); font-size: 12px; margin-top: 28px; line-height: 1.7;
+  }
+  .note {
+    background: var(--brand-soft); color: #2B4FB0; font-size: 12.5px;
+    border-radius: 10px; padding: 10px 12px; margin-top: 14px; line-height: 1.6;
+  }
+
+  @media (max-width: 380px) {
+    .ring { width: 84px; height: 84px; }
+    .ring .num { font-size: 26px; }
+    .actions { width: 100%; }
+    .btn-primary { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1><span class="dot">✎</span> 作文批改</h1>
+    <p>粘贴作文 → 一键批改 → 总评 · 分段点评 · 修改建议</p>
+  </header>
+
+  <!-- 输入区 -->
+  <div class="card">
+    <textarea id="essay" placeholder="把作文粘贴到这里……&#10;&#10;建议保留原文的分段(每段之间空一行或换行),这样分段点评会更准确。"></textarea>
+    <div class="toolbar">
+      <div class="counter">字数:<b id="count">0</b> &nbsp;|&nbsp; 段落:<b id="pcount">0</b></div>
+      <div class="actions">
+        <button class="btn-ghost" id="clearBtn" type="button">清空</button>
+        <button class="btn-primary" id="gradeBtn" type="button" disabled>批改</button>
+      </div>
+    </div>
+    <button class="link-sample" id="sampleBtn" type="button">没有现成作文?载入一篇示例试试 →</button>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="result">
+    <!-- 总评 -->
+    <div class="card">
+      <div class="score-hero">
+        <div class="ring" id="ring"><div class="num"><span id="scoreNum">0</span><small>/100</small></div></div>
+        <div class="score-meta">
+          <span class="grade-tag" id="gradeTag">—</span>
+          <h2 id="gradeTitle">总评</h2>
+          <p id="overall">—</p>
+        </div>
+      </div>
+      <div class="dims" id="dims"></div>
+    </div>
+
+    <!-- 分段点评 -->
+    <div class="card">
+      <div class="sec-title">分段点评</div>
+      <div id="paras"></div>
+    </div>
+
+    <!-- 修改建议 -->
+    <div class="card">
+      <div class="sec-title">修改建议</div>
+      <ul class="sug-list" id="sugs"></ul>
+    </div>
+  </div>
+
+  <footer>
+    本工具在你的浏览器本地运行,作文内容不会上传到任何服务器。<br>
+    评分基于字数篇幅、结构层次、句式、词汇、修辞、标点等规则维度,供参考与自查使用。
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   作文批改 —— 纯前端规则引擎
+   维度:内容篇幅 / 结构层次 / 语言表达 / 词汇丰富 / 修辞文采 / 标点规范
+   ========================================================= */
+
+const els = {
+  essay: document.getElementById('essay'),
+  count: document.getElementById('count'),
+  pcount: document.getElementById('pcount'),
+  gradeBtn: document.getElementById('gradeBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  sampleBtn: document.getElementById('sampleBtn'),
+  result: document.getElementById('result'),
+  ring: document.getElementById('ring'),
+  scoreNum: document.getElementById('scoreNum'),
+  gradeTag: document.getElementById('gradeTag'),
+  gradeTitle: document.getElementById('gradeTitle'),
+  overall: document.getElementById('overall'),
+  dims: document.getElementById('dims'),
+  paras: document.getElementById('paras'),
+  sugs: document.getElementById('sugs'),
+};
+
+/* ---------- 词库(用于修辞 / 口语化检测) ---------- */
+// 常见成语 / 四字好词(节选,命中即视为有文采)
+const IDIOMS = new Set([
+  "津津有味","无可奈何","不约而同","目不转睛","争先恐后","络绎不绝",
+  "废寝忘食","专心致志","聚精会神","一丝不苟","名列前茅","恍然大悟","迫不及待",
+  "兴高采烈","眉飞色舞","心花怒放","喜出望外","若有所思","小心翼翼",
+  "五光十色","五颜六色","金光闪闪","郁郁葱葱","生机勃勃","姹紫嫣红",
+  "万紫千红","春暖花开","秋高气爽","白雪皑皑","勇往直前","坚持不懈",
+  "锲而不舍","披荆斩棘","脚踏实地","循序渐进","受益匪浅","感慨万千","刻骨铭心",
+  "记忆犹新","历历在目","引人入胜","栩栩如生","活灵活现","惟妙惟肖","一望无际",
+  "层峦叠嶂","波澜壮阔","气势磅礴","震耳欲聋","鸦雀无声","络绎不绝","川流不息",
+  "和蔼可亲","平易近人","语重心长","谆谆教导","无微不至","拾金不昧","助人为乐"
+]);
+// 修辞标志词
+const SIMILE = ["仿佛","好像","犹如","宛如","好似","如同","似的","像一","像是"];
+const PERSONIFY = ["微笑","点头","招手","跳舞","歌唱","哭泣","沉睡","苏醒","低语","诉说"];
+// 口语 / 啰嗦词(过多则扣分)
+const FILLER = ["然后","就是说","反正","其实吧","什么的","之类的","对吧","你知道","额"];
+
+/* ---------- 工具函数 ---------- */
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+const cjkOf = s => (s.match(/[一-龥]/g) || []);
+
+function splitParagraphs(text) {
+  return text.split(/\n+/).map(p => p.trim()).filter(Boolean);
+}
+function splitSentences(text) {
+  return text.split(/[。！？!?…；;]+/).map(s => s.trim()).filter(Boolean);
+}
+
+/* ---------- 各维度评分(每项返回 0~max) ---------- */
+
+// 1. 内容篇幅
+function scoreLength(cjkLen) {
+  // 以 ~600 字为饱满区间的平缓曲线
+  let s;
+  if (cjkLen >= 550) s = 25;
+  else if (cjkLen >= 400) s = 22 + (cjkLen - 400) / 150 * 3;
+  else if (cjkLen >= 250) s = 16 + (cjkLen - 250) / 150 * 6;
+  else if (cjkLen >= 120) s = 9 + (cjkLen - 120) / 130 * 7;
+  else s = cjkLen / 120 * 9;
+  return Math.round(clamp(s, 0, 25));
+}
+
+// 2. 结构层次
+function scoreStructure(paras) {
+  const n = paras.length;
+  let s;
+  if (n >= 4 && n <= 8) s = 20;
+  else if (n === 3) s = 17;
+  else if (n === 2) s = 12;
+  else if (n === 1) s = 7;
+  else s = 16; // 段落很多
+  // 段落长度是否均衡:有特别长的段落(>250字)略扣
+  const longest = Math.max(...paras.map(p => cjkOf(p).length), 0);
+  if (longest > 280) s -= 3;
+  return Math.round(clamp(s, 0, 20));
+}
+
+// 3. 语言表达(句式长短变化、避免流水句)
+function scoreFluency(sentences) {
+  if (sentences.length === 0) return 0;
+  const lens = sentences.map(s => cjkOf(s).length);
+  const avg = lens.reduce((a, b) => a + b, 0) / lens.length;
+  const variance = lens.reduce((a, b) => a + (b - avg) ** 2, 0) / lens.length;
+  const sd = Math.sqrt(variance);
+  let s = 11;
+  // 平均句长适中(8~28字)加分
+  if (avg >= 8 && avg <= 28) s += 5; else s += 2;
+  // 长短句有变化(标准差越大越灵动,封顶)
+  s += clamp(sd / 3, 0, 4);
+  // 超长流水句(>60字无断句)扣分
+  const runOn = lens.filter(l => l > 60).length;
+  s -= runOn * 2;
+  return Math.round(clamp(s, 0, 20));
+}
+
+// 4. 词汇丰富度(不重复字占比)
+function scoreVocab(cjkArr) {
+  if (cjkArr.length === 0) return 0;
+  const unique = new Set(cjkArr).size;
+  const ratio = unique / cjkArr.length; // 0~1
+  // 一般好作文不重复字比例 0.45~0.7
+  let s = clamp((ratio - 0.30) / (0.62 - 0.30), 0, 1) * 15;
+  return Math.round(clamp(s, 0, 15));
+}
+
+// 5. 修辞文采
+function detail_rhetoric(text) {
+  const idiomHits = [];
+  for (const w of IDIOMS) if (text.includes(w)) idiomHits.push(w);
+  const simileHits = SIMILE.filter(w => text.includes(w));
+  const personifyHits = PERSONIFY.filter(w => text.includes(w));
+  // 排比:连续出现 3 次及以上相同句首两字
+  const sents = splitSentences(text);
+  let parallel = false;
+  for (let i = 0; i + 2 < sents.length; i++) {
+    const a = cjkOf(sents[i]).slice(0, 2).join('');
+    const b = cjkOf(sents[i + 1]).slice(0, 2).join('');
+    const c = cjkOf(sents[i + 2]).slice(0, 2).join('');
+    if (a && a === b && b === c) { parallel = true; break; }
+  }
+  // 引用:含书名号或引号包裹的内容
+  const quote = /[「『""].{2,}?[」』""]/.test(text) || /《.+?》/.test(text);
+  return { idiomHits, simileHits, personifyHits, parallel, quote };
+}
+function scoreRhetoric(r) {
+  let s = 4;
+  s += clamp(r.idiomHits.length * 2.5, 0, 8);
+  if (r.simileHits.length) s += 3;
+  if (r.personifyHits.length) s += 2;
+  if (r.parallel) s += 2;
+  if (r.quote) s += 1;
+  return Math.round(clamp(s, 0, 20));
+}
+
+/* ---------- 主分析 ---------- */
+function analyze(text) {
+  const clean = text.trim();
+  const cjkArr = cjkOf(clean);
+  const cjkLen = cjkArr.length;
+  const paras = splitParagraphs(clean);
+  const sentences = splitSentences(clean);
+  const rhet = detail_rhetoric(clean);
+
+  const dims = [
+    { key: 'len',  name: '内容篇幅', note: '字数与表达充实度', score: scoreLength(cjkLen), max: 25 },
+    { key: 'str',  name: '结构层次', note: '分段与条理',       score: scoreStructure(paras), max: 20 },
+    { key: 'flu',  name: '语言表达', note: '句式与流畅度',     score: scoreFluency(sentences), max: 20 },
+    { key: 'voc',  name: '词汇丰富', note: '用词多样性',       score: scoreVocab(cjkArr), max: 15 },
+    { key: 'rhe',  name: '修辞文采', note: '成语·比喻·排比',   score: scoreRhetoric(rhet), max: 20 },
+  ];
+  const total = clamp(dims.reduce((a, d) => a + d.score, 0), 0, 100);
+
+  return { clean, cjkLen, paras, sentences, rhet, dims, total };
+}
+
+/* ---------- 等级 & 总评文案 ---------- */
+function gradeInfo(total) {
+  if (total >= 90) return { tag: '优秀', color: '#2BB673', ring: '#2BB673' };
+  if (total >= 80) return { tag: '良好', color: '#3B6EF5', ring: '#3B6EF5' };
+  if (total >= 70) return { tag: '中等', color: '#F2B705', ring: '#F2B705' };
+  if (total >= 60) return { tag: '及格', color: '#F5A623', ring: '#F5A623' };
+  return { tag: '待提高', color: '#EB5757', ring: '#EB5757' };
+}
+function dimColor(ratio) {
+  if (ratio >= 0.8) return 'var(--good)';
+  if (ratio >= 0.55) return 'var(--brand)';
+  if (ratio >= 0.4) return 'var(--gold)';
+  return 'var(--bad)';
+}
+function overallText(a) {
+  const g = gradeInfo(a.total);
+  // 找最强 / 最弱维度
+  const sorted = [...a.dims].sort((x, y) => (y.score / y.max) - (x.score / x.max));
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  let txt = `全文约 ${a.cjkLen} 字、${a.paras.length} 个自然段、${a.sentences.length} 个句子。`;
+  txt += `综合来看属于「${g.tag}」水平。`;
+  if (best.score / best.max >= 0.7) txt += `亮点在于「${best.name}」表现突出;`;
+  if (worst.score / worst.max < 0.6) txt += `「${worst.name}」相对薄弱,是提分的重点方向。`;
+  else txt += `各维度较为均衡,可在细节上继续打磨。`;
+  return txt;
+}
+
+/* ---------- 分段点评 ---------- */
+function paragraphComments(a) {
+  return a.paras.map((p, i) => {
+    const len = cjkOf(p).length;
+    const sents = splitSentences(p);
+    const pills = [];
+    const text = p;
+    const r = detail_rhetoric(text);
+
+    // 修辞亮点
+    if (r.idiomHits.length) pills.push({ t: 'ok', x: `用了成语「${r.idiomHits.slice(0,2).join('、')}」` });
+    if (r.simileHits.length) pills.push({ t: 'ok', x: '有比喻,描写更生动' });
+    if (r.personifyHits.length) pills.push({ t: 'ok', x: '有拟人,富有画面感' });
+    if (r.parallel) pills.push({ t: 'ok', x: '运用排比,有气势' });
+
+    // 提示
+    if (len < 25) pills.push({ t: 'tip', x: '段落偏短,可补充细节' });
+    if (len > 280) pills.push({ t: 'tip', x: '段落过长,建议拆分' });
+    const runOn = sents.filter(s => cjkOf(s).length > 60).length;
+    if (runOn) pills.push({ t: 'tip', x: '有过长的流水句,适当断句' });
+    const fillerHit = FILLER.filter(w => text.includes(w));
+    if (fillerHit.length) pills.push({ t: 'tip', x: `口语化词偏多,如「${fillerHit[0]}」` });
+
+    // 位置性建议
+    let role = '';
+    if (i === 0) role = '开头段';
+    else if (i === a.paras.length - 1 && a.paras.length > 1) role = '结尾段';
+    else role = `第 ${i + 1} 段`;
+    if (i === 0 && len < 40) pills.push({ t: 'tip', x: '开头可设悬念或点题,更抓人' });
+    if (role === '结尾段' && !/(总之|因此|所以|让我|我明白|我懂得|这就是|启示|道理)/.test(text))
+      pills.push({ t: 'tip', x: '结尾可点明主旨或升华情感' });
+
+    if (pills.length === 0) pills.push({ t: 'ok', x: '表达清晰,结构完整' });
+
+    return { idx: i + 1, role, len, sentCount: sents.length, quote: p, pills };
+  });
+}
+
+/* ---------- 修改建议(全局) ---------- */
+function suggestions(a) {
+  const out = [];
+  const dimMap = Object.fromEntries(a.dims.map(d => [d.key, d]));
+
+  if (a.cjkLen < 250)
+    out.push({ good: false, html: `<b>增加篇幅:</b>全文约 ${a.cjkLen} 字,内容偏单薄。可围绕中心多写一两件具体的事或细节描写,让文章更充实。` });
+
+  if (a.paras.length <= 2)
+    out.push({ good: false, html: `<b>合理分段:</b>目前只有 ${a.paras.length} 段。建议按「开头—主体—结尾」或事情发展顺序分成 4~6 段,层次更清楚。` });
+
+  if (dimMap.rhe.score / dimMap.rhe.max < 0.5)
+    out.push({ good: false, html: `<b>增添文采:</b>适当使用比喻、拟人、排比等修辞,或恰当引用成语、名言,能让语言更有感染力。` });
+
+  if (dimMap.voc.score / dimMap.voc.max < 0.5)
+    out.push({ good: false, html: `<b>丰富词汇:</b>用词重复较多,试着替换近义词、加入描写性的形容词与动词,避免反复用同一个字眼。` });
+
+  // 流水句
+  const runOn = a.sentences.filter(s => cjkOf(s).length > 60).length;
+  if (runOn)
+    out.push({ good: false, html: `<b>拆分长句:</b>有 ${runOn} 处句子过长(像流水账)。把长句拆成几个短句,读起来更顺畅、有节奏。` });
+
+  // 口语化
+  const fillerAll = FILLER.filter(w => a.clean.includes(w));
+  if (fillerAll.length)
+    out.push({ good: false, html: `<b>减少口语词:</b>书面表达中尽量少用「${fillerAll.slice(0,3).join('、')}」这类口语词,语言会更精炼。` });
+
+  // 标点检查
+  if (/[，,]{2,}|[。.]{2,}/.test(a.clean))
+    out.push({ good: false, html: `<b>规范标点:</b>检测到连续重复的标点,记得逐句检查标点是否正确、是否一逗到底。` });
+  if (a.clean.length > 60 && !/[。！？!?]/.test(a.clean))
+    out.push({ good: false, html: `<b>补全句号:</b>几乎没有句末标点。每个完整意思结束时记得用句号、问号或感叹号。` });
+
+  // 开头结尾呼应
+  if (a.paras.length >= 3) {
+    const head = a.paras[0], tail = a.paras[a.paras.length - 1];
+    const hk = new Set(cjkOf(head));
+    const overlap = [...new Set(cjkOf(tail))].filter(c => hk.has(c)).length;
+    if (overlap < 3)
+      out.push({ good: false, html: `<b>首尾呼应:</b>开头与结尾关联较弱。结尾可回扣开头的内容或主题,让结构更完整。` });
+  }
+
+  // 正向肯定
+  if (a.rhet.idiomHits.length >= 2)
+    out.push({ good: true, html: `<b>保持优点:</b>成语运用恰当(如「${a.rhet.idiomHits.slice(0,3).join('、')}」),让表达更有文采,继续保持。` });
+  if (a.dims.find(d => d.key === 'str').score >= 17)
+    out.push({ good: true, html: `<b>保持优点:</b>分段清晰、结构条理,阅读体验好。` });
+
+  if (out.length === 0)
+    out.push({ good: true, html: `<b>整体不错:</b>各方面都比较均衡,继续多读多写,在细节描写和立意深度上精进即可。` });
+
+  return out;
+}
+
+/* =========================================================
+   渲染
+   ========================================================= */
+function render(a) {
+  const g = gradeInfo(a.total);
+
+  // 总评
+  els.gradeTag.textContent = g.tag;
+  els.gradeTag.style.background = g.color;
+  els.gradeTitle.textContent = '总评';
+  els.overall.textContent = overallText(a);
+  els.ring.style.setProperty('--ring-color', g.ring);
+  els.ring.style.setProperty('--val', 0);
+
+  // 维度条
+  els.dims.innerHTML = a.dims.map(d => {
+    const ratio = d.score / d.max;
+    return `<div class="dim">
+      <div class="dim-top">
+        <span class="name">${d.name}<span>${d.note}</span></span>
+        <span class="val">${d.score} / ${d.max}</span>
+      </div>
+      <div class="bar"><i data-w="${(ratio * 100).toFixed(0)}" style="background:${dimColor(ratio)}"></i></div>
+    </div>`;
+  }).join('');
+
+  // 分段点评
+  const pcs = paragraphComments(a);
+  els.paras.innerHTML = pcs.map(p => `
+    <div class="para">
+      <div class="para-head">
+        <span class="para-idx">${p.role}</span>
+        <span class="para-meta">${p.len} 字 · ${p.sentCount} 句</span>
+      </div>
+      <div class="para-quote">${escapeHtml(p.quote)}</div>
+      <div class="para-cmt">
+        ${p.pills.map(pl => `<span class="pill ${pl.t}">${pl.x}</span>`).join('')}
+      </div>
+    </div>`).join('');
+
+  // 修改建议
+  const sg = suggestions(a);
+  els.sugs.innerHTML = sg.map(s => `<li class="${s.good ? 'good' : ''}">${s.html}</li>`).join('');
+
+  // 显示 + 动画
+  els.result.classList.add('show');
+  els.result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // 数字滚动 + 进度条动画
+  animateNumber(els.scoreNum, 0, a.total, 800);
+  requestAnimationFrame(() => {
+    els.ring.style.setProperty('--val', a.total);
+    els.dims.querySelectorAll('.bar > i').forEach(i => { i.style.width = i.dataset.w + '%'; });
+  });
+}
+
+function animateNumber(node, from, to, dur) {
+  const t0 = performance.now();
+  function step(now) {
+    const p = clamp((now - t0) / dur, 0, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    node.textContent = Math.round(from + (to - from) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* =========================================================
+   交互
+   ========================================================= */
+function updateCounter() {
+  const t = els.essay.value;
+  els.count.textContent = cjkOf(t).length;
+  els.pcount.textContent = splitParagraphs(t.trim()).length;
+  els.gradeBtn.disabled = cjkOf(t).length < 20;
+}
+
+els.essay.addEventListener('input', updateCounter);
+
+els.gradeBtn.addEventListener('click', () => {
+  const text = els.essay.value.trim();
+  if (cjkOf(text).length < 20) return;
+  els.result.classList.remove('show');
+  // 轻微延时,让“重新批改”也有刷新动画
+  setTimeout(() => render(analyze(text)), 60);
+});
+
+els.clearBtn.addEventListener('click', () => {
+  els.essay.value = '';
+  updateCounter();
+  els.result.classList.remove('show');
+  els.essay.focus();
+});
+
+const SAMPLE = `难忘的一堂课
+
+铃声响起,语文老师抱着一摞作文本走进教室。她的脸上没有往日的微笑,空气仿佛一下子凝固了。
+
+“这次作文,有人写得很用心,也有人在敷衍。”老师的声音不高,却像一记重锤敲在我的心上。我低下头,因为我知道,那篇潦草的作文就是我写的。
+
+下课后,老师把我叫到办公室。她没有批评我,而是和我一起,一句一句地修改那篇文章。她说,写作就像种花,只有用心浇灌,才能开出美丽的花朵。那一刻,我恍然大悟。
+
+从那以后,我再也不敢敷衍每一次写作。这堂课让我明白:认真对待每一件小事,生活才会回报你最好的答案。`;
+
+els.sampleBtn.addEventListener('click', () => {
+  els.essay.value = SAMPLE;
+  updateCounter();
+  els.essay.focus();
+});
+
+updateCounter();
+</script>
+</body>
+</html>
