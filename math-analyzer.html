@@ -157,6 +157,15 @@
     gap: 5px;
   }
 
+  /* ===== 步骤说明 ===== */
+  .step-desc {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  .step-desc b { color: var(--ink); }
+
   /* ===== 上传图片 ===== */
   .tip-scan {
     font-size: 13px;
@@ -169,6 +178,64 @@
     margin-bottom: 12px;
   }
   .tip-scan b { color: var(--warn); }
+
+  /* ===== 备用粘贴 ===== */
+  .backup summary {
+    font-size: 13px;
+    color: var(--brand);
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .backup textarea { min-height: 120px; margin: 8px 0; }
+
+  /* ===== 题目勾选列表（第二步）===== */
+  .q-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--bg-soft);
+    cursor: pointer;
+  }
+  .q-item.checked { border-color: var(--bad); background: rgba(255,77,79,.08); }
+  .q-check { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--bad); }
+  .q-num {
+    flex-shrink: 0;
+    min-width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--card);
+    border-radius: 6px;
+  }
+  .q-text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+  /* ===== 错误答案填写（第三步）===== */
+  .ans-form {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: var(--bg-soft);
+  }
+  .af-q {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .ans-form .field { margin-bottom: 8px; }
+  .ans-form .field:last-child { margin-bottom: 0; }
   .uploader { display: flex; flex-direction: column; gap: 10px; }
   .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .upload-btn-main { padding: 22px 12px; }
@@ -334,7 +401,7 @@
 <div id="app">
   <header>
     <h1>📐 数学错题分析</h1>
-    <p>上传扫描好的题目图片（或粘贴文字），自动分析知识点、错误类型，并汇总薄弱环节。</p>
+    <p>三步走：①上传卷子识别题目 → ②勾选做错的题 → ③填错误答案，自动分析知识点、错误类型并汇总薄弱点。</p>
   </header>
 
   <!-- API Key（本地测试用） -->
@@ -359,62 +426,57 @@
     </div>
   </section>
 
-  <!-- 上传扫描图片（主推入口） -->
+  <!-- 第一步：上传整张卷子 → 识别 + 拆题 -->
   <section class="card">
     <div class="card-title">
-      <span>① 上传题目图片</span>
+      <span>① 上传卷子，识别题目</span>
       <span class="badge-source" id="recog-source"></span>
     </div>
+    <div class="step-desc">上传整张卷子的照片（可多张），系统会识别全部文字、自动清理标签并按题号拆成一道道题。</div>
     <div class="tip-scan">
-      💡 建议：先用<b>「扫描全能王」</b>把题目扫描清晰、裁切干净后再上传，识别效果最好。
+      💡 建议：先用<b>「扫描全能王」</b>把卷子扫描清晰、裁切干净再上传，识别效果最好。
     </div>
     <div class="uploader">
       <div class="upload-actions">
         <label class="upload-btn upload-btn-main">
-          <span class="ico">🖼️</span><span>选择 / 上传扫描图片</span>
+          <span class="ico">🖼️</span><span>选择 / 上传卷子图片</span>
           <input type="file" id="file-album" accept="image/*" multiple>
         </label>
       </div>
       <div class="preview-list" id="preview-list"></div>
       <div class="row">
-        <button class="btn-primary" id="btn-recognize" disabled>识别文字并填入</button>
+        <button class="btn-primary" id="btn-recognize" disabled>识别并拆分题目</button>
       </div>
+      <details class="backup">
+        <summary>没有图片？点这里粘贴卷子文字</summary>
+        <textarea id="paste-input" placeholder="把卷子文字粘贴到这里，每道题最好带题号（如 1. 2. 3.），系统会自动拆题。"></textarea>
+        <button class="btn-ghost btn-sm" id="btn-paste-split">用这段文字拆分题目</button>
+      </details>
       <div class="hint">
-        识别后的题目文字会自动填进下方输入框，可手动修改后再分析。
-        填入上方 API Key 后将调用<b>通义千问 qwen-vl-ocr</b> 真实识别；未填写时使用本地示例。
+        填入上方 API Key 后将调用<b>通义千问 qwen-vl-ocr</b> 真实识别；未填写时用本地示例演示流程。
       </div>
     </div>
   </section>
 
-  <!-- 粘贴文字（备用入口） -->
-  <section class="card">
-    <div class="card-title">
-      <span>② 粘贴文字（备用）</span>
-      <button class="btn-ghost btn-sm" id="btn-sample">填入示例</button>
-    </div>
-    <textarea id="input" placeholder="支持从作业帮等扫描后直接粘贴。每道题之间用空行隔开，例如：
-
-题目：计算 (-3)² + (-2)³
-我的答案：9 - 6 = 3
-正确答案：9 - 8 = 1
-
-题目：解方程 2x + 5 = 3x - 1
-我的答案：x = 4
-正确答案：x = 6"></textarea>
-    <div class="hint">
-      识别字段（中英冒号均可）：<code>题目</code> / <code>我的答案</code>(错误答案) / <code>正确答案</code>。
-      题目之间用<b>空行</b>分隔。字段缺失也能解析，仅题目也可以。
-    </div>
+  <!-- 第二步：勾选做错的题 -->
+  <section class="card" id="step2" style="display:none;">
+    <div class="card-title"><span>② 勾选做错的题</span><span class="badge-source" id="sel-count">已选 0 题</span></div>
+    <div class="step-desc">下面是识别出的题目。<b>勾选你做错的题</b>（做对的不用管），然后点底部按钮进入下一步。</div>
+    <div id="q-list"></div>
     <div class="row" style="margin-top:12px;">
-      <button class="btn-primary" id="btn-analyze">开始分析</button>
-      <button class="btn-ghost" id="btn-clear">清空</button>
+      <button class="btn-primary" id="btn-to-step3" disabled>下一步：填写错误答案</button>
+      <button class="btn-ghost" id="btn-restart">重新上传</button>
     </div>
   </section>
 
-  <!-- 解析预览 -->
-  <section class="card" id="parsed-card" style="display:none;">
-    <div class="card-title"><span>已识别题目</span><span id="parsed-count" class="badge-source"></span></div>
-    <div id="parsed-list"></div>
+  <!-- 第三步：填写错误答案 -->
+  <section class="card" id="step3" style="display:none;">
+    <div class="card-title"><span>③ 填写你的错误答案</span></div>
+    <div class="step-desc">为每道错题填上你<b>当时填/选的错误答案</b>（正确答案可填可不填，填了分析更准）。</div>
+    <div id="answer-forms"></div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn-primary" id="btn-analyze">开始分析这些错题</button>
+    </div>
   </section>
 
   <!-- 分析结果 -->
@@ -422,7 +484,7 @@
 
   <!-- 汇总 -->
   <section class="card" id="summary-card" style="display:none;">
-    <div class="card-title"><span>③ 薄弱点汇总</span></div>
+    <div class="card-title"><span>④ 薄弱点汇总</span></div>
     <div id="summary-body"></div>
   </section>
 
@@ -452,51 +514,61 @@ const ERROR_TYPES = {
 };
 
 /* =========================================================================
- *  1. 解析：把粘贴的纯文本拆成结构化题目数组
- *  返回 [{ question, wrongAnswer, rightAnswer, raw }]
+ *  1. 文本清理 + 拆题
+ *  cleanOCRText：去掉 HTML 标签 / 代码围栏 / markdown 噪声。
+ *  splitQuestions：按题号把整张卷子拆成 [{ id, num, text }]。
  * ========================================================================= */
-function parseInput(text) {
-  if (!text || !text.trim()) return [];
-  // 用一个或多个空行分块
-  const blocks = text.replace(/\r\n/g, '\n').split(/\n\s*\n+/);
-  const fieldMap = [
-    { key: 'question',    re: /^(?:题目|原题|题|question|q)\s*[:：]\s*/i },
-    { key: 'wrongAnswer', re: /^(?:我的答案|错误答案|我的解答|错答|my\s*answer|wrong)\s*[:：]\s*/i },
-    { key: 'rightAnswer', re: /^(?:正确答案|标准答案|参考答案|答案|correct|right|answer)\s*[:：]\s*/i },
-  ];
+function cleanOCRText(raw) {
+  let t = String(raw || '');
+  t = t.replace(/```[a-zA-Z]*\n?/g, '').replace(/```/g, '');          // 代码围栏 ```html
+  t = t.replace(/<\s*br\s*\/?>/gi, '\n');                              // <br> → 换行
+  t = t.replace(/<\/?(h[1-6]|p|div|li|tr|table|tbody|thead|ul|ol|pre|blockquote)[^>]*>/gi, '\n'); // 块级标签 → 换行
+  t = t.replace(/<[^>]+>/g, '');                                       // 其余所有标签
+  t = t.replace(/&nbsp;/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+       .replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;/g, "'");
+  t = t.replace(/^[ \t]*[#>]+[ \t]*/gm, '');                           // 行首 markdown 标题/引用
+  t = t.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*/g, '');          // 粗体 / 星号
+  t = t.replace(/`/g, '');                                             // 反引号
+  t = t.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  return t.trim();
+}
 
-  const problems = [];
-  for (const block of blocks) {
-    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-    if (!lines.length) continue;
-
-    const p = { question: '', wrongAnswer: '', rightAnswer: '', raw: block.trim() };
-    let current = null;       // 当前正在填充的字段（用于多行内容续行）
-    let matchedAny = false;
-
-    for (const line of lines) {
-      let matched = false;
-      for (const f of fieldMap) {
-        if (f.re.test(line)) {
-          const val = line.replace(f.re, '').trim();
-          p[f.key] = p[f.key] ? p[f.key] + '\n' + val : val;
-          current = f.key;
-          matched = true;
-          matchedAny = true;
-          break;
-        }
-      }
-      if (!matched) {
-        // 续行：接到当前字段；若还没有任何字段，则视为题目
-        if (current) p[current] += '\n' + line;
-        else { p.question = p.question ? p.question + '\n' + line : line; current = 'question'; }
-      }
+function splitQuestions(raw) {
+  const clean = cleanOCRText(raw);
+  if (!clean) return [];
+  // 题号：行首  1.  1、  1)  （1）  (1)  第1题  1．
+  const numRe = /^\s*(?:第\s*)?(\d{1,3})\s*(?:[.．、)）]|题[.:：]?)\s*/;
+  const lines = clean.split('\n');
+  const items = [];
+  let cur = null;
+  for (const line of lines) {
+    const m = line.match(numRe);
+    if (m) {
+      if (cur) items.push(cur);
+      cur = { num: m[1], text: line.replace(numRe, '').trim() };
+    } else if (cur) {
+      cur.text += (cur.text ? '\n' : '') + line.trim();
+    } else if (line.trim()) {
+      cur = { num: '', text: line.trim() };   // 题号前的零散文字
     }
-    // 完全没有任何字段标记时，整块当作题目
-    if (!matchedAny && !p.question) p.question = block.trim();
-    if (p.question || p.wrongAnswer || p.rightAnswer) problems.push(p);
   }
-  return problems;
+  if (cur) items.push(cur);
+
+  const tidy = (s) => s.replace(/\n{2,}/g, '\n').trim();
+  // 有清晰题号：只保留带题号的题，丢掉标题/姓名/日期等无号前言
+  const numbered = items.filter(i => i.num && tidy(i.text));
+  if (numbered.length >= 2) {
+    return numbered.map((i, idx) => ({ id: idx + 1, num: i.num, text: tidy(i.text) }));
+  }
+  // 没有题号：退化为按空行分段
+  const blocks = clean.split(/\n\s*\n+/).map(b => b.trim()).filter(Boolean);
+  if (blocks.length >= 2) {
+    return blocks.map((b, i) => ({ id: i + 1, num: String(i + 1), text: b }));
+  }
+  // 实在分不出：整段当成一道题
+  const all = items.filter(i => i.text);
+  if (!all.length) return [];
+  return [{ id: 1, num: all[0].num || '1', text: all.map(i => i.text).join('\n') }];
 }
 
 /* =========================================================================
@@ -588,13 +660,19 @@ async function analyzeProblems(problems) {
 const mockRecognizer = {
   name: '本地示例识图',
   async recognize(image) {
-    // 占位：不做真实 OCR，仅模拟耗时后返回一段示例题目文字。
+    // 占位：不做真实 OCR，模拟一张整卷的识别结果（含 HTML 噪声，用于演示清理+拆题）。
     // image.file / image.dataURL 此处未使用，接入真模型时才会用到。
     await new Promise(r => setTimeout(r, 600));
     return [
-      '题目：计算 (-3)² + (-2)³',
-      '我的答案：9 - 6 = 3',
-      '正确答案：9 - 8 = 1',
+      '```html',
+      '<h2>七年级数学单元测验</h2>',
+      '<p>1. 计算 (-3)² + (-2)³ = ____</p>',
+      '<p>2. 解方程 2x + 5 = 3x - 1，求 x = ____</p>',
+      '<p>3. 因式分解：x² - 4 = ____</p>',
+      '<p>4. 已知一次函数 y = 2x + 1，当 x = 3 时 y = ____</p>',
+      '<p>5. 化简：3a + 2a - a = ____</p>',
+      '<p>6. 比较大小：-3 ____ -5（填 &gt; 或 &lt;）</p>',
+      '```',
     ].join('\n');
   }
 };
@@ -611,20 +689,41 @@ async function recognizeImage(image) {
  *  4. UI 渲染
  * ========================================================================= */
 const $ = (id) => document.getElementById(id);
-let lastParsed = [];
 
-function renderParsed(problems) {
-  const card = $('parsed-card'), list = $('parsed-list');
-  if (!problems.length) { card.style.display = 'none'; return; }
+/* 流程状态 */
+let questions = [];          // 拆出的题目 [{ id, num, text }]
+let selected = new Set();    // 勾选为「做错」的题目 id
+
+/* 第二步：渲染题目勾选列表 */
+function renderQuestionList() {
+  const card = $('step2'), list = $('q-list');
+  if (!questions.length) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  $('parsed-count').textContent = `${problems.length} 题`;
-  list.innerHTML = problems.map((p, i) => `
-    <div class="parsed-item">
-      <div class="pi-q">${i + 1}. ${esc(p.question) || '<span class="parsed-empty">（无题目文字）</span>'}</div>
-      <div class="pi-ans">
-        ${p.wrongAnswer ? `<span><span class="label">我的</span><span class="wrong">${esc(p.wrongAnswer)}</span></span>` : ''}
-        ${p.rightAnswer ? `<span><span class="label">正确</span><span class="right">${esc(p.rightAnswer)}</span></span>` : ''}
-      </div>
+  list.innerHTML = questions.map(q => `
+    <label class="q-item${selected.has(q.id) ? ' checked' : ''}" data-id="${q.id}">
+      <input type="checkbox" class="q-check" data-id="${q.id}" ${selected.has(q.id) ? 'checked' : ''}>
+      <span class="q-num">${esc(q.num)}</span>
+      <span class="q-text">${esc(q.text)}</span>
+    </label>`).join('');
+  updateSelCount();
+}
+
+function updateSelCount() {
+  $('sel-count').textContent = `已选 ${selected.size} 题`;
+  $('btn-to-step3').disabled = selected.size === 0;
+}
+
+/* 第三步：为每道错题渲染答案输入 */
+function renderAnswerForms() {
+  const card = $('step3'), root = $('answer-forms');
+  const chosen = questions.filter(q => selected.has(q.id));
+  if (!chosen.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  root.innerHTML = chosen.map(q => `
+    <div class="ans-form" data-id="${q.id}">
+      <div class="af-q"><span class="q-num">${esc(q.num)}</span><span>${esc(q.text)}</span></div>
+      <input type="text" class="field af-wrong" data-id="${q.id}" placeholder="我当时填/选的错误答案（必填）" spellcheck="false">
+      <input type="text" class="field af-right" data-id="${q.id}" placeholder="正确答案（可不填）" spellcheck="false">
     </div>`).join('');
 }
 
@@ -635,7 +734,7 @@ function renderResults(analyses) {
     const p = a.problem;
     return `
     <section class="card">
-      <div class="card-title"><span>第 ${i + 1} 题</span><span class="badge-source">${esc(ANALYZER.name)}</span></div>
+      <div class="card-title"><span>第 ${esc(p.num || (i + 1))} 题</span><span class="badge-source">${esc(ANALYZER.name)}</span></div>
       <div class="result-q">${esc(p.question) || '（无题目文字）'}</div>
       ${p.wrongAnswer ? `<div class="ans-line"><span class="label">我的答案</span><span style="color:var(--bad)">${esc(p.wrongAnswer)}</span></div>` : ''}
       ${p.rightAnswer ? `<div class="ans-line"><span class="label">正确答案</span><span style="color:var(--good)">${esc(p.rightAnswer)}</span></div>` : ''}
@@ -726,26 +825,18 @@ function esc(s) {
 /* =========================================================================
  *  5. 交互绑定
  * ========================================================================= */
-$('input').addEventListener('input', () => {
-  lastParsed = parseInput($('input').value);
-  renderParsed(lastParsed);
-});
-
-/* ---- 上传图片 ---- */
+/* ---- 第一步：上传图片 ---- */
 let images = [];           // [{ id, file, dataURL }]
 let imgSeq = 0;
-$('recog-source').textContent = RECOGNIZER.name;
 
 function addFiles(fileList) {
   const files = [...(fileList || [])].filter(f => f.type.startsWith('image/'));
-  let pending = files.length;
-  if (!pending) return;
+  if (!files.length) return;
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = () => {
       images.push({ id: ++imgSeq, file, dataURL: reader.result });
-      if (--pending === 0) renderPreviews();
-      else renderPreviews();
+      renderPreviews();
     };
     reader.readAsDataURL(file);
   });
@@ -755,7 +846,7 @@ function renderPreviews() {
   const list = $('preview-list');
   list.innerHTML = images.map(im => `
     <div class="preview-thumb" data-id="${im.id}">
-      <img src="${im.dataURL}" alt="题目图片">
+      <img src="${im.dataURL}" alt="卷子图片">
       <span class="remove" data-id="${im.id}">×</span>
     </div>`).join('');
   $('btn-recognize').disabled = images.length === 0;
@@ -771,6 +862,7 @@ $('preview-list').addEventListener('click', (e) => {
 
 $('file-album').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
 
+/* OCR 识别 → 清理 → 拆题 → 进入第二步 */
 $('btn-recognize').addEventListener('click', async () => {
   if (!images.length) return;
   const btn = $('btn-recognize');
@@ -783,68 +875,93 @@ $('btn-recognize').addEventListener('click', async () => {
       const t = await recognizeImage(images[i]);
       if (t && t.trim()) texts.push(t.trim());
     } catch (err) {
-      texts.push(`（第 ${i + 1} 张图片识别失败：${err.message || err}）`);
+      btn.innerHTML = original; btn.disabled = false;
+      alert('第 ' + (i + 1) + ' 张图片识别失败：' + (err.message || err));
+      return;
     }
   }
-  // 把识别文字追加进输入框（已有内容则空行分隔），再走原解析流程
-  const merged = texts.join('\n\n');
-  const cur = $('input').value.trim();
-  $('input').value = cur ? cur + '\n\n' + merged : merged;
-  lastParsed = parseInput($('input').value);
-  renderParsed(lastParsed);
   btn.innerHTML = original;
   btn.disabled = false;
-  $('input').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  loadQuestions(texts.join('\n\n'));
 });
 
-$('btn-analyze').addEventListener('click', async () => {
-  lastParsed = parseInput($('input').value);
-  renderParsed(lastParsed);
-  if (!lastParsed.length) {
-    $('results').innerHTML = '<div class="status">没有识别到题目，请检查粘贴内容。</div>';
-    $('summary-card').style.display = 'none';
+/* 备用：粘贴文字拆题 */
+$('btn-paste-split').addEventListener('click', () => {
+  const txt = $('paste-input').value.trim();
+  if (!txt) { alert('请先粘贴卷子文字'); return; }
+  loadQuestions(txt);
+});
+
+/* 把整卷文字拆成题目并渲染第二步 */
+function loadQuestions(rawText) {
+  questions = splitQuestions(rawText);
+  selected = new Set();
+  if (!questions.length) {
+    alert('没有识别到题目，请检查图片是否清晰，或改用粘贴文字。');
     return;
   }
-  $('results').innerHTML = `<div class="status"><span class="spinner"></span>正在分析 ${lastParsed.length} 道题…</div>`;
+  $('step3').style.display = 'none';
+  $('results').innerHTML = '';
   $('summary-card').style.display = 'none';
+  renderQuestionList();
+  $('step2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---- 第二步：勾选错题 ---- */
+$('q-list').addEventListener('change', (e) => {
+  if (!e.target.classList.contains('q-check')) return;
+  const id = Number(e.target.getAttribute('data-id'));
+  if (e.target.checked) selected.add(id); else selected.delete(id);
+  const item = e.target.closest('.q-item');
+  if (item) item.classList.toggle('checked', e.target.checked);
+  updateSelCount();
+});
+
+$('btn-restart').addEventListener('click', () => {
+  images = []; questions = []; selected = new Set();
+  renderPreviews();
+  $('step2').style.display = 'none';
+  $('step3').style.display = 'none';
+  $('results').innerHTML = '';
+  $('summary-card').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+$('btn-to-step3').addEventListener('click', () => {
+  if (!selected.size) return;
+  renderAnswerForms();
+  $('step3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+/* ---- 第三步：填错误答案 → 分析 ---- */
+$('btn-analyze').addEventListener('click', async () => {
+  const chosen = questions.filter(q => selected.has(q.id));
+  if (!chosen.length) { alert('请先在第②步勾选做错的题'); return; }
+
+  const problems = chosen.map(q => {
+    const wrongEl = document.querySelector(`.af-wrong[data-id="${q.id}"]`);
+    const rightEl = document.querySelector(`.af-right[data-id="${q.id}"]`);
+    return {
+      num: q.num,
+      question: q.text,
+      wrongAnswer: (wrongEl ? wrongEl.value : '').trim(),
+      rightAnswer: (rightEl ? rightEl.value : '').trim(),
+    };
+  });
+  if (problems.every(p => !p.wrongAnswer)) {
+    if (!confirm('你还没有填写任何错误答案，仍要只按题目内容分析吗？')) return;
+  }
+
+  $('results').innerHTML = `<div class="status"><span class="spinner"></span>正在分析 ${problems.length} 道错题…</div>`;
+  $('summary-card').style.display = 'none';
+  $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   try {
-    const analyses = await analyzeProblems(lastParsed);
+    const analyses = await analyzeProblems(problems);
     renderResults(analyses);
     renderSummary(analyses);
-    $('summary-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch (err) {
     $('results').innerHTML = `<div class="status">分析失败：${esc(err.message || err)}</div>`;
   }
-});
-
-$('btn-clear').addEventListener('click', () => {
-  $('input').value = '';
-  lastParsed = [];
-  renderParsed([]);
-  $('results').innerHTML = '';
-  $('summary-card').style.display = 'none';
-  $('input').focus();
-});
-
-$('btn-sample').addEventListener('click', () => {
-  $('input').value =
-`题目：计算 (-3)² + (-2)³
-我的答案：9 - 6 = 3
-正确答案：9 - 8 = 1
-
-题目：解方程 2x + 5 = 3x - 1
-我的答案：2x - 3x = -1 - 5，得 x = 4
-正确答案：x = 6
-
-题目：已知一次函数 y = 2x + 1，求 x = 3 时 y 的值
-我的答案：y = 2 × 3 = 6
-正确答案：y = 2 × 3 + 1 = 7
-
-题目：因式分解 x² - 4
-我的答案：x(x - 4)
-正确答案：(x + 2)(x - 2)`;
-  lastParsed = parseInput($('input').value);
-  renderParsed(lastParsed);
 });
 
 /* =========================================================================
@@ -929,7 +1046,8 @@ function extractJSON(text) {
 function createImageRecognizer(config) {
   // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-vl-ocr', name:'...' }
   // qwen-vl-ocr 以内置 OCR 能力为主，提示词给一句「读出图中所有文字」即可。
-  const OCR_PROMPT = '请识别并输出图片中的全部文字，尽量保持原有换行与题号，不要翻译、不要解释。';
+  const OCR_PROMPT = '请识别并输出这张试卷图片中的全部题目文字，保留每道题的题号和换行，' +
+    '逐题输出，不要翻译、不要解释、不要添加任何 HTML 或 markdown 标记。';
 
   async function callVisionModel(image) {
     const resp = await fetch(config.endpoint, {
