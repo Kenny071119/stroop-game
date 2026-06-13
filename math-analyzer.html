@@ -634,7 +634,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v10（正式版/测试版切换）
+    错题学习助手 · 单页版 · v11（测试版总开关）
   </footer>
 </div>
 
@@ -1479,6 +1479,10 @@ function createImageRecognizer(config) {
  * ------------------------------------------------------------------------- */
 const PROD_API_BASE = '';   // ← 部署后端后填这里
 
+/* 上线开关：true=保留测试版入口（自测用）；false=隐藏切换条和设置卡、强制正式版（软删除）。
+ * 上线时改成 false 即可一键关掉测试版；等彻底确认后再做代码层面的删除。 */
+const ALLOW_TEST_MODE = true;
+
 const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
@@ -1512,7 +1516,7 @@ function refreshEngines() {
 
 /* 切换模式：显示/隐藏设置卡、更新网址参数、重连引擎 */
 function applyMode(mode) {
-  MODE = (mode === 'test') ? 'test' : 'app';
+  MODE = (ALLOW_TEST_MODE && mode === 'test') ? 'test' : 'app';   // 关掉测试版时强制正式版
   $('settings-card').style.display = (MODE === 'test') ? 'block' : 'none';
   [...document.querySelectorAll('.mode-btn')].forEach(b =>
     b.classList.toggle('active', b.getAttribute('data-mode') === MODE));
@@ -1538,7 +1542,10 @@ $('text-model').addEventListener('input', (e) => { qwen.textModel = e.target.val
 $('ocr-model').addEventListener('input', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-max-latest'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
-// 初始模式：网址 ?mode=test 进测试版，否则默认正式版
+// 关掉测试版时，隐藏顶部切换条
+if (!ALLOW_TEST_MODE) $('mode-switch').style.display = 'none';
+
+// 初始模式：网址 ?mode=test 进测试版，否则默认正式版（测试版被关时永远进正式版）
 applyMode(new URLSearchParams(location.search).get('mode') === 'test' ? 'test' : 'app');
 </script>
 </body>
