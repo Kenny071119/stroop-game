@@ -349,6 +349,10 @@
       <label>分析模型<input type="text" id="text-model" class="field" value="qwen-plus" spellcheck="false"></label>
       <label>识图模型<input type="text" id="ocr-model" class="field" value="qwen-vl-ocr" spellcheck="false"></label>
     </div>
+    <label style="font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:5px;margin-top:10px;">
+      接口地址（直连会被 CORS 拦；本地代理填 http://localhost:8787/compatible-mode/v1）
+      <input type="text" id="api-base" class="field" value="https://dashscope.aliyuncs.com/compatible-mode/v1" spellcheck="false">
+    </label>
     <div class="hint">
       Key 仅保存在<b>浏览器内存</b>，不写入 localStorage，刷新页面后需重新填写。
       填入 Key 后自动切换为通义千问真实调用；留空时使用本地示例。
@@ -990,6 +994,7 @@ function refreshEngines() {
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
 $('text-model').addEventListener('input', (e) => { qwen.textModel = e.target.value.trim() || 'qwen-plus'; refreshEngines(); });
 $('ocr-model').addEventListener('input', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-ocr'; refreshEngines(); });
+$('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
 refreshEngines();   // 初始化来源标签（默认本地示例）
 </script>
