@@ -122,6 +122,55 @@
   }
   .btn-sm { padding: 8px 12px; font-size: 13px; }
 
+  /* ===== 拍照 / 上传图片 ===== */
+  .uploader { display: flex; flex-direction: column; gap: 10px; }
+  .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .upload-btn {
+    flex: 1;
+    min-width: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--bg-soft);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 16px 12px;
+    cursor: pointer;
+  }
+  .upload-btn:active { transform: scale(.99); }
+  .upload-btn .ico { font-size: 18px; }
+  .upload-btn input[type=file] {
+    position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+  }
+  .preview-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .preview-thumb {
+    position: relative;
+    width: calc(33.333% - 7px);
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+  .preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .preview-thumb .remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 22px; height: 22px; line-height: 20px;
+    text-align: center;
+    background: rgba(0,0,0,.6);
+    color: #fff; border-radius: 50%;
+    font-size: 14px; cursor: pointer;
+  }
+  .preview-thumb .pending {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15,19,32,.55);
+  }
+
   /* ===== 解析后的题目预览 ===== */
   .parsed-item {
     border: 1px solid var(--line);
@@ -238,13 +287,41 @@
 <div id="app">
   <header>
     <h1>📐 数学错题分析</h1>
-    <p>粘贴错题（题目 / 我的答案 / 正确答案），自动分析知识点、错误类型，并汇总薄弱环节。</p>
+    <p>拍照或粘贴错题（题目 / 我的答案 / 正确答案），自动分析知识点、错误类型，并汇总薄弱环节。</p>
   </header>
+
+  <!-- 拍照 / 上传图片 -->
+  <section class="card">
+    <div class="card-title">
+      <span>① 拍照 / 上传题目图片</span>
+      <span class="badge-source" id="recog-source"></span>
+    </div>
+    <div class="uploader">
+      <div class="upload-actions">
+        <label class="upload-btn">
+          <span class="ico">📷</span><span>拍照</span>
+          <input type="file" id="file-camera" accept="image/*" capture="environment">
+        </label>
+        <label class="upload-btn">
+          <span class="ico">🖼️</span><span>从相册选择</span>
+          <input type="file" id="file-album" accept="image/*" multiple>
+        </label>
+      </div>
+      <div class="preview-list" id="preview-list"></div>
+      <div class="row">
+        <button class="btn-primary" id="btn-recognize" disabled>识别文字并填入</button>
+      </div>
+      <div class="hint">
+        识别后的题目文字会自动填进下方输入框，可手动修改后再分析。
+        <b>识图功能当前为占位示例</b>，将来接入支持读图的 AI 模型后即可真实识别。
+      </div>
+    </div>
+  </section>
 
   <!-- 输入 -->
   <section class="card">
     <div class="card-title">
-      <span>① 粘贴错题</span>
+      <span>② 粘贴 / 编辑错题</span>
       <button class="btn-ghost btn-sm" id="btn-sample">填入示例</button>
     </div>
     <textarea id="input" placeholder="支持从作业帮等扫描后直接粘贴。每道题之间用空行隔开，例如：
@@ -277,7 +354,7 @@
 
   <!-- 汇总 -->
   <section class="card" id="summary-card" style="display:none;">
-    <div class="card-title"><span>② 薄弱点汇总</span></div>
+    <div class="card-title"><span>③ 薄弱点汇总</span></div>
     <div id="summary-body"></div>
   </section>
 
@@ -430,6 +507,39 @@ async function analyzeProblems(problems) {
 }
 
 /* =========================================================================
+ *  3b. 识图（图片 → 题目文字）
+ *  与分析器同样的设计：UI 只调用统一入口 recognizeImage()，当前用本地
+ *  mock 顶着，将来接入「支持读图的 AI 模型」时只需实现 createImageRecognizer()
+ *  里的 callVisionModel()，并把 RECOGNIZER 指向它，UI 不用改。详见文件底部。
+ *
+ *  统一约定：
+ *    输入  image: { file:File, dataURL:string }   （单张图片）
+ *    输出  Promise<string>                          （识别出的题目纯文字）
+ *  说明：返回的文字会直接填入下方输入框，可手动编辑后再走原分析流程。
+ * ========================================================================= */
+const mockRecognizer = {
+  name: '本地示例识图',
+  async recognize(image) {
+    // 占位：不做真实 OCR，仅模拟耗时后返回一段示例题目文字。
+    // image.file / image.dataURL 此处未使用，接入真模型时才会用到。
+    await new Promise(r => setTimeout(r, 600));
+    return [
+      '题目：计算 (-3)² + (-2)³',
+      '我的答案：9 - 6 = 3',
+      '正确答案：9 - 8 = 1',
+    ].join('\n');
+  }
+};
+
+/* 当前启用的识图器（接读图 AI 后改这里即可） */
+let RECOGNIZER = mockRecognizer;
+
+/* recognizeImage：UI 唯一调用入口，永远返回「识别出的题目文字」字符串 */
+async function recognizeImage(image) {
+  return RECOGNIZER.recognize(image);
+}
+
+/* =========================================================================
  *  4. UI 渲染
  * ========================================================================= */
 const $ = (id) => document.getElementById(id);
@@ -551,6 +661,73 @@ function esc(s) {
 $('input').addEventListener('input', () => {
   lastParsed = parseInput($('input').value);
   renderParsed(lastParsed);
+});
+
+/* ---- 拍照 / 上传图片 ---- */
+let images = [];           // [{ id, file, dataURL }]
+let imgSeq = 0;
+$('recog-source').textContent = RECOGNIZER.name;
+
+function addFiles(fileList) {
+  const files = [...(fileList || [])].filter(f => f.type.startsWith('image/'));
+  let pending = files.length;
+  if (!pending) return;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      images.push({ id: ++imgSeq, file, dataURL: reader.result });
+      if (--pending === 0) renderPreviews();
+      else renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreviews() {
+  const list = $('preview-list');
+  list.innerHTML = images.map(im => `
+    <div class="preview-thumb" data-id="${im.id}">
+      <img src="${im.dataURL}" alt="题目图片">
+      <span class="remove" data-id="${im.id}">×</span>
+    </div>`).join('');
+  $('btn-recognize').disabled = images.length === 0;
+}
+
+$('preview-list').addEventListener('click', (e) => {
+  const id = e.target.getAttribute('data-id');
+  if (e.target.classList.contains('remove') && id) {
+    images = images.filter(im => String(im.id) !== id);
+    renderPreviews();
+  }
+});
+
+$('file-camera').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+$('file-album').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+
+$('btn-recognize').addEventListener('click', async () => {
+  if (!images.length) return;
+  const btn = $('btn-recognize');
+  btn.disabled = true;
+  const original = btn.textContent;
+  const texts = [];
+  for (let i = 0; i < images.length; i++) {
+    btn.innerHTML = `<span class="spinner"></span>识别中 ${i + 1}/${images.length}…`;
+    try {
+      const t = await recognizeImage(images[i]);
+      if (t && t.trim()) texts.push(t.trim());
+    } catch (err) {
+      texts.push(`（第 ${i + 1} 张图片识别失败：${err.message || err}）`);
+    }
+  }
+  // 把识别文字追加进输入框（已有内容则空行分隔），再走原解析流程
+  const merged = texts.join('\n\n');
+  const cur = $('input').value.trim();
+  $('input').value = cur ? cur + '\n\n' + merged : merged;
+  lastParsed = parseInput($('input').value);
+  renderParsed(lastParsed);
+  btn.innerHTML = original;
+  btn.disabled = false;
+  $('input').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 $('btn-analyze').addEventListener('click', async () => {
@@ -677,6 +854,62 @@ function extractJSON(text) {
 //   model: '你的模型名',
 //   name: 'AI 分析',
 // });
+
+/* =========================================================================
+ *  7. >>> 读图 AI 接入位 <<<
+ *  接入「支持读图(多模态)的国内模型」时，实现下面的 callVisionModel，
+ *  并取消注释最后一行把 RECOGNIZER 指过去即可，UI / 上传 / 预览都不用改。
+ *
+ *  约定（与 recognizeImage 一致）：
+ *    输入  image = { file: File, dataURL: 'data:image/...;base64,xxxx' }
+ *    输出  Promise<string>  —— 识别出的题目纯文字（尽量保留「题目/我的答案/
+ *          正确答案」分行格式，方便下游 parseInput 自动拆分）
+ * ------------------------------------------------------------------------- */
+function createImageRecognizer(config) {
+  // config 示例: { endpoint:'https://...', apiKey:'...', model:'支持视觉的模型名', name:'AI 识图' }
+  const VISION_PROMPT =
+    '你是数学题 OCR 助手。请识别图片中的数学题目文字，按「题目：…」' +
+    '（如有学生作答和标准答案则补充「我的答案：…」「正确答案：…」）逐行输出，' +
+    '多道题之间用空行分隔。只输出题目文字，不要解释、不要额外内容。';
+
+  async function callVisionModel(image) {
+    // 多数国内多模态模型兼容 OpenAI 风格：image_url 直接传 base64 dataURL。
+    // 如你所用模型接口不同（如需先上传拿 URL、或字段名不同），改这里即可。
+    const resp = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: VISION_PROMPT },
+            { type: 'image_url', image_url: { url: image.dataURL } },
+          ],
+        }],
+        temperature: 0.1,
+      }),
+    });
+    const data = await resp.json();
+    return data.choices?.[0]?.message?.content ?? data.output ?? '';
+  }
+
+  return {
+    name: config.name || 'AI 识图',
+    async recognize(image) {
+      return (await callVisionModel(image)).trim();
+    },
+  };
+}
+
+// 接入示例（填好后取消注释即可切换到读图 AI；记得同步更新顶部识图来源标签）：
+// RECOGNIZER = createImageRecognizer({
+//   endpoint: 'https://你的多模态模型地址/v1/chat/completions',
+//   apiKey: '你的KEY',
+//   model: '你的视觉模型名',
+//   name: 'AI 识图',
+// });
+// document.getElementById('recog-source').textContent = RECOGNIZER.name;
 </script>
 </body>
 </html>
