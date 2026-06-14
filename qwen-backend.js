@@ -1,32 +1,37 @@
-// qwen-backend.js —— 正式版最小后端（持有 Key + 转发百炼 + 限流防刷）
-// 与 qwen-proxy.js 的区别：proxy 是“测试版”用、透传用户自己填的 Key；
-// 本后端是“正式版”用、Key 藏在服务器，前端/用户完全看不到。
+// qwen-backend.js —— 正式版后端（一个服务同时：托管网页 + 转发百炼 + 限流防刷）
+// 适配阿里云函数计算 FC「Web函数」：默认监听 9000，绑定 0.0.0.0。
 //
-// 运行（需要 Node 18+，自带 fetch）。先用环境变量传入 Key，再启动：
-//   Mac/Linux:  BAILIAN_API_KEY=sk-你的key node qwen-backend.js
-//   Windows  :  set BAILIAN_API_KEY=sk-你的key  然后  node qwen-backend.js
+// 它做三件事：
+//   GET  任意路径        → 返回前端页面 math-analyzer.html（同目录）
+//   POST 任意路径        → 把请求转发给百炼 chat/completions（用服务器持有的 Key）
+//   OPTIONS              → CORS 预检
 //
-// 启动后，把前端正式版里的 PROD_API_BASE 填成：
-//   http://localhost:8080/compatible-mode/v1     （本机自测）
-//   https://你的域名/compatible-mode/v1          （部署到服务器后）
+// 部署到函数计算：上传本文件 + math-analyzer.html，启动命令 `node qwen-backend.js`，
+// 监听端口 9000，并在「环境变量」里配置 BAILIAN_API_KEY。
+//
+// 本地也能跑：BAILIAN_API_KEY=sk-你的key node qwen-backend.js  然后开 http://localhost:9000/
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-// ===== 配置（都从环境变量读，Key 绝不写进代码）=====
+// ===== 配置（Key 从环境变量读，绝不写进代码）=====
 const API_KEY = process.env.BAILIAN_API_KEY;                  // 必填：你的百炼 API Key
-const PORT = process.env.PORT || 8080;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';      // 上线建议改成你的网页域名，如 https://yourapp.com
+const PORT = process.env.PORT || 9000;                        // 函数计算 Web函数默认 9000
 const UPSTREAM = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-// 只允许这些模型，防止有人拿你的 Key 调贵模型刷钱
-const ALLOWED_MODELS = new Set([
-  // 与前端下拉选项保持一致
+const ALLOWED_MODELS = new Set([                              // 与前端下拉选项一致，防止被刷贵模型
   'qwen-plus', 'qwen-turbo', 'qwen3.7-plus', 'qwen3.7-max',
   'qwen-vl-max-latest', 'qwen-vl-plus', 'qwen-vl-ocr',
 ]);
 
+// ===== 读取前端页面（与本文件同目录）=====
+let HTML = '<h1>缺少 math-analyzer.html，请和本文件一起部署</h1>';
+try { HTML = fs.readFileSync(path.join(__dirname, 'math-analyzer.html'), 'utf8'); }
+catch (e) { console.error('⚠️ 没读到 math-analyzer.html：', e.message); }
+
 // ===== 简单按 IP 限流（固定时间窗）=====
-const WINDOW_MS = 60 * 60 * 1000;                              // 1 小时
-const MAX_PER_WINDOW = Number(process.env.RATE_LIMIT || 60);   // 每个 IP 每小时最多多少次
-const hits = new Map();                                        // ip -> { count, reset }
+const WINDOW_MS = 60 * 60 * 1000;                             // 1 小时
+const MAX_PER_WINDOW = Number(process.env.RATE_LIMIT || 60);  // 每 IP 每小时最多次数
+const hits = new Map();
 function rateLimited(ip) {
   const now = Date.now();
   let r = hits.get(ip);
@@ -35,25 +40,28 @@ function rateLimited(ip) {
   return r.count > MAX_PER_WINDOW;
 }
 
-if (!API_KEY) {
-  console.error('❌ 未设置环境变量 BAILIAN_API_KEY，无法启动。');
-  process.exit(1);
-}
-
 const CORS = {
-  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 const sendJSON = (res, code, obj) =>
   res.writeHead(code, { ...CORS, 'Content-Type': 'application/json' }).end(JSON.stringify(obj));
 
 http.createServer(async (req, res) => {
-  if (req.method === 'OPTIONS') { res.writeHead(204, CORS); return res.end(); }     // CORS 预检
-  if (req.method === 'GET') { res.writeHead(200, CORS); return res.end('ok'); }     // 健康检查
+  if (req.method === 'OPTIONS') { res.writeHead(204, CORS); return res.end(); }
+
+  // GET → 返回网页（同源托管前端，避免跨域）
+  if (req.method === 'GET') {
+    res.writeHead(200, { ...CORS, 'Content-Type': 'text/html; charset=utf-8' });
+    return res.end(HTML);
+  }
+
   if (req.method !== 'POST') { res.writeHead(405, CORS); return res.end('Method Not Allowed'); }
 
-  // 取客户端 IP（部署在反向代理后时优先用 x-forwarded-for）
+  // POST → 转发给百炼
+  if (!API_KEY) return sendJSON(res, 500, { error: '服务器未配置 BAILIAN_API_KEY' });
+
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
     || req.socket.remoteAddress || 'unknown';
   if (rateLimited(ip)) return sendJSON(res, 429, { error: '请求过于频繁，请稍后再试' });
@@ -72,7 +80,7 @@ http.createServer(async (req, res) => {
     const upstream = await fetch(UPSTREAM, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
-      body: JSON.stringify(body),                 // 直接把前端的请求体转发给百炼
+      body: JSON.stringify(body),
     });
     const text = await upstream.text();
     res.writeHead(upstream.status, { ...CORS, 'Content-Type': 'application/json' });
@@ -80,8 +88,7 @@ http.createServer(async (req, res) => {
   } catch (e) {
     sendJSON(res, 502, { error: String(e) });
   }
-}).listen(PORT, () => {
-  console.log(`✅ 正式版后端已启动: http://localhost:${PORT}`);
-  console.log(`   前端 PROD_API_BASE 填: http://localhost:${PORT}/compatible-mode/v1`);
-  console.log(`   限流: 每个 IP ${MAX_PER_WINDOW} 次/小时 | 允许模型: ${[...ALLOWED_MODELS].join(', ')}`);
+}).listen(PORT, '0.0.0.0', () => {     // 函数计算要求绑定 0.0.0.0
+  console.log(`✅ 已启动: http://0.0.0.0:${PORT}  （网页 + 接口同源）`);
+  if (!API_KEY) console.log('⚠️ 还没配置环境变量 BAILIAN_API_KEY，接口会报错，网页能打开。');
 });

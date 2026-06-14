@@ -651,7 +651,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v12（模型下拉选择）
+    错题学习助手 · 单页版 · v13（可部署·函数计算）
   </footer>
 </div>
 
@@ -1494,7 +1494,11 @@ function createImageRecognizer(config) {
  *  例如：'https://你的域名/api/compatible-mode/v1'（后端负责加 Key 并转发到百炼）。
  *  留空时，正式版用本地示例(mock) 跑，方便先看“用户零输入”的干净界面。
  * ------------------------------------------------------------------------- */
-const PROD_API_BASE = '';   // ← 部署后端后填这里
+/* 正式版后端地址：
+ * - 被服务器(http/https)托管时 → 用同源相对路径 '/compatible-mode/v1'，后端会转发到百炼；
+ * - 直接双击本地文件(file://)打开时 → 空，用本地示例(mock)，方便离线看界面。 */
+const PROD_API_BASE = (location.protocol === 'http:' || location.protocol === 'https:')
+  ? '/compatible-mode/v1' : '';
 
 /* 上线开关：true=保留测试版入口（自测用）；false=隐藏切换条和设置卡、强制正式版（软删除）。
  * 上线时改成 false 即可一键关掉测试版；等彻底确认后再做代码层面的删除。 */

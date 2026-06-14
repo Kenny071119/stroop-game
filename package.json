@@ -1,0 +1,13 @@
+{
+  "name": "math-error-helper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "错题学习助手：前端 + 转发百炼的最小后端",
+  "main": "qwen-backend.js",
+  "scripts": {
+    "start": "node qwen-backend.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
