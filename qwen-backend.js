@@ -18,8 +18,9 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';      // 上线建议�
 const UPSTREAM = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 // 只允许这些模型，防止有人拿你的 Key 调贵模型刷钱
 const ALLOWED_MODELS = new Set([
-  'qwen3.7-max', 'qwen3.7-plus', 'qwen-plus',
-  'qwen-vl-max-latest', 'qwen-vl-ocr',
+  // 与前端下拉选项保持一致
+  'qwen-plus', 'qwen-turbo', 'qwen3.7-plus', 'qwen3.7-max',
+  'qwen-vl-max-latest', 'qwen-vl-plus', 'qwen-vl-ocr',
 ]);
 
 // ===== 简单按 IP 限流（固定时间窗）=====

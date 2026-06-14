@@ -213,6 +213,10 @@
     flex-direction: column;
     gap: 5px;
   }
+  select.field { cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
 
   /* ===== 步骤说明 ===== */
   .step-desc {
@@ -551,8 +555,21 @@
     </div>
     <input type="password" id="api-key" class="field" placeholder="粘贴阿里云百炼 API Key（sk-...）" autocomplete="off" spellcheck="false">
     <div class="model-row">
-      <label>分析模型<input type="text" id="text-model" class="field" value="qwen3.7-max" spellcheck="false"></label>
-      <label>识图模型<input type="text" id="ocr-model" class="field" value="qwen-vl-max-latest" spellcheck="false"></label>
+      <label>分析模型
+        <select id="text-model" class="field">
+          <option value="qwen-plus" selected>qwen-plus（免费额度·推荐）</option>
+          <option value="qwen-turbo">qwen-turbo（最便宜最快）</option>
+          <option value="qwen3.7-plus">qwen3.7-plus（更强·均衡）</option>
+          <option value="qwen3.7-max">qwen3.7-max（最强·可能收费）</option>
+        </select>
+      </label>
+      <label>识图模型
+        <select id="ocr-model" class="field">
+          <option value="qwen-vl-max-latest" selected>qwen-vl-max-latest（免费额度·推荐）</option>
+          <option value="qwen-vl-plus">qwen-vl-plus（更便宜）</option>
+          <option value="qwen-vl-ocr">qwen-vl-ocr（专用OCR·会带坐标）</option>
+        </select>
+      </label>
     </div>
     <label style="font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:5px;margin-top:10px;">
       接口地址（直连会被 CORS 拦；本地代理填 http://localhost:8787/compatible-mode/v1）
@@ -634,7 +651,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v11（测试版总开关）
+    错题学习助手 · 单页版 · v12（模型下拉选择）
   </footer>
 </div>
 
@@ -1486,7 +1503,7 @@ const ALLOW_TEST_MODE = true;
 const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
-  textModel: 'qwen3.7-max',
+  textModel: 'qwen-plus',
   ocrModel: 'qwen-vl-max-latest',
 };
 
@@ -1538,8 +1555,8 @@ $('mode-switch').addEventListener('click', (e) => {
 });
 
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
-$('text-model').addEventListener('input', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-max'; refreshEngines(); });
-$('ocr-model').addEventListener('input', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-max-latest'; refreshEngines(); });
+$('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen-plus'; refreshEngines(); });
+$('ocr-model').addEventListener('change', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-max-latest'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
 // 关掉测试版时，隐藏顶部切换条
