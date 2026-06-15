@@ -651,7 +651,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v15（识图改 qwen-vl-plus）
+    错题学习助手 · 单页版 · v16（修像素参数）
   </footer>
 </div>
 
@@ -1449,23 +1449,21 @@ function createImageRecognizer(config) {
     '数学符号、上标、分数、根号尽量用普通字符原样保留（如 x²、a/b、根号5），不要转成 LaTeX 或 $ 公式。';
 
   async function callVisionModel(image) {
+    // 图片内容项；min_pixels/max_pixels 只有 qwen-vl-ocr 专用模型才认，
+    // 通用 VL 模型（qwen-vl-plus / qwen-vl-max）带上会报 InvalidParameter，故按模型判断。
+    const imgItem = { type: 'image_url', image_url: { url: image.dataURL } };
+    if (/ocr/i.test(config.model)) {
+      imgItem.min_pixels = 28 * 28 * 4;
+      imgItem.max_pixels = 28 * 28 * 1280;
+    }
     const resp = await fetch(config.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
       body: JSON.stringify({
-        model: config.model,                       // qwen-vl-ocr / qwen-vl-ocr-latest
+        model: config.model,
         messages: [{
           role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: image.dataURL },    // base64 dataURL
-              // qwen-vl-ocr 像素范围（与 image_url 同级）：28*28*4 ~ 28*28*1280
-              min_pixels: 28 * 28 * 4,
-              max_pixels: 28 * 28 * 1280,
-            },
-            { type: 'text', text: OCR_PROMPT },
-          ],
+          content: [imgItem, { type: 'text', text: OCR_PROMPT }],
         }],
       }),
     });
