@@ -599,9 +599,9 @@
     <div class="model-row">
       <label>分析模型
         <select id="text-model" class="field">
-          <option value="qwen-plus" selected>qwen-plus（免费额度·推荐）</option>
+          <option value="qwen-plus">qwen-plus（便宜·一般）</option>
           <option value="qwen-turbo">qwen-turbo（最便宜最快）</option>
-          <option value="qwen3.7-plus">qwen3.7-plus（更强·均衡）</option>
+          <option value="qwen3.7-plus" selected>qwen3.7-plus（更强·推荐讲题）</option>
           <option value="qwen3.7-max">qwen3.7-max（最强·可能收费）</option>
         </select>
       </label>
@@ -707,7 +707,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v21（每步专属背景图）
+    错题学习助手 · 单页版 · v22（辅导更会讲题）
   </footer>
 </div>
 
@@ -967,16 +967,16 @@ const mockTutor = {
 function createTutor(config) {
   // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-plus' }
   const TUTOR_SYS =
-    '你是一位耐心、爱鼓励的中小学数学老师，正在一对一帮一个学生弄懂他做错的题。' +
-    '【教学方式】用“引导式”：先弄清他卡在哪一步，用提问和小提示一步步带他自己想出来，' +
-    '不要一上来就给完整解题过程或最终答案。' +
-    '【每次回复的硬性要求】① 尽量只说 2-3 句话、不超过 80 字；② 每次只推进一小步，只问一个问题或只给一个提示；' +
-    '③ 用学生年级能懂的大白话，少用术语。' +
-    '【写算式】一律用普通文字，例如 x²写成“x的平方”、分数写成 a/b、根号写成“根号5”；' +
-    '绝对不要用 LaTeX，也不要出现 $ 符号或 \\\\ 反斜杠公式。' +
-    '【常见情况】学生只说“不会/不懂”时，先反问他卡在哪一步，别直接开讲；' +
-    '学生思路错了，先肯定他敢想，再点出一个具体地方让他重想；学生跑题就温和拉回这道题。' +
-    '【兜底】只有当学生连续卡住、或明确说“直接告诉我答案”时，才循序给出关键步骤。';
+    '你是一位很会讲题、有耐心的中小学数学老师，正在一对一帮一个学生弄懂他做错的这道题。' +
+    '你的目标是让他真正听懂、学会，而不是考他。' +
+    '【怎么讲】' +
+    '① 以“讲明白”为主：先用一两句话点出这道题的关键思路或考点，再把解法拆成小步，带着他一步步走；' +
+    '② 每一步都说清“为什么这么做”，需要时举个简单例子或打个比方；用他这个年级能懂的大白话，少用术语；' +
+    '③ 不要一口气把整道题答案全甩出来——每次讲一两步，讲完用一句话问他懂没懂、或请他试着算下一步，再按他的回答继续；' +
+    '④ 他说“不会/不懂”时，别只反问“你卡哪了”，而是直接把当前这一步讲清楚、给个例子，帮他迈过去；' +
+    '⑤ 他算错了，先肯定对的部分，再具体指出错在哪、怎么改；语气温和、多鼓励。' +
+    '【写算式】一律用普通文字（如 x的平方、a/b、根号5、×÷），绝不用 LaTeX，也不要出现 $ 符号或反斜杠公式。' +
+    '【其它】只聊这道数学题，跑题就温和拉回；回答围绕这道题，别长篇大论、别凑字数。';
   const SUM_SYS =
     '你是学习分析助手。下面是一个学生针对自己的错题向老师提出的问题/对话。' +
     '请【只根据学生提出的问题、暴露出的困惑】来总结他的薄弱点，不要凭题目本身臆测。' +
@@ -1624,7 +1624,7 @@ const ALLOW_TEST_MODE = true;
 const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
-  textModel: 'qwen-plus',
+  textModel: 'qwen3.7-plus',
   ocrModel: 'qwen-vl-plus',
 };
 
@@ -1676,7 +1676,7 @@ $('mode-switch').addEventListener('click', (e) => {
 });
 
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
-$('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen-plus'; refreshEngines(); });
+$('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-plus'; refreshEngines(); });
 $('ocr-model').addEventListener('change', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-plus'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
