@@ -707,7 +707,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v23（最强模型 qwen3.7-max）
+    错题学习助手 · 单页版 · v24（问AI 带题目原图）
   </footer>
 </div>
 
@@ -998,12 +998,33 @@ function createTutor(config) {
 
   return {
     name: '通义千问·' + config.model,
-    async reply(question, history) {
-      const msgs = [
-        { role: 'system', content: TUTOR_SYS + '\n\n【本题】' + question },
-        ...history.map(m => ({ role: m.role, content: m.content })),
-      ];
-      return chat(msgs);
+    // imgURLs: 卷子原图（已缩小）。带上后 AI 能看到题目里的图形，不再只靠识别文字。
+    async reply(question, history, imgURLs) {
+      const build = (withImg) => {
+        const msgs = [{
+          role: 'system',
+          content: TUTOR_SYS + '\n\n【本题】' + question +
+            (withImg ? '\n（下面附了这道题所在的卷子原图，题目里若有图形/数轴/统计图，请结合图片来讲，别只看文字。）' : ''),
+        }];
+        let attached = false;
+        for (const m of history) {
+          if (withImg && m.role === 'user' && !attached && imgURLs && imgURLs.length) {
+            msgs.push({ role: 'user', content: [
+              { type: 'text', text: m.content },
+              ...imgURLs.map(u => ({ type: 'image_url', image_url: { url: u } })),
+            ] });
+            attached = true;
+          } else {
+            msgs.push({ role: m.role, content: m.content });
+          }
+        }
+        return msgs;
+      };
+      if (imgURLs && imgURLs.length) {
+        try { return await chat(build(true)); }
+        catch (e) { return await chat(build(false)); }   // 模型若不支持图片，回退纯文字
+      }
+      return chat(build(false));
     },
     async summarize(items) {
       const transcript = items.map(it => {
@@ -1295,6 +1316,7 @@ function loadQuestions(rawText) {
   selected = new Set();
   chats = {};
   openChats = new Set();
+  tutorImages = null;
   $('weak-summary').style.display = 'none';
   if (!questions.length) {
     alert('没有识别到题目，请检查图片是否清晰，或改用粘贴文字。');
@@ -1365,7 +1387,29 @@ $('collection-list').addEventListener('keydown', (e) => {
   }
 });
 
-/* 发送一条提问给 AI（引导式辅导） */
+/* 把上传的卷子原图缩小，供「问AI」时连图一起发（让 AI 看到题目里的图形）*/
+let tutorImages = null;   // 缓存缩小后的 dataURL 数组；新上传时置 null
+function downscaleDataURL(dataURL, maxDim = 1100, quality = 0.72) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      try { resolve(c.toDataURL('image/jpeg', quality)); } catch (_) { resolve(dataURL); }
+    };
+    img.onerror = () => resolve(dataURL);
+    img.src = dataURL;
+  });
+}
+async function ensureTutorImages() {
+  if (tutorImages !== null) return tutorImages;
+  tutorImages = images.length ? await Promise.all(images.map(im => downscaleDataURL(im.dataURL))) : [];
+  return tutorImages;
+}
+
+/* 发送一条提问给 AI（带卷子原图的引导式辅导） */
 async function sendChat(id) {
   const item = $('collection-list').querySelector(`.col-item[data-id="${id}"]`);
   if (!item) return;
@@ -1380,7 +1424,8 @@ async function sendChat(id) {
   log.innerHTML = renderChatLog(id) + `<div class="chat-msg assistant pending"><span class="spinner"></span>老师思考中…</div>`;
   log.scrollTop = log.scrollHeight;
   try {
-    const reply = await TUTOR.reply(q.text, chats[id]);
+    const imgs = await ensureTutorImages();
+    const reply = await TUTOR.reply(q.text, chats[id], imgs);
     chats[id].push({ role: 'assistant', content: reply || '（没有返回内容）' });
   } catch (err) {
     chats[id].push({ role: 'assistant', content: '（出错了：' + (err.message || err) + '）' });
@@ -1442,7 +1487,7 @@ $('btn-copy').addEventListener('click', async () => {
 /* ---- 重新上传：清空一切 ---- */
 $('btn-restart').addEventListener('click', () => {
   images = []; questions = []; selected = new Set(); chats = {}; openChats = new Set();
-  reachedStep = 1;
+  tutorImages = null; reachedStep = 1;
   renderPreviews();
   $('q-peek').style.display = 'none';
   $('weak-summary').style.display = 'none';
