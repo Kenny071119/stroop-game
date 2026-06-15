@@ -601,8 +601,8 @@
         <select id="text-model" class="field">
           <option value="qwen-plus">qwen-plus（便宜·一般）</option>
           <option value="qwen-turbo">qwen-turbo（最便宜最快）</option>
-          <option value="qwen3.7-plus" selected>qwen3.7-plus（更强·推荐讲题）</option>
-          <option value="qwen3.7-max">qwen3.7-max（最强·可能收费）</option>
+          <option value="qwen3.7-plus">qwen3.7-plus（更强·均衡）</option>
+          <option value="qwen3.7-max" selected>qwen3.7-max（最强·讲题最好）</option>
         </select>
       </label>
       <label>识图模型
@@ -707,7 +707,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v22（辅导更会讲题）
+    错题学习助手 · 单页版 · v23（最强模型 qwen3.7-max）
   </footer>
 </div>
 
@@ -1624,7 +1624,7 @@ const ALLOW_TEST_MODE = true;
 const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
-  textModel: 'qwen3.7-plus',
+  textModel: 'qwen3.7-max',
   ocrModel: 'qwen-vl-plus',
 };
 
@@ -1676,7 +1676,7 @@ $('mode-switch').addEventListener('click', (e) => {
 });
 
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
-$('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-plus'; refreshEngines(); });
+$('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-max'; refreshEngines(); });
 $('ocr-model').addEventListener('change', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-plus'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
