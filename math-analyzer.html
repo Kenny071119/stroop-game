@@ -651,7 +651,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v16（修像素参数）
+    错题学习助手 · 单页版 · v17（LaTeX清理+模型可切）
   </footer>
 </div>
 
@@ -696,7 +696,17 @@ function cleanOCRText(raw) {
   t = t.replace(/^[ \t]*[#>]+[ \t]*/gm, '');                           // 行首 markdown 标题/引用
   t = t.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*/g, '');          // 粗体 / 星号
   t = t.replace(/`/g, '');                                             // 反引号
-  t = t.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  // LaTeX 数学式 → 普通文字（模型有时把算式写成 \(18 \times 4\) 这种）
+  t = t.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '($1)/($2)'); // \frac{a}{b} → (a)/(b)
+  t = t.replace(/\\times/g, '×').replace(/\\div/g, '÷').replace(/\\cdot/g, '·')
+       .replace(/\\pm/g, '±').replace(/\\leq?\b/g, '≤').replace(/\\geq?\b/g, '≥')
+       .replace(/\\neq/g, '≠').replace(/\\sqrt/g, '√').replace(/\\pi/g, 'π')
+       .replace(/\\(?:left|right|displaystyle|quad|;|,)/g, '');
+  t = t.replace(/\\[()[\]]/g, ' ');                                    // 去掉 \( \) \[ \] 定界符
+  t = t.replace(/\$+/g, '');                                           // 去掉 $ 定界符
+  t = t.replace(/\\[a-zA-Z]+/g, '');                                   // 其余残留的 \命令
+  t = t.replace(/\s*\{\s*([^{}]*?)\s*\}\s*/g, '$1');                   // 去掉残留花括号，保留里面内容
+  t = t.replace(/\r\n/g, '\n').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
   return t.trim();
 }
 
@@ -1563,8 +1573,13 @@ $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim
 // 关掉测试版时，隐藏顶部切换条
 if (!ALLOW_TEST_MODE) $('mode-switch').style.display = 'none';
 
+// 网址参数可临时指定模型，方便对比测试：?ocr=qwen-vl-ocr  或  ?text=qwen3.7-plus
+const _sp = new URLSearchParams(location.search);
+if (_sp.get('ocr'))  qwen.ocrModel  = _sp.get('ocr').trim();
+if (_sp.get('text')) qwen.textModel = _sp.get('text').trim();
+
 // 初始模式：网址 ?mode=test 进测试版，否则默认正式版（测试版被关时永远进正式版）
-applyMode(new URLSearchParams(location.search).get('mode') === 'test' ? 'test' : 'app');
+applyMode(_sp.get('mode') === 'test' ? 'test' : 'app');
 </script>
 </body>
 </html>
