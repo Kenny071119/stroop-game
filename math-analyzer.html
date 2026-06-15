@@ -6,26 +6,28 @@
 <title>错题录入整理</title>
 <style>
   :root {
-    --bg: #0F1320;
-    --bg-soft: #1A1F30;
-    --card: #1E2435;
-    --ink: #EDEFF6;
-    --ink-dim: #8A90A6;
-    --line: #2C3245;
+    --bg: #F7F1E7;
+    --bg-soft: #FBF6EE;
+    --card: #FFFFFF;
+    --ink: #3B362E;
+    --ink-dim: #9A8D7B;
+    --line: #ECE2D2;
     --brand: #4C8DFF;
-    --brand-soft: #1d3357;
-    --good: #52C41A;
-    --bad: #FF4D4F;
-    --warn: #FAAD14;
-    --purple: #9254DE;
+    --brand-soft: #E9F1FF;
+    --brand-ink: #2E6BD6;
+    --good: #5AA84F;
+    --bad: #E5645E;
+    --warn: #D99A2B;
+    --purple: #9B7BE0;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { min-height: 100%; }
   body {
     background:
-      radial-gradient(900px 480px at 100% -8%, rgba(146,84,222,.16), transparent 60%),
-      radial-gradient(900px 520px at -10% 0%, rgba(76,141,255,.18), transparent 55%),
-      linear-gradient(180deg, #121829 0%, #0F1320 38%);
+      radial-gradient(720px 380px at 92% -6%, rgba(155,123,224,.12), transparent 60%),
+      radial-gradient(720px 420px at 4% 0%, rgba(76,141,255,.12), transparent 55%),
+      radial-gradient(640px 520px at 100% 102%, rgba(217,154,43,.10), transparent 60%),
+      linear-gradient(180deg, #FBF6ED 0%, #F4EDE1 100%);
     background-attachment: fixed;
     color: var(--ink);
     font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -43,7 +45,7 @@
     display: inline-flex;
     gap: 3px;
     padding: 3px;
-    background: rgba(255,255,255,.05);
+    background: #FFFFFF;
     border: 1px solid var(--line);
     border-radius: 999px;
     margin-bottom: 14px;
@@ -73,7 +75,7 @@
     font-size: 26px;
     font-weight: 800;
     letter-spacing: .3px;
-    background: linear-gradient(95deg, #7DB1FF 0%, #A98BFF 55%, #FF9EC8 100%);
+    background: linear-gradient(95deg, #4C8DFF 0%, #8166E0 52%, #E0688F 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -88,12 +90,12 @@
   /* ===== 通用卡片 ===== */
   .card {
     position: relative;
-    background: linear-gradient(180deg, #222942 0%, #1B2133 100%);
+    background: var(--card);
     border: 1px solid var(--line);
     border-radius: 16px;
     padding: 18px;
     margin-bottom: 14px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    box-shadow: 0 6px 20px rgba(120,100,70,.10);
     animation: rise .34s ease both;
   }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -136,7 +138,7 @@
     outline: none;
   }
   textarea:focus { border-color: var(--brand); }
-  textarea::placeholder { color: #5B617A; }
+  textarea::placeholder { color: #B7AB97; }
 
   .hint {
     font-size: 12px;
@@ -172,7 +174,7 @@
     flex: 1;
   }
   .btn-ghost {
-    background: rgba(255,255,255,.03);
+    background: #FFFFFF;
     border: 1px solid var(--line);
     color: var(--ink-dim);
   }
@@ -184,7 +186,7 @@
     font-size: 13px;
     line-height: 1.6;
     font-weight: 600;
-    color: #FFD7D7;
+    color: #B0433D;
     background: rgba(255,77,79,.12);
     border: 1px solid rgba(255,77,79,.4);
     border-radius: 10px;
@@ -203,7 +205,7 @@
     outline: none;
   }
   .field:focus { border-color: var(--brand); }
-  .field::placeholder { color: #5B617A; }
+  .field::placeholder { color: #B7AB97; }
   .model-row { display: flex; gap: 10px; margin-top: 10px; }
   .model-row label {
     flex: 1;
@@ -239,7 +241,7 @@
     border-color: transparent; box-shadow: 0 4px 12px rgba(76,141,255,.45); transform: scale(1.08);
   }
   .stepper .step.active .lbl { color: var(--ink); font-weight: 600; }
-  .stepper .step.done .dot { background: var(--brand-soft); color: #9CC1FF; border-color: #2c4a78; }
+  .stepper .step.done .dot { background: var(--brand-soft); color: var(--brand-ink); border-color: #BBD2F5; }
   .stepper .step.reached { cursor: pointer; }
 
   /* ===== 分屏切换 ===== */
@@ -261,7 +263,7 @@
   .tip-scan {
     font-size: 13px;
     line-height: 1.7;
-    color: #FAD27A;
+    color: #9A6B16;
     background: rgba(250,173,20,.10);
     border: 1px solid rgba(250,173,20,.3);
     border-radius: 10px;
@@ -337,8 +339,8 @@
   .col-actions { margin-top: 10px; }
   .btn-ask {
     background: var(--brand-soft);
-    color: #9CC1FF;
-    border: 1px solid #2c4a78;
+    color: var(--brand-ink);
+    border: 1px solid #BBD2F5;
     font-size: 13px;
     font-weight: 600;
     padding: 8px 12px;
@@ -411,7 +413,7 @@
     justify-content: center;
     gap: 8px;
     background: linear-gradient(180deg, rgba(76,141,255,.10), rgba(146,84,222,.08));
-    border: 1.5px dashed #3a4668;
+    border: 1.5px dashed #C3D2EE;
     border-radius: 12px;
     color: var(--ink);
     font-size: 14px;
@@ -485,7 +487,7 @@
     border-radius: 20px;
     white-space: nowrap;
   }
-  .tag-kp { background: var(--brand-soft); color: #9CC1FF; }
+  .tag-kp { background: var(--brand-soft); color: var(--brand-ink); }
   .tag-err {
     color: #fff;
   }
@@ -548,7 +550,7 @@
   .badge-source {
     font-size: 11px;
     font-weight: 600;
-    color: #9CC1FF;
+    color: var(--brand-ink);
     background: rgba(76,141,255,.12);
     border: 1px solid rgba(76,141,255,.25);
     border-radius: 20px;
@@ -559,7 +561,7 @@
   footer {
     text-align: center;
     font-size: 12px;
-    color: #4B5066;
+    color: #B3A693;
     padding: 16px 0 4px;
   }
   a { color: var(--brand); }
@@ -695,7 +697,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v19（分步向导）
+    错题学习助手 · 单页版 · v20（浅色暖调主题）
   </footer>
 </div>
 
