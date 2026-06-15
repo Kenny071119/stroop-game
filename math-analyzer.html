@@ -565,8 +565,8 @@
       </label>
       <label>识图模型
         <select id="ocr-model" class="field">
-          <option value="qwen-vl-max-latest" selected>qwen-vl-max-latest（免费额度·推荐）</option>
-          <option value="qwen-vl-plus">qwen-vl-plus（更便宜）</option>
+          <option value="qwen-vl-max-latest">qwen-vl-max-latest（即将下线，不推荐）</option>
+          <option value="qwen-vl-plus" selected>qwen-vl-plus（推荐·纯文字）</option>
           <option value="qwen-vl-ocr">qwen-vl-ocr（专用OCR·会带坐标）</option>
         </select>
       </label>
@@ -651,7 +651,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v14（网页直连后端）
+    错题学习助手 · 单页版 · v15（识图改 qwen-vl-plus）
   </footer>
 </div>
 
@@ -1507,7 +1507,7 @@ const qwen = {
   base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   apiKey: '',
   textModel: 'qwen-plus',
-  ocrModel: 'qwen-vl-max-latest',
+  ocrModel: 'qwen-vl-plus',
 };
 
 let MODE = 'app';   // 'app' 正式版 | 'test' 测试版
@@ -1559,7 +1559,7 @@ $('mode-switch').addEventListener('click', (e) => {
 
 $('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
 $('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen-plus'; refreshEngines(); });
-$('ocr-model').addEventListener('change', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-max-latest'; refreshEngines(); });
+$('ocr-model').addEventListener('change', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-plus'; refreshEngines(); });
 $('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
 
 // 关掉测试版时，隐藏顶部切换条
