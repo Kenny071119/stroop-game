@@ -218,6 +218,36 @@
     background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
     background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
 
+  /* ===== 步骤进度条 ===== */
+  .stepper { display: flex; align-items: flex-start; margin: 2px 2px 18px; }
+  .stepper .step {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    flex: 0 0 auto; user-select: none;
+  }
+  .stepper .dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    background: var(--bg-soft); border: 1px solid var(--line); color: var(--ink-dim);
+    transition: transform .25s, background .25s, color .25s, box-shadow .25s;
+  }
+  .stepper .lbl { font-size: 11px; color: var(--ink-dim); white-space: nowrap; }
+  .stepper .bar { flex: 1; height: 2px; background: var(--line); border-radius: 2px; margin: 16px 8px 0; transition: background .3s; }
+  .stepper .bar.done { background: linear-gradient(90deg, #5C9BFF, #6A6CFF); }
+  .stepper .step.active .dot {
+    background: linear-gradient(135deg, #5C9BFF, #6A6CFF); color: #fff;
+    border-color: transparent; box-shadow: 0 4px 12px rgba(76,141,255,.45); transform: scale(1.08);
+  }
+  .stepper .step.active .lbl { color: var(--ink); font-weight: 600; }
+  .stepper .step.done .dot { background: var(--brand-soft); color: #9CC1FF; border-color: #2c4a78; }
+  .stepper .step.reached { cursor: pointer; }
+
+  /* ===== 分屏切换 ===== */
+  .screen { display: none; }
+  .screen.active { display: block; animation: screenIn .34s cubic-bezier(.22,.61,.36,1); }
+  @keyframes screenIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+  .nav-bottom { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+
   /* ===== 步骤说明 ===== */
   .step-desc {
     font-size: 13px;
@@ -581,8 +611,17 @@
     </div>
   </section>
 
+  <!-- 步骤进度条 -->
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="1"><span class="dot">1</span><span class="lbl">上传卷子</span></div>
+    <div class="bar"></div>
+    <div class="step" data-step="2"><span class="dot">2</span><span class="lbl">勾选错题</span></div>
+    <div class="bar"></div>
+    <div class="step" data-step="3"><span class="dot">3</span><span class="lbl">错题本</span></div>
+  </div>
+
   <!-- 第一步：上传整张卷子 → 识别 + 拆题 -->
-  <section class="card">
+  <section class="card screen active" id="step1">
     <div class="card-title">
       <span>① 上传卷子，识别题目</span>
       <span class="badge-source" id="recog-source"></span>
@@ -618,20 +657,21 @@
   </section>
 
   <!-- 第二步：勾选做错的题（只显示题号） -->
-  <section class="card" id="step2" style="display:none;">
+  <section class="card screen" id="step2">
     <div class="card-title"><span>② 勾选做错的题</span><span class="badge-source" id="sel-count">已选 0 题</span></div>
     <div class="step-desc">点题号即可<b>勾选/取消</b>做错的题（做对的不用管）。点右侧 👁 可展开看该题内容。</div>
     <div id="q-grid" class="q-grid"></div>
     <div id="q-peek" class="q-peek" style="display:none;"></div>
-    <div class="row" style="margin-top:12px;">
-      <button class="btn-ghost" id="btn-restart">重新上传</button>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn-ghost" id="btn-back-1">← 重新上传</button>
+      <button class="btn-primary" id="btn-to-collection">下一步：整理错题 →</button>
     </div>
   </section>
 
   <!-- 我的错题集 + 问AI -->
-  <section class="card" id="collection" style="display:none;">
+  <section class="card screen" id="collection">
     <div class="card-title">
-      <span>📒 我的错题集</span>
+      <span>③ 我的错题本</span>
       <button class="btn-ghost btn-sm" id="btn-copy">复制全部</button>
     </div>
     <div class="step-desc">每道错题点「💬 问 AI」说说自己<b>哪里不懂</b>，AI 会一步步引导你想出来。聊完点下面「总结我的薄弱点」。</div>
@@ -641,6 +681,10 @@
       <button class="btn-ghost" id="btn-copy-summary" style="display:none;flex:0 0 auto;">📋 复制总结</button>
     </div>
     <div id="weak-summary" class="advice" style="display:none;margin-top:12px;"></div>
+    <div class="row nav-bottom">
+      <button class="btn-ghost" id="btn-back-2">← 上一步</button>
+      <button class="btn-ghost" id="btn-restart">🔄 重新开始</button>
+    </div>
   </section>
 
   <!-- 旧版自动分析区域（保留隐藏，暂不使用）-->
@@ -651,7 +695,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v18（小问级拆题）
+    错题学习助手 · 单页版 · v19（分步向导）
   </footer>
 </div>
 
@@ -972,11 +1016,29 @@ let selected = new Set();    // 勾选为「做错」的题目 id
 let chats = {};              // 每道错题的问AI对话 { [id]: [{role:'user'|'assistant', content}] }
 let openChats = new Set();   // 当前展开了对话框的题目 id
 
+/* 分屏向导：3 步一屏一显，带切换动画 */
+let curStep = 1, reachedStep = 1;
+const SCREENS = { 1: 'step1', 2: 'step2', 3: 'collection' };
+function goStep(n) {
+  curStep = n;
+  reachedStep = Math.max(reachedStep, n);
+  for (const k in SCREENS) $(SCREENS[k]).classList.toggle('active', Number(k) === n);
+  updateStepper();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function updateStepper() {
+  document.querySelectorAll('#stepper .step').forEach(el => {
+    const n = Number(el.getAttribute('data-step'));
+    el.classList.toggle('active', n === curStep);
+    el.classList.toggle('done', n < curStep);
+    el.classList.toggle('reached', n <= reachedStep);
+  });
+  document.querySelectorAll('#stepper .bar').forEach((b, i) => b.classList.toggle('done', curStep > i + 1));
+}
+
 /* 第二步：渲染题号勾选网格（只显示题号） */
 function renderQuestionChips() {
-  const card = $('step2'), grid = $('q-grid');
-  if (!questions.length) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
+  const grid = $('q-grid');
   grid.innerHTML = questions.map(q => `
     <div class="qchip${selected.has(q.id) ? ' checked' : ''}" data-id="${q.id}">
       <span class="qchip-main" data-act="select" data-id="${q.id}">${esc(q.label)}</span>
@@ -1000,12 +1062,14 @@ function peekQuestion(id) {
 
 /* 我的错题集：把勾选的题按题号收拢，每题带「问AI」对话 */
 function renderCollection() {
-  const card = $('collection'), list = $('collection-list');
+  const list = $('collection-list');
   const chosen = questions
     .filter(q => selected.has(q.id))
     .sort((a, b) => a.id - b.id);
-  if (!chosen.length) { card.style.display = 'none'; $('weak-summary').style.display = 'none'; return; }
-  card.style.display = 'block';
+  if (!chosen.length) {
+    list.innerHTML = '<div class="col-empty">还没勾选错题。点「← 上一步」回去，点题号选出你做错的题。</div>';
+    return;
+  }
   list.innerHTML = chosen.map(q => `
     <div class="col-item" data-id="${q.id}">
       <div class="col-row">
@@ -1225,8 +1289,19 @@ function loadQuestions(rawText) {
   $('q-peek').style.display = 'none';
   renderQuestionChips();
   renderCollection();
-  $('step2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  goStep(2);
 }
+
+/* 向导导航 */
+$('stepper').addEventListener('click', (e) => {
+  const stepEl = e.target.closest('.step');
+  if (stepEl && Number(stepEl.getAttribute('data-step')) <= reachedStep) {
+    goStep(Number(stepEl.getAttribute('data-step')));
+  }
+});
+$('btn-to-collection').addEventListener('click', () => { renderCollection(); goStep(3); });
+$('btn-back-1').addEventListener('click', () => goStep(1));
+$('btn-back-2').addEventListener('click', () => goStep(2));
 
 /* ---- 第二步：点题号勾选 / 点 👁 预览 ---- */
 $('q-grid').addEventListener('click', (e) => {
@@ -1353,12 +1428,13 @@ $('btn-copy').addEventListener('click', async () => {
 /* ---- 重新上传：清空一切 ---- */
 $('btn-restart').addEventListener('click', () => {
   images = []; questions = []; selected = new Set(); chats = {}; openChats = new Set();
+  reachedStep = 1;
   renderPreviews();
   $('q-peek').style.display = 'none';
-  $('step2').style.display = 'none';
-  $('collection').style.display = 'none';
   $('weak-summary').style.display = 'none';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $('btn-copy-summary').style.display = 'none';
+  $('paste-input').value = '';
+  goStep(1);
 });
 
 /* =========================================================================
