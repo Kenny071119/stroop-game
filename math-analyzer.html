@@ -651,7 +651,7 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v17（LaTeX清理+模型可切）
+    错题学习助手 · 单页版 · v18（小问级拆题）
   </footer>
 </div>
 
@@ -710,42 +710,62 @@ function cleanOCRText(raw) {
   return t.trim();
 }
 
+/* 拆题：理解「大题(一二三) → 题(1.2.3) → 小问((1)(2))」层级，
+ * 每个小问单独成一个可勾选项，显示时带上母题题干。
+ * 返回 [{ id, label, text }]，id 为全局连续序号（不重复）。 */
 function splitQuestions(raw) {
   const clean = cleanOCRText(raw);
   if (!clean) return [];
-  // 题号：行首  1.  1、  1)  （1）  (1)  第1题  1．
-  const numRe = /^\s*[（(]?\s*(?:第\s*)?(\d{1,3})\s*(?:[.．、)）]|题[.:：]?)\s*/;
-  const lines = clean.split('\n');
-  const items = [];
-  let cur = null;
+  const lines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const secRe = /^([一二三四五六七八九十]+)\s*[、.．]/;            // 大题：一、二、
+  const qRe   = /^(?:第\s*)?(\d{1,3})\s*(?:[.．、]|题[.:：]?)\s*/;  // 题：1. 1、 第1题
+  const subRe = /^[（(]\s*(\d{1,2})\s*[）)]\s*/;                   // 小问：(1) （1）
+
+  const questions = [];     // { sec, num, stem, subs:[{sub,text}] }
+  let curSec = '', curQ = null, curSub = null;
+
   for (const line of lines) {
-    const m = line.match(numRe);
-    if (m) {
-      if (cur) items.push(cur);
-      cur = { num: m[1], text: line.replace(numRe, '').trim() };
-    } else if (cur) {
-      cur.text += (cur.text ? '\n' : '') + line.trim();
-    } else if (line.trim()) {
-      cur = { num: '', text: line.trim() };   // 题号前的零散文字
+    let m;
+    if ((m = line.match(secRe)) && !qRe.test(line)) {            // 大题标题行
+      curSec = m[1]; curQ = null; curSub = null; continue;
+    }
+    if ((m = line.match(qRe))) {                                 // 题
+      curQ = { sec: curSec, num: m[1], stem: line.replace(qRe, '').trim(), subs: [] };
+      questions.push(curQ); curSub = null; continue;
+    }
+    if ((m = line.match(subRe)) && curQ) {                       // 小问
+      curSub = { sub: m[1], text: line.replace(subRe, '').trim() };
+      curQ.subs.push(curSub); continue;
+    }
+    if (curSub) curSub.text += (curSub.text ? '\n' : '') + line; // 续行 → 当前小问
+    else if (curQ) curQ.stem += (curQ.stem ? '\n' : '') + line;  // 续行 → 当前题干
+    else { curQ = { sec: curSec, num: '', stem: line, subs: [] }; questions.push(curQ); } // 题号前零散文字
+  }
+
+  const valid = questions.filter(q => (q.num || q.stem || q.subs.length));
+  if (!valid.length) return [{ id: 1, label: '第1题', text: clean }];
+
+  const multiSec = new Set(valid.map(q => q.sec).filter(Boolean)).size >= 2;
+  const tidy = (s) => String(s || '').replace(/\n{2,}/g, '\n').trim();
+
+  const units = [];
+  let gid = 0;
+  for (const q of valid) {
+    const head = (multiSec && q.sec) ? `${q.sec}、` : '';
+    if (q.subs.length) {
+      for (const s of q.subs) {
+        gid++;
+        const label = `${head}第${q.num || gid}题(${s.sub})`;
+        const text = (q.stem ? tidy(q.stem) + '\n' : '') + `(${s.sub}) ${tidy(s.text)}`;
+        units.push({ id: gid, label, text: text.trim() });
+      }
+    } else {
+      gid++;
+      units.push({ id: gid, label: `${head}第${q.num || gid}题`, text: tidy(q.stem) });
     }
   }
-  if (cur) items.push(cur);
-
-  const tidy = (s) => s.replace(/\n{2,}/g, '\n').trim();
-  // 有清晰题号：只保留带题号的题，丢掉标题/姓名/日期等无号前言
-  const numbered = items.filter(i => i.num && tidy(i.text));
-  if (numbered.length >= 2) {
-    return numbered.map((i, idx) => ({ id: idx + 1, num: i.num, text: tidy(i.text) }));
-  }
-  // 没有题号：退化为按空行分段
-  const blocks = clean.split(/\n\s*\n+/).map(b => b.trim()).filter(Boolean);
-  if (blocks.length >= 2) {
-    return blocks.map((b, i) => ({ id: i + 1, num: String(i + 1), text: b }));
-  }
-  // 实在分不出：整段当成一道题
-  const all = items.filter(i => i.text);
-  if (!all.length) return [];
-  return [{ id: 1, num: all[0].num || '1', text: all.map(i => i.text).join('\n') }];
+  return units;
 }
 
 /* =========================================================================
@@ -880,7 +900,7 @@ const mockTutor = {
   },
   async summarize(items) {
     await new Promise(r => setTimeout(r, 500));
-    const nums = items.map(i => '第' + i.num + '题').join('、');
+    const nums = items.map(i => i.label).join('、');
     return '（本地示例·未接 AI）你这次就 ' + nums + ' 提了问。\n' +
       '从提问看，常见卡点可能是：1) 不知道第一步从哪下手；2) 运算/符号处理。\n' +
       '建议：每题先用一句话说清「求什么、已知什么」再动笔。\n' +
@@ -932,7 +952,7 @@ function createTutor(config) {
     async summarize(items) {
       const transcript = items.map(it => {
         const asks = it.messages.filter(m => m.role === 'user').map(m => '  学生问：' + m.content).join('\n');
-        return `【第${it.num}题】${it.question}\n${asks}`;
+        return `【${it.label}】${it.question}\n${asks}`;
       }).join('\n\n');
       return chat([{ role: 'system', content: SUM_SYS }, { role: 'user', content: transcript }]);
     },
@@ -959,7 +979,7 @@ function renderQuestionChips() {
   card.style.display = 'block';
   grid.innerHTML = questions.map(q => `
     <div class="qchip${selected.has(q.id) ? ' checked' : ''}" data-id="${q.id}">
-      <span class="qchip-main" data-act="select" data-id="${q.id}">第${esc(q.num)}题</span>
+      <span class="qchip-main" data-act="select" data-id="${q.id}">${esc(q.label)}</span>
       <span class="qchip-eye" data-act="peek" data-id="${q.id}">👁</span>
     </div>`).join('');
   updateSelCount();
@@ -975,7 +995,7 @@ function peekQuestion(id) {
   const box = $('q-peek');
   if (!q) { box.style.display = 'none'; return; }
   box.style.display = 'block';
-  box.innerHTML = `<span class="peek-num">第${esc(q.num)}题</span>${esc(q.text)}`;
+  box.innerHTML = `<span class="peek-num">${esc(q.label)}</span>${esc(q.text)}`;
 }
 
 /* 我的错题集：把勾选的题按题号收拢，每题带「问AI」对话 */
@@ -983,13 +1003,13 @@ function renderCollection() {
   const card = $('collection'), list = $('collection-list');
   const chosen = questions
     .filter(q => selected.has(q.id))
-    .sort((a, b) => (parseInt(a.num, 10) || 0) - (parseInt(b.num, 10) || 0));
+    .sort((a, b) => a.id - b.id);
   if (!chosen.length) { card.style.display = 'none'; $('weak-summary').style.display = 'none'; return; }
   card.style.display = 'block';
   list.innerHTML = chosen.map(q => `
     <div class="col-item" data-id="${q.id}">
       <div class="col-row">
-        <span class="col-num">第${esc(q.num)}题</span>
+        <span class="col-num">${esc(q.label)}</span>
         <span class="col-text">${esc(q.text)}</span>
         <span class="col-remove" data-id="${q.id}" title="移出错题集">×</span>
       </div>
@@ -1284,7 +1304,7 @@ async function sendChat(id) {
 $('btn-summarize').addEventListener('click', async () => {
   const items = questions
     .filter(q => selected.has(q.id) && chats[q.id] && chats[q.id].some(m => m.role === 'user'))
-    .map(q => ({ num: q.num, question: q.text, messages: chats[q.id] }));
+    .map(q => ({ label: q.label, question: q.text, messages: chats[q.id] }));
   if (!items.length) { alert('先对至少一道错题「问 AI」说说哪里不懂，再来总结～'); return; }
   const box = $('weak-summary');
   box.style.display = 'block';
@@ -1317,9 +1337,9 @@ $('btn-copy-summary').addEventListener('click', async () => {
 $('btn-copy').addEventListener('click', async () => {
   const chosen = questions
     .filter(q => selected.has(q.id))
-    .sort((a, b) => (parseInt(a.num, 10) || 0) - (parseInt(b.num, 10) || 0));
+    .sort((a, b) => a.id - b.id);
   if (!chosen.length) { alert('错题集还是空的'); return; }
-  const text = chosen.map(q => `第${q.num}题：${q.text}`).join('\n\n');
+  const text = chosen.map(q => `${q.label}：${q.text}`).join('\n\n');
   try {
     await navigator.clipboard.writeText(text);
     const btn = $('btn-copy'); const o = btn.textContent;
