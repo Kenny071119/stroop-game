@@ -407,6 +407,18 @@
     font-size: 14px;
   }
   .col-empty { font-size: 13px; color: var(--ink-dim); }
+  .btn-view {
+    background: #FFF6E6; color: #9A6B16; border: 1px solid #F0DCB0;
+    font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+    margin-left: 8px;
+  }
+  /* 看原图弹层 */
+  .img-modal { position: fixed; inset: 0; z-index: 100; background: rgba(28,22,14,.92); display: flex; flex-direction: column; }
+  .img-modal-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; color: #fff; font-size: 14px; flex: 0 0 auto; }
+  .img-modal-close { background: rgba(255,255,255,.18); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .img-modal-body { flex: 1; overflow: auto; padding: 0 12px 16px; -webkit-overflow-scrolling: touch; }
+  .img-modal-body img { width: 100%; border-radius: 8px; margin-bottom: 12px; display: block; }
+  .img-modal-tip { color: rgba(255,255,255,.7); font-size: 12px; text-align: center; padding: 0 0 10px; }
   .uploader { display: flex; flex-direction: column; gap: 10px; }
   .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .upload-btn-main { padding: 26px 12px; }
@@ -671,7 +683,8 @@
   <!-- 第二步：勾选做错的题（只显示题号） -->
   <section class="card screen" id="step2">
     <div class="card-title"><span>② 勾选做错的题</span><span class="badge-source" id="sel-count">已选 0 题</span></div>
-    <div class="step-desc">点题号即可<b>勾选/取消</b>做错的题（做对的不用管）。点右侧 👁 可展开看该题内容。</div>
+    <div class="step-desc">点题号即可<b>勾选/取消</b>做错的题（做对的不用管）。点右侧 👁 看该题文字，点「🖼 看原图」看整张卷子。</div>
+    <div style="margin-bottom:10px;"><button class="btn-view" id="btn-view-step2">🖼 看卷子原图</button></div>
     <div id="q-grid" class="q-grid"></div>
     <div id="q-peek" class="q-peek" style="display:none;"></div>
     <div class="row" style="margin-top:14px;">
@@ -707,8 +720,15 @@
   </section>
 
   <footer>
-    错题学习助手 · 单页版 · v24（问AI 带题目原图）
+    错题学习助手 · 单页版 · v25（看原图）
   </footer>
+</div>
+
+<!-- 看卷子原图弹层 -->
+<div id="img-modal" class="img-modal" style="display:none;">
+  <div class="img-modal-bar"><span>📄 卷子原图</span><button id="img-modal-close" class="img-modal-close">✕ 关闭</button></div>
+  <div class="img-modal-tip">手机上可双指放大查看</div>
+  <div class="img-modal-body" id="img-modal-body"></div>
 </div>
 
 <script>
@@ -1114,6 +1134,7 @@ function renderCollection() {
       </div>
       <div class="col-actions">
         <button class="btn-ask" data-id="${q.id}">💬 问 AI（说说哪里不懂）</button>
+        ${images.length ? `<button class="btn-view" data-act="view" data-id="${q.id}">🖼 看原图</button>` : ''}
       </div>
       <div class="chat" data-id="${q.id}" style="display:${openChats.has(q.id) ? 'block' : 'none'}">
         <div class="chat-log" data-id="${q.id}">${renderChatLog(q.id)}</div>
@@ -1339,6 +1360,16 @@ $('btn-to-collection').addEventListener('click', () => { renderCollection(); goS
 $('btn-back-1').addEventListener('click', () => goStep(1));
 $('btn-back-2').addEventListener('click', () => goStep(2));
 
+/* 看卷子原图弹层 */
+function openImgModal() {
+  if (!images.length) { alert('这次没有上传图片（用的是粘贴文字）'); return; }
+  $('img-modal-body').innerHTML = images.map(im => `<img src="${im.dataURL}" alt="卷子原图">`).join('');
+  $('img-modal').style.display = 'flex';
+}
+$('btn-view-step2').addEventListener('click', openImgModal);
+$('img-modal-close').addEventListener('click', () => { $('img-modal').style.display = 'none'; });
+$('img-modal').addEventListener('click', (e) => { if (e.target.id === 'img-modal') $('img-modal').style.display = 'none'; });
+
 /* ---- 第二步：点题号勾选 / 点 👁 预览 ---- */
 $('q-grid').addEventListener('click', (e) => {
   const act = e.target.getAttribute('data-act');
@@ -1361,7 +1392,9 @@ $('collection-list').addEventListener('click', (e) => {
   const t = e.target;
   const id = Number(t.getAttribute('data-id'));
   if (!id) return;
-  if (t.classList.contains('col-remove')) {
+  if (t.classList.contains('btn-view')) {
+    openImgModal();
+  } else if (t.classList.contains('col-remove')) {
     selected.delete(id);
     openChats.delete(id);
     const chip = $('q-grid').querySelector(`.qchip[data-id="${id}"]`);
