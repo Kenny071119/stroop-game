@@ -683,6 +683,7 @@
   .hw-check { width:22px; height:22px; flex:0 0 auto; border:2px solid #CFC4B2; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent; }
   .hw-item.done .hw-check { background:var(--good); border-color:var(--good); color:#fff; }
   .subject-tag { font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; flex:0 0 auto; }
+  .src-tag { font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px; flex:0 0 auto; white-space:nowrap; }
   .hw-text { flex:1; font-size:14px; line-height:1.5; word-break:break-word; }
   .hw-item.done .hw-text { text-decoration:line-through; }
   .hw-del { flex:0 0 auto; color:var(--ink-dim); cursor:pointer; font-size:14px; padding:2px 6px; }
@@ -918,6 +919,19 @@
   .te-arrow { color:var(--brand-ink); font-weight:800; flex:0 0 auto; }
   .te-ico-img { width:46px; height:46px; flex:0 0 auto; object-fit:contain; border-radius:12px; }
   .sc-ico-img { width:52px; height:52px; object-fit:contain; border-radius:14px; }
+  /* ===== 图标动态效果：轻微浮动（错开）+ 点按回弹 ===== */
+  @keyframes icoFloat { 0%,100%{ transform:translateY(0) rotate(0) } 50%{ transform:translateY(-4px) rotate(-2deg) } }
+  @keyframes icoPop { 0%{ transform:scale(1) } 40%{ transform:scale(1.22) rotate(-7deg) } 100%{ transform:scale(1) } }
+  .te-ico-img, .sc-ico-img, .fg-fox-img { animation:icoFloat 2.8s ease-in-out infinite; }
+  .task-entry:nth-child(2) .te-ico-img { animation-delay:.5s; }
+  .task-entry:nth-child(3) .te-ico-img { animation-delay:1s; }
+  .study-card:nth-child(2) .sc-ico-img { animation-delay:.6s; }
+  .study-card:nth-child(3) .sc-ico-img { animation-delay:1.2s; }
+  .task-entry:active .te-ico-img, .study-card:active .sc-ico-img { animation:icoPop .5s; }
+  .home-pet-ava .hpa-img, .buddy-big .pa-img, .joined-pet .pa-img { animation:petbob 3s ease-in-out infinite; }
+  .badge-item.got .badge-img { animation:icoFloat 3.2s ease-in-out infinite; }
+  .dex-item:active .pa-emoji, .pf-food:active { animation:icoPop .45s; }
+  @media (prefers-reduced-motion: reduce) { .te-ico-img,.sc-ico-img,.fg-fox-img,.hpa-img,.buddy-big .pa-img,.joined-pet .pa-img,.badge-item .badge-img { animation:none !important; } }
   /* ===== 选择伙伴（页1）===== */
   .ps-bigtitle { text-align:center; font-size:22px; font-weight:800; color:var(--ink); margin:6px 0 4px; }
   .ps-bigsub { text-align:center; font-size:13px; color:var(--ink-dim); margin-bottom:18px; }
@@ -1291,6 +1305,14 @@
         <select id="hw-add-subject" class="field">
           <option>语文</option><option>数学</option><option>英语</option><option>其他</option>
         </select>
+        <select id="hw-add-source" class="field" title="作业来源">
+          <option value="self">✏️ 自己记</option>
+          <option value="review">🔁 复习计划</option>
+          <option value="teacher">👩‍🏫 老师布置</option>
+          <option value="exam">📄 考试</option>
+        </select>
+      </div>
+      <div class="hw-add">
         <input id="hw-add-input" class="field" placeholder="加一项作业，如：听写第3单元生字" spellcheck="false">
         <button class="btn-primary btn-sm" id="hw-add-btn" style="flex:0 0 auto;">添加</button>
       </div>
@@ -3611,7 +3633,7 @@ $('hw-unit-pick').addEventListener('click', (e) => {
   const c = e.target.closest('.unit-chip'); if (!c) return;
   const key = c.dataset.key, bk = c.dataset.book, u = Number(c.dataset.unit);
   const uname = TEXTBOOKS[key].books[bk].units[u - 1];
-  addHomeworkItems($('hw-add-subject').value, ['第' + u + '单元 ' + uname]);
+  addHomeworkItems($('hw-add-subject').value, ['第' + u + '单元 ' + uname], 'review');   // 从教材选单元 = 复习计划
   markTBLearned(key, bk, u);   // 顺便把这个单元标记为"已学"
   $('hw-unit-pick').style.display = 'none';
   renderTextbook(); renderHome();
@@ -3623,6 +3645,14 @@ const HW_TAG_STYLE = {
   '语文': 'background:#FBE9E7;color:#C0563E', '数学': 'background:#E9F1FF;color:#2E6BD6',
   '英语': 'background:#EAF7EC;color:#3C8C44', '其他': 'background:#F0ECF8;color:#7558B0',
 };
+// 作业来源（老师端举手 / 考试 以后只需创建 source:'teacher'/'exam' 的作业项即可接入）
+const HW_SOURCES = {
+  self:    { name: '自己记',   icon: '✏️',  style: 'background:#EEF3F8;color:#5B7A99' },
+  review:  { name: '复习计划', icon: '🔁',  style: 'background:#EAF7EC;color:#3C8C44' },
+  teacher: { name: '老师布置', icon: '👩‍🏫', style: 'background:#FFF1E0;color:#C0792B' },
+  exam:    { name: '考试',     icon: '📄',  style: 'background:#FBE9E7;color:#C0563E' },
+};
+function hwSourceOf(it) { return HW_SOURCES[it && it.source] ? it.source : 'self'; }   // 旧数据无 source → 自己记
 function ymd(d) { const p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
 function todayStr() { return ymd(new Date()); }
 function shiftDate(s, days) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + days); return ymd(d); }
@@ -3631,9 +3661,10 @@ let hwDate = todayStr();
 function loadHomework() { return DB.read(pKey('homework'), {}); }   // { 'YYYY-MM-DD': [ {id,subject,text,done} ] }
 function saveHomeworkDay(date, items) { const all = loadHomework(); all[date] = items; DB.write(pKey('homework'), all); }
 function getDayItems(date) { return loadHomework()[date] || []; }
-function addHomeworkItems(subject, texts) {
+function addHomeworkItems(subject, texts, source) {
   const items = getDayItems(hwDate);
-  texts.map(t => (t || '').trim()).filter(Boolean).forEach(t => items.push({ id: genId(), subject, text: t, done: false }));
+  const src = HW_SOURCES[source] ? source : 'self';
+  texts.map(t => (t || '').trim()).filter(Boolean).forEach(t => items.push({ id: genId(), subject, text: t, done: false, source: src }));
   saveHomeworkDay(hwDate, items); renderHomework();
 }
 function toggleHwDone(id) {
@@ -3675,6 +3706,7 @@ function renderHomework() {
         <div class="hw-item${i.done ? ' done' : ''}" data-id="${i.id}">
           <span class="hw-check" data-act="toggle" data-id="${i.id}">✓</span>
           <span class="subject-tag" style="${HW_TAG_STYLE[i.subject] || HW_TAG_STYLE['其他']}">${i.subject}</span>
+          <span class="src-tag" style="${HW_SOURCES[hwSourceOf(i)].style}">${HW_SOURCES[hwSourceOf(i)].icon} ${HW_SOURCES[hwSourceOf(i)].name}</span>
           <span class="hw-text">${esc(i.text)}</span>
           <span class="hw-del" data-act="del" data-id="${i.id}">✕</span>
         </div>`).join('')}
@@ -3684,7 +3716,7 @@ function renderHomework() {
 $('hw-add-btn').addEventListener('click', () => {
   const v = $('hw-add-input').value;
   if (!v.trim()) return;
-  addHomeworkItems($('hw-add-subject').value, [v]);
+  addHomeworkItems($('hw-add-subject').value, [v], $('hw-add-source').value);
   $('hw-add-input').value = '';
 });
 $('hw-add-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('hw-add-btn').click(); });
@@ -3734,7 +3766,7 @@ async function recognizeHomeworkPhoto(dataURL) {
 }
 function addClassifiedHomework(items) {
   const day = getDayItems(hwDate);
-  items.forEach(it => day.push({ id: genId(), subject: it.subject, text: it.text, done: false }));
+  items.forEach(it => day.push({ id: genId(), subject: it.subject, text: it.text, done: false, source: 'teacher' }));   // 拍照=老师布置
   saveHomeworkDay(hwDate, day); renderHomework();
 }
 $('hw-photo').addEventListener('change', async (e) => {
@@ -3756,7 +3788,7 @@ $('hw-photo').addEventListener('change', async (e) => {
     const raw = await recognizeImage({ file, dataURL });
     const lines = cleanOCRText(raw).split(/\n+/).map(s => s.replace(/^[\s\-•·.、)）\d]+/, '').trim()).filter(s => s.length >= 2);
     if (!lines.length) alert('小狐狸没看清，换张清楚点的再拍～');
-    else addHomeworkItems($('hw-add-subject').value, lines);
+    else addHomeworkItems($('hw-add-subject').value, lines, 'teacher');
     label.textContent = old;
   } catch (err) { alert('小狐狸没看清：' + (err.message || err)); label.textContent = old; }
 });
