@@ -966,6 +966,30 @@
   .lvup-title { font-size:24px; font-weight:800; color:var(--fox-deep); }
   .lvup-lv { font-size:18px; font-weight:800; color:var(--brand-ink); margin-top:4px; }
   .lvup-say { font-size:14px; color:var(--ink-dim); margin-top:8px; }
+  /* 宝物形象：单图(pa-img)覆盖在 emoji 占位上；缺图则只剩 emoji */
+  .pa-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  .home-pet-ava, .joined-pet, .buddy-big, .lvup-pet { position:relative; overflow:hidden; }
+  .psc-ava { position:relative; width:84px; height:84px; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .hs-ava { position:relative; width:56px; height:56px; margin:0 auto; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .lvup-pet { width:120px; height:120px; margin:2px auto; display:flex; align-items:center; justify-content:center; }
+  /* ===== 打卡日历 ===== */
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .cal-dow { text-align:center; font-size:11px; font-weight:700; color:var(--ink-3); padding-bottom:2px; }
+  .cal-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:9px; color:var(--ink-dim); background:var(--bg-soft); }
+  .cal-cell.empty { background:transparent; }
+  .cal-cell.done { background:var(--brand); color:#fff; }
+  .cal-cell.partial { background:#FCE3A6; color:#9A6B16; }
+  .cal-cell.today { box-shadow:0 0 0 2px var(--fox-deep); }
+  /* ===== 成就徽章 ===== */
+  .badge-count { font-size:13px; font-weight:800; color:var(--brand-ink); }
+  .badge-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .badge-item { text-align:center; padding:12px 6px 10px; border-radius:14px; background:var(--bg-soft); border:1px solid var(--line); }
+  .badge-item.got { background:linear-gradient(160deg,#FFF6E6,#fff); border-color:#F0DCB0; }
+  .badge-img { width:46px; height:46px; object-fit:contain; filter:grayscale(1) opacity(.4); }
+  .badge-item.got .badge-img { filter:none; }
+  .badge-name { font-size:12.5px; font-weight:800; color:var(--ink); margin-top:6px; }
+  .badge-item:not(.got) .badge-name { color:var(--ink-3); }
+  .badge-desc { font-size:10.5px; color:var(--ink-dim); margin-top:2px; line-height:1.35; }
 
   /* 每个功能页的小狐狸引导语 */
   .fox-guide { display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#FFF6E9,#FFEFD9); border:1px solid #F3E2C8; border-radius:14px; padding:10px 13px; margin:0 0 14px; }
@@ -1123,7 +1147,8 @@
     <div class="view-title">📚 学习</div>
     <div class="fox-guide"><img class="fg-fox-img" src="icons/errors.png" alt="小狐狸"><span class="fg-text"><b>今天想学点什么？</b>小狐狸都在这儿陪着你～</span></div>
     <div class="study-grid">
-      <div class="study-card sc-err" data-go="mistakes"><span class="sc-ico">📝</span><div class="sc-name">错题辅导</div><div class="sc-sub">拍卷子，一步步教懂</div></div>
+      <!-- 错题辅导(搜题)入口已暂时隐藏；加回只需恢复下面这张卡：
+      <div class="study-card sc-err" data-go="mistakes"><span class="sc-ico">📝</span><div class="sc-name">错题辅导</div><div class="sc-sub">拍卷子，一步步教懂</div></div> -->
       <div class="study-card sc-dict" data-go="dictation"><span class="sc-ico">🔊</span><div class="sc-name">听写小帮手</div><div class="sc-sub">小狐狸报读，你来写</div></div>
       <div class="study-card sc-hw" data-go="homework"><span class="sc-ico">📒</span><div class="sc-name">今日任务</div><div class="sc-sub">记作业、打勾、攒经验</div></div>
     </div>
@@ -1352,7 +1377,14 @@
     <section class="card">
       <div class="card-title"><span>🔥 打卡 · 近 7 天</span></div>
       <div id="progress-body"></div>
-      <div class="hint" style="margin-top:10px;">更多趋势（错题薄弱点变化、AI 本周小结）下个版本加上～</div>
+    </section>
+    <section class="card">
+      <div class="card-title"><span>📅 打卡日历</span></div>
+      <div id="calendar-body"></div>
+    </section>
+    <section class="card">
+      <div class="card-title"><span>🏅 成就徽章</span><span class="badge-count" id="badge-count"></span></div>
+      <div id="badge-body"></div>
     </section>
     <div class="page-fox"><img src="icons/tree.png" alt="小狐狸"></div>
   </div>
@@ -3250,6 +3282,13 @@ const TASK_REWARDS = [
   { icon: '🔊', name: '练听写 / 讲错题', xp: '陪你一起练' },
 ];
 function petOf(id) { return PETS.find(p => p.id === id) || null; }
+// 形象：优先单图 icons/pets/<id>.png，加载失败/缺图自动回退 emoji（精灵层透明）
+function petFace(id) {
+  const p = petOf(id), e = p ? p.emoji : '🐾';
+  return '<span class="pa-emoji">' + e + '</span>'
+    + '<img class="pa-img" alt="" src="icons/pets/' + (id || 'x') + '.png"'
+    + ' onload="this.previousElementSibling.style.display=\'none\'" onerror="this.remove()">';
+}
 function selectedPetId() { const id = DB.read(pKey('selectedPet'), null); return petOf(id) ? id : null; }
 function petName() { const id = selectedPetId(); const n = DB.read(pKey('petName'), ''); return n || (petOf(id) ? petOf(id).name : ''); }
 function ownedPets() { const a = DB.read(pKey('ownedPets'), []); return Array.isArray(a) ? a : []; }
@@ -3272,7 +3311,7 @@ function renamePet() {
 /* ---- 升级弹窗（页5）---- */
 function showLevelUp(li) {
   const p = petOf(selectedPetId());
-  if ($('lvup-pet')) $('lvup-pet').textContent = p ? p.emoji : '🎉';
+  if ($('lvup-pet')) $('lvup-pet').innerHTML = p ? petFace(p.id) : '🎉';
   if ($('lvup-lv')) $('lvup-lv').textContent = 'Lv.' + li.level + ' ' + li.name;
   if ($('levelup-modal')) $('levelup-modal').style.display = 'flex';
 }
@@ -3289,7 +3328,7 @@ function renderPetSelect() {
   if (!_selPending) _selPending = selectedPetId();
   grid.innerHTML = PETS.map(p => '<button class="petsel-card' + (p.id === _selPending ? ' sel' : '') + '" style="--tint:' + p.tint + '" onclick="petSelectPick(\'' + p.id + '\')">'
     + (p.id === _selPending ? '<span class="psc-check">✓</span>' : '')
-    + '<div class="psc-ava">' + p.emoji + '</div><div class="psc-name">' + p.name + '</div><div class="psc-type">' + p.type + '</div></button>').join('');
+    + '<div class="psc-ava">' + petFace(p.id) + '</div><div class="psc-name">' + p.name + '</div><div class="psc-type">' + p.type + '</div></button>').join('');
   $('petsel-confirm').disabled = !_selPending;
 }
 /* ---- 页2：伙伴加入成功 ---- */
@@ -3300,7 +3339,7 @@ function renderPetJoined() {
     '<div class="joined-burst">🎉</div>'
     + '<div class="joined-title">太棒了！</div>'
     + '<div class="joined-sub">你的学习伙伴已加入！</div>'
-    + '<div class="joined-pet" style="--tint:' + p.tint + '">' + p.emoji + '</div>'
+    + '<div class="joined-pet" style="--tint:' + p.tint + '">' + petFace(p.id) + '</div>'
     + '<div class="joined-name">' + esc(petName()) + ' · ' + p.name + '</div>'
     + '<button class="btn-primary" style="width:100%;margin-top:20px;" onclick="go(\'home\')">开始学习之旅 →</button>';
 }
@@ -3312,7 +3351,7 @@ function renderMyBuddy() {
   const pct = Math.round(li.into / li.need * 100);
   host.innerHTML =
     '<div class="buddy-stage" style="--tint:' + p.tint + '">'
-    + '<div class="buddy-big">' + p.emoji + '</div>'
+    + '<div class="buddy-big">' + petFace(p.id) + '</div>'
     + '<div class="pet-name-row"><span class="pet-name">' + esc(petName()) + '</span>'
     + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
     + '<div class="pet-stage-name">' + p.name + ' · ' + p.type + '</div>'
@@ -3337,7 +3376,7 @@ function renderPetHouse() {
         const owned = own.indexOf(p.id) >= 0, isCur = p.id === cur;
         return '<div class="house-slot' + (owned ? ' owned' : ' locked') + (isCur ? ' cur' : '') + '"'
           + (owned && !isCur ? ' onclick="applyPet(\'' + p.id + '\');renderPetHouse();renderHome();showToast(\'已换成 ' + p.name + '\')"' : '')
-          + '><div class="hs-ava">' + (owned ? p.emoji : '🔒') + '</div>'
+          + '><div class="hs-ava">' + (owned ? petFace(p.id) : '<span class="pa-emoji">🔒</span>') + '</div>'
           + '<div class="hs-name">' + (owned ? p.name : '未解锁') + '</div>'
           + (isCur ? '<div class="hs-tag cur">使用中</div>' : (owned ? '<div class="hs-tag">点击换上</div>' : '<div class="hs-tag lock">选过即解锁</div>'))
           + '</div>';
@@ -3376,7 +3415,7 @@ function renderHome() {
   if (!id) { go('petselect'); return; }   // 没选伙伴 → 先去选择页
   const p = petOf(id), li = syncPetStats(), st = streakCount();
   const prof = curProfile();
-  if ($('home-pet-ava')) $('home-pet-ava').textContent = p.emoji;
+  if ($('home-pet-ava')) $('home-pet-ava').innerHTML = petFace(id);
   if ($('home-avatar')) $('home-avatar').textContent = (prof && prof.emoji) ? prof.emoji : '🦊';
   if ($('home-name')) $('home-name').textContent = prof ? prof.name : '小朋友';
   if ($('hero-greet')) $('hero-greet').textContent = foxState().greet;
@@ -3389,7 +3428,8 @@ function renderHome() {
   const tasks = [
     { ico: '📝', name: '记作业 · 做作业', sub: items.length ? ('今天 ' + done + ' / ' + items.length + ' 完成') : '还没记今天的作业', go: 'homework' },
     { ico: '🔊', name: '练听写', sub: '拍生字表，小狐狸来报读', go: 'dictation' },
-    { ico: '📖', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
+    // 错题讲解(搜题)入口已暂时隐藏 —— view-mistakes 代码保留，加回只需恢复这一行：
+    // { ico: '📖', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
   ];
   $('home-tasks').innerHTML = tasks.map(t => '<div class="task-entry" data-go="' + t.go + '"><span class="te-ico">' + t.ico + '</span>'
     + '<div class="te-txt"><div class="te-name">' + t.name + '</div><div class="te-sub">' + esc(t.sub) + '</div></div>'
@@ -3457,6 +3497,52 @@ function renderProgress() {
   $('progress-body').innerHTML = head
     + '<div style="display:flex;gap:6px;margin:12px 0 8px;">' + cells + '</div>'
     + '<div class="hint">✅ 当天作业全做完 ｜ ○ 做了一部分 ｜ · 没记作业</div>';
+  if ($('calendar-body')) $('calendar-body').innerHTML = renderCalendarHTML();
+  if ($('badge-body')) renderBadges();
+}
+
+/* ===== 成长趋势：当月打卡日历 ===== */
+function renderCalendarHTML() {
+  const today = new Date(todayStr() + 'T00:00:00');
+  const y = today.getFullYear(), m = today.getMonth();
+  const startDow = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const wk = ['日', '一', '二', '三', '四', '五', '六'];
+  let cells = wk.map(w => '<div class="cal-dow">' + w + '</div>').join('');
+  for (let i = 0; i < startDow; i++) cells += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= days; d++) {
+    const ds = ymd(new Date(y, m, d)), st = dayStatus(ds);
+    const cls = (st === 'done' ? 'done' : st === 'partial' ? 'partial' : 'none') + (ds === todayStr() ? ' today' : '');
+    cells += '<div class="cal-cell ' + cls + '">' + d + '</div>';
+  }
+  return '<div class="cal-grid">' + cells + '</div>'
+    + '<div class="hint" style="margin-top:8px;">绿色=作业全做完 ｜ 黄色=做了一部分</div>';
+}
+
+/* ===== 成就徽章：里程碑达成自动解锁（条件从真实数据推算）===== */
+function totalHwDone() { const hw = loadHomework(); let n = 0; Object.keys(hw).forEach(d => { n += (hw[d] || []).filter(x => x.done).length; }); return n; }
+function totalUnitsLearned() { const tb = loadTB(); let n = 0; Object.keys(tb).forEach(s => { const t = tb[s]; if (t && Array.isArray(t.done)) n += t.done.length; }); return n; }
+const BADGES = [
+  { id: 'first',   icon: 'b_star.png',     name: '初次见面', desc: '选择第一个学习伙伴', test: () => !!selectedPetId() },
+  { id: 'streak3', icon: 'b_persist.png',  name: '坚持之星', desc: '连续打卡 3 天',      test: () => streakCount() >= 3 },
+  { id: 'streak7', icon: 'b_king.png',     name: '坚持之王', desc: '连续打卡 7 天',      test: () => streakCount() >= 7 },
+  { id: 'hw30',    icon: 'b_progress.png', name: '勤学小能手', desc: '累计完成 30 项作业', test: () => totalHwDone() >= 30 },
+  { id: 'units8',  icon: 'b_reading.png',  name: '课文达人', desc: '学过 8 个单元/课文',  test: () => totalUnitsLearned() >= 8 },
+  { id: 'lv5',     icon: 'b_calc.png',     name: '学习达人', desc: '升到 Lv.5',          test: () => levelInfo(totalXP()).level >= 5 },
+];
+function renderBadges() {
+  const got = BADGES.map(b => ({ b: b, ok: !!b.test() }));
+  // 新解锁的徽章弹一次祝贺
+  const seen = DB.read(pKey('badgeSeen'), []);
+  const seenArr = Array.isArray(seen) ? seen : [];
+  got.filter(x => x.ok && seenArr.indexOf(x.b.id) < 0).forEach(x => showToast('🏅 解锁新徽章「' + x.b.name + '」！'));
+  DB.write(pKey('badgeSeen'), got.filter(x => x.ok).map(x => x.b.id));
+  $('badge-count').textContent = got.filter(x => x.ok).length + ' / ' + BADGES.length;
+  $('badge-body').innerHTML = '<div class="badge-grid">'
+    + got.map(x => '<div class="badge-item' + (x.ok ? ' got' : '') + '">'
+        + '<img class="badge-img" src="icons/' + x.b.icon + '" alt="">'
+        + '<div class="badge-name">' + x.b.name + '</div>'
+        + '<div class="badge-desc">' + (x.ok ? x.b.desc : '🔒 ' + x.b.desc) + '</div></div>').join('')
+    + '</div>';
 }
 
 /* ---- 从教材选单元 → 生成作业项 + 自动更新教材进度 ---- */
