@@ -2152,7 +2152,7 @@ function renderCollection() {
     .filter(q => selected.has(q.id))
     .sort((a, b) => a.id - b.id);
   if (!chosen.length) {
-    list.innerHTML = '<div class="empty-fox"><img src="icons/pets/' + (selectedPetId() || 'fox') + '.png" alt=""><div class="ef-text">还没选错题呢～<br>点「← 上一步」回去，点一点你做错的题，小狐狸来帮你讲！</div></div>';
+    list.innerHTML = '<div class="empty-fox"><img src="icons/pets/' + (selectedPetId() || 'fox') + '.png" alt=""><div class="ef-text">还没选错题呢～<br>点「← 上一步」回去，点一点你做错的题，' + petN() + '来帮你讲！</div></div>';
     return;
   }
   list.innerHTML = chosen.map(q => `
@@ -3305,7 +3305,9 @@ const PETS = [
   { id: 'squirrel', name: '松鼠探险家', nick: '小松鼠', emoji: '🐿️', type: '探索型', skill: '探索经验加成 +5%', tint: '#FBEDDD' },
 ];
 // 伙伴昵称：用户取了名字就用名字，否则用该动物昵称（默认狐狸=小狐狸）。所有"小狐狸"文字都改用它
-function petN() { const c = DB.read(pKey('petName'), ''); const p = petOf(selectedPetId()); return c || (p ? p.nick : '小狐狸'); }
+// 自定义名：只有当存的名字不是任何"物种默认名"时才算用户自己取的；否则视为空 → 名字跟随当前动物
+function customPetName() { const s = DB.read(pKey('petName'), ''); return (s && !PETS.some(x => x.name === s)) ? s : ''; }
+function petN() { const c = customPetName(), p = petOf(selectedPetId()); return c || (p ? p.nick : '小狐狸'); }
 // 把 HTML 里 class="pn" 的占位文字设为当前昵称（go/换伙伴时调用）
 function applyPetText() { document.querySelectorAll('.pn').forEach(el => { el.textContent = petN(); }); }
 const TASK_REWARDS = [
@@ -3330,7 +3332,7 @@ function applyPetIcons() {
   document.querySelectorAll('[data-petimg]').forEach(el => { el.src = av; });
 }
 function selectedPetId() { const id = DB.read(pKey('selectedPet'), null); return petOf(id) ? id : null; }
-function petName() { const id = selectedPetId(); const n = DB.read(pKey('petName'), ''); return n || (petOf(id) ? petOf(id).name : ''); }
+function petName() { const c = customPetName(), p = petOf(selectedPetId()); return c || (p ? p.name : ''); }
 function ownedPets() { const a = DB.read(pKey('ownedPets'), []); return Array.isArray(a) ? a : []; }
 // 把真实经验镜像进原型要求的键（每次渲染时同步）
 function syncPetStats() { const xp = totalXP(), li = levelInfo(xp); DB.write(pKey('studentXP'), xp); DB.write(pKey('petXP'), li.into); DB.write(pKey('petLevel'), li.level); return li; }
@@ -3338,7 +3340,7 @@ function syncPetStats() { const xp = totalXP(), li = levelInfo(xp); DB.write(pKe
 function applyPet(id) {
   const p = petOf(id); if (!p) return;
   DB.write(pKey('selectedPet'), id);
-  if (!DB.read(pKey('petName'), '')) DB.write(pKey('petName'), p.name);
+  // 不再把物种默认名写进 petName（否则换动物时名字会卡在旧物种）；只有用户在 renamePet 里取的名才存
   const own = ownedPets(); if (own.indexOf(id) < 0) { own.push(id); DB.write(pKey('ownedPets'), own); }
   DB.write(pKey('lvSeen'), levelInfo(totalXP()).level);
   syncPetStats();
