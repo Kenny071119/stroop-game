@@ -909,7 +909,9 @@
   .xp-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
   .xp-lv { font-size:15px; font-weight:800; color:var(--brand-ink); }
   .xp-num { font-size:13px; font-weight:800; color:var(--ink-dim); }
-  .sec-title { font-size:15px; font-weight:800; color:var(--ink); margin:4px 2px 10px; }
+  .sec-title { font-size:15px; font-weight:800; color:var(--ink); margin:14px 2px 10px; }
+  .home-greetbar { font-size:16px; font-weight:800; color:var(--ink); margin:6px 2px 12px; }
+  .home-greetbar .fb-name { cursor:pointer; color:var(--brand-ink); }
   .task-entry { display:flex; align-items:center; gap:12px; background:var(--card); border:var(--card-border); border-radius:var(--inner-radius); padding:13px 14px; margin-bottom:10px; box-shadow:var(--card-shadow); cursor:pointer; transition:transform .12s; }
   .task-entry:active { transform:scale(.98); }
   .te-ico { font-size:24px; flex:0 0 auto; }
@@ -1118,23 +1120,10 @@
 
   <!-- ============ 视图：首页 Hub ============ -->
   <!-- ============ 视图：首页（页3）============ -->
+  <!-- ============ 视图：首页（宠物主角 + 今日任务 合并）============ -->
   <div id="view-home" class="view active">
-    <!-- 顶部：伙伴头像 + 问候 + 连续天数 -->
-    <div class="home-top">
-      <div class="home-pet-ava" id="home-pet-ava" data-go="mybuddy"><img data-petimg class="hpa-img" src="icons/pets/fox.png" alt="伙伴"></div>
-      <div class="home-greet">
-        <div class="hg-line"><span id="hero-greet">你好呀</span>，<span class="fb-name" id="hh-profile"><span id="home-name">小朋友</span> ▾</span></div>
-        <div class="hg-streak" id="hg-streak">🔥 连续学习 0 天</div>
-      </div>
-    </div>
-    <!-- 经验系统 -->
-    <section class="card xp-card" data-go="mybuddy">
-      <div class="xp-top"><span class="xp-lv" id="home-lv">Lv.1 学习萌新</span><span class="xp-num" id="home-xp">0 / 100 XP</span></div>
-      <div class="xp-bar"><div class="xp-fill" id="home-xpfill"></div></div>
-    </section>
-    <!-- 今日任务 -->
-    <div class="sec-title">📋 今日任务</div>
-    <div id="home-tasks"></div>
+    <div class="home-greetbar"><span id="hero-greet">你好呀</span>，<span class="fb-name" id="hh-profile"><span id="home-name">小朋友</span> ▾</span></div>
+    <div id="home-body"></div>
   </div>
 
   <!-- ============ 视图：选择学习伙伴（页1）============ -->
@@ -1150,11 +1139,6 @@
     <div id="petjoined-body" class="joined-wrap"></div>
   </div>
 
-  <!-- ============ 视图：我的伙伴（页4）============ -->
-  <div id="view-mybuddy" class="view">
-    <div class="view-title">🐾 我的伙伴</div>
-    <div id="mybuddy-body"></div>
-  </div>
 
   <!-- ============ 视图：宠物之家（页6）============ -->
   <div id="view-pethouse" class="view">
@@ -1418,7 +1402,7 @@
   <div id="view-me" class="view">
     <div class="view-title">👤 我的</div>
     <div class="fox-guide"><img class="fg-fox-img" data-func="level" src="icons/pets/ic-fox-level.png" alt="小狐狸"><span class="fg-text"><b>我的小天地</b>管理小朋友、备份数据～</span></div>
-    <div class="hint" style="text-align:center;margin:-4px 0 12px;opacity:.6;">build 0617-mvp · 看到这行=已是最新版（动态图标+6页流程）</div>
+    <div class="hint" style="text-align:center;margin:-4px 0 12px;opacity:.6;">build 0617b-mvp · 看到这行=已是最新版（动态图标+6页流程）</div>
     <section class="card">
       <div class="card-title"><span>👨‍👩‍👧 小朋友档案</span></div>
       <div id="me-profiles"></div>
@@ -1494,14 +1478,13 @@
   </section>
 
   <footer>
-    <span class="pn">小狐狸</span>学习助手 · build 0617
+    <span class="pn">小狐狸</span>学习助手 · build 0617b
   </footer>
 
   <!-- 底部导航：首页 / 学习 / 成长 / 我的 -->
   <div class="bottom-nav" id="bottom-nav">
     <div class="bn-item active" data-nav="home"><span class="bn-ico">🏠</span><span>首页</span></div>
     <div class="bn-item" data-nav="study"><span class="bn-ico">📚</span><span>学习</span></div>
-    <div class="bn-item" data-nav="mybuddy"><span class="bn-ico">🐾</span><span>伙伴</span></div>
     <div class="bn-item" data-nav="progress"><span class="bn-ico">🌱</span><span>成长</span></div>
     <div class="bn-item" data-nav="me"><span class="bn-ico">👤</span><span>我的</span></div>
   </div>
@@ -3002,11 +2985,11 @@ document.addEventListener('click', (e) => {
 
 /* ---- 视图路由：home | mistakes | homework | progress | me ---- */
 function go(view) {
-  ['home', 'petselect', 'petjoined', 'study', 'mybuddy', 'pethouse', 'mistakes', 'homework', 'dictation', 'progress', 'me'].forEach(v => {
+  ['home', 'petselect', 'petjoined', 'study', 'pethouse', 'mistakes', 'homework', 'dictation', 'progress', 'me'].forEach(v => {
     const el = $('view-' + v); if (el) el.classList.toggle('active', v === view);
   });
   // 底部 4 Tab：首页 / 学习 / 成长 / 我的
-  const TAB = { home: 'home', study: 'study', mistakes: 'study', dictation: 'study', homework: 'study', mybuddy: 'mybuddy', pethouse: 'mybuddy', progress: 'progress', me: 'me' };
+  const TAB = { home: 'home', petselect: 'home', petjoined: 'home', pethouse: 'home', study: 'study', mistakes: 'study', dictation: 'study', homework: 'study', progress: 'progress', me: 'me' };
   const tab = TAB[view] || '';
   [...document.querySelectorAll('.bn-item')].forEach(b => b.classList.toggle('active', b.dataset.nav === tab));
   try { window.scrollTo(0, 0); } catch (_) {}
@@ -3016,7 +2999,6 @@ function go(view) {
   if (view === 'home') renderHome();
   else if (view === 'petselect') renderPetSelect();
   else if (view === 'petjoined') renderPetJoined();
-  else if (view === 'mybuddy') renderMyBuddy();
   else if (view === 'pethouse') renderPetHouse();
   else if (view === 'homework') renderHomework();
   else if (view === 'progress') renderProgress();
@@ -3415,35 +3397,6 @@ function getPetState() {
     todayTotal: items.length,
   };
 }
-/* ---- 页4：我的伙伴（展示完整成长状态）---- */
-function renderMyBuddy() {
-  const host = $('mybuddy-body'); if (!host) return;
-  const id = selectedPetId(); if (!id) { go('petselect'); return; }
-  const p = petOf(id), s = getPetState(); syncPetStats();
-  const pct = Math.round(s.currentXP / s.maxXP * 100);
-  host.innerHTML =
-    '<div class="buddy-stage" style="--tint:' + p.tint + '">'
-    + '<div class="buddy-big">' + petFace(p.id) + '</div>'
-    + '<div class="pet-name-row"><span class="pet-name">' + esc(s.petName) + '</span>'
-    + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
-    + '<div class="pet-stage-name">' + p.name + ' · ' + p.type + ' · ' + s.growthStage + '</div>'
-    + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="mb-xpfill"></div></div>'
-    + '<div class="pet-xp-text">Lv.' + s.level + ' ' + levelInfo(totalXP()).name + ' · ' + s.currentXP + ' / ' + s.maxXP + ' XP</div>'
-    + '</div>'
-    + '<div class="pet-stat-row">'
-    + '<div class="pet-stat"><div class="ps-k">当前心情</div><div class="ps-v">' + s.mood + '</div></div>'
-    + '<div class="pet-stat"><div class="ps-k">连续学习</div><div class="ps-v">🔥 ' + s.streakDays + ' 天</div></div>'
-    + '<div class="pet-stat"><div class="ps-k">今日任务</div><div class="ps-v">' + (s.todayTotal ? s.todayDone + ' / ' + s.todayTotal : '未记') + '</div></div>'
-    + '</div>'
-    + '<div class="pet-road"><div class="pr-title">✨ 伙伴技能</div><div class="skill-box">' + p.skill
-    + '<div class="hint" style="margin-top:4px;">陪伴属性，和你一起做任务、一起成长～</div></div></div>'
-    + '<div class="pet-road"><div class="pr-title">⭐ 怎么和伙伴一起升级</div><div class="task-list">'
-    + TASK_REWARDS.map(t => '<div class="task-row"><span class="tr-ico">' + t.icon + '</span><span class="tr-name">' + t.name + '</span><span class="tr-xp">' + t.xp + '</span></div>').join('')
-    + '</div></div>'
-    + '<div class="row"><button class="btn-ghost" style="flex:1;" onclick="go(\'pethouse\')">🏠 宠物之家</button>'
-    + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>';
-  animateBar($('mb-xpfill'), pct);
-}
 /* ---- 页6：宠物之家（收集系统）---- */
 function renderPetHouse() {
   const host = $('pethouse-body'); if (!host) return;
@@ -3486,32 +3439,50 @@ function foxState() {
 }
 
 /* ---- 页3：首页（顶部伙伴+问候+连续天数 / 等级XP / 今日任务）---- */
+/* ---- 首页（宠物主角 + 状态 + 今日任务，合并自旧"伙伴页"）---- */
 function renderHome() {
   if (!$('home-body')) return;
   const id = selectedPetId();
   if (!id) { go('petselect'); return; }   // 没选伙伴 → 先去选择页
-  const p = petOf(id), li = syncPetStats(), st = streakCount();
+  const p = petOf(id), s = getPetState(); syncPetStats();
   const prof = curProfile();
-  // home-pet-ava 走 data-petimg + applyPetIcons（与功能图标同一机制），此处不再单独 petFace
-  if ($('home-avatar')) $('home-avatar').textContent = (prof && prof.emoji) ? prof.emoji : '🦊';
-  if ($('home-name')) $('home-name').textContent = prof ? prof.name : '小朋友';
   if ($('hero-greet')) $('hero-greet').textContent = foxState().greet;
-  if ($('hg-streak')) $('hg-streak').textContent = '🔥 连续学习 ' + st + ' 天';
-  if ($('home-lv')) $('home-lv').textContent = 'Lv.' + li.level + ' ' + li.name;
-  if ($('home-xp')) $('home-xp').textContent = li.into + ' / ' + li.need + ' XP';
-  animateBar($('home-xpfill'), Math.round(li.into / li.need * 100));
-  // 今日任务（记作业 / 听写 / 错题讲解）
+  if ($('home-name')) $('home-name').textContent = prof ? prof.name : '小朋友';
+  const pct = Math.round(s.currentXP / s.maxXP * 100);
   const items = getDayItems(todayStr()), done = items.filter(x => x.done).length;
   const tasks = [
     { func: 'homework', name: '记作业 · 做作业', sub: items.length ? ('今天 ' + done + ' / ' + items.length + ' 完成') : '还没记今天的作业', go: 'homework' },
     { func: 'dict', name: '练听写', sub: '拍生字表，' + petN() + '来报读', go: 'dictation' },
-    // 错题讲解(搜题)入口已暂时隐藏 —— view-mistakes 代码保留，加回只需恢复这一行：
+    // 错题讲解(搜题)入口已暂时隐藏 —— 加回只需恢复这一行：
     // { func: 'mistakes', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
   ];
-  $('home-tasks').innerHTML = tasks.map(t => '<div class="task-entry" data-go="' + t.go + '"><img class="te-ico-img" src="' + petIcon(t.func) + '" alt="">'
-    + '<div class="te-txt"><div class="te-name">' + t.name + '</div><div class="te-sub">' + esc(t.sub) + '</div></div>'
-    + '<span class="te-arrow">▶</span></div>').join('');
-  checkLevelUp(li);   // 升级 → 弹窗（页5）
+  $('home-body').innerHTML =
+    // 宠物主角
+    '<div class="buddy-stage" style="--tint:' + p.tint + '">'
+    + '<div class="buddy-big">' + petFace(id) + '</div>'
+    + '<div class="pet-name-row"><span class="pet-name">' + esc(s.petName) + '</span>'
+    + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
+    + '<div class="pet-stage-name">' + p.name + ' · ' + s.growthStage + ' · Lv.' + s.level + ' ' + levelInfo(totalXP()).name + '</div>'
+    + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="home-xpfill"></div></div>'
+    + '<div class="pet-xp-text">' + s.currentXP + ' / ' + s.maxXP + ' XP</div>'
+    + '</div>'
+    // 状态行：心情 / 连续 / 今日任务
+    + '<div class="pet-stat-row">'
+    + '<div class="pet-stat"><div class="ps-k">当前心情</div><div class="ps-v">' + s.mood + '</div></div>'
+    + '<div class="pet-stat"><div class="ps-k">连续学习</div><div class="ps-v">🔥 ' + s.streakDays + ' 天</div></div>'
+    + '<div class="pet-stat"><div class="ps-k">今日任务</div><div class="ps-v">' + (s.todayTotal ? s.todayDone + ' / ' + s.todayTotal : '未记') + '</div></div>'
+    + '</div>'
+    // 今日任务
+    + '<div class="sec-title">📋 今日任务</div>'
+    + tasks.map(t => '<div class="task-entry" data-go="' + t.go + '"><img class="te-ico-img" src="' + petIcon(t.func) + '" alt="">'
+        + '<div class="te-txt"><div class="te-name">' + t.name + '</div><div class="te-sub">' + esc(t.sub) + '</div></div>'
+        + '<span class="te-arrow">▶</span></div>').join('')
+    // 技能 + 入口
+    + '<div class="pet-road" style="margin-top:14px;"><div class="pr-title">✨ ' + esc(s.petName) + ' 的技能</div><div class="skill-box">' + p.skill + '</div></div>'
+    + '<div class="row"><button class="btn-ghost" style="flex:1;" onclick="go(\'pethouse\')">🏠 宠物之家</button>'
+    + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>';
+  animateBar($('home-xpfill'), pct);
+  checkLevelUp(levelInfo(totalXP()));   // 升级 → 弹窗
 }
 // 今日路径：小狐狸排好今天该做的几件事（作业用真数据，听写/错题为引导步骤）
 function renderTodayPath() {
