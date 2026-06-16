@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 9000;                        // 函数计算 We
 const UPSTREAM = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 const ALLOWED_MODELS = new Set([                              // 与前端下拉选项一致，防止被刷贵模型
   'qwen-plus', 'qwen-turbo', 'qwen3.7-plus', 'qwen3.7-max',
-  'qwen-vl-max-latest', 'qwen-vl-plus', 'qwen-vl-ocr',
+  'qwen-vl-max-latest', 'qwen-vl-max', 'qwen-vl-plus', 'qwen-vl-ocr',
 ]);
 
 // ===== 读取前端页面（与本文件同目录）=====
