@@ -1394,10 +1394,6 @@
   <div id="view-progress" class="view">
     <div class="view-title">🌱 我的成长</div>
     <div class="fox-guide"><img class="fg-fox-img" data-func="growth" src="icons/pets/ic-fox-growth.png" alt="小狐狸"><span class="fg-text"><b>你和小伙伴一起长大啦！</b>看看学过的内容，还有这几天的打卡记录～</span></div>
-    <div class="row" style="margin-bottom:14px;">
-      <button class="btn-ghost" style="flex:1;" data-go="mybuddy">🐾 我的伙伴</button>
-      <button class="btn-ghost" style="flex:1;" data-go="pethouse">🏠 宠物之家</button>
-    </div>
     <section class="card">
       <div class="card-title"><span>📖 教材进度</span></div>
       <div id="tb-progress"></div>
@@ -1505,6 +1501,7 @@
   <div class="bottom-nav" id="bottom-nav">
     <div class="bn-item active" data-nav="home"><span class="bn-ico">🏠</span><span>首页</span></div>
     <div class="bn-item" data-nav="study"><span class="bn-ico">📚</span><span>学习</span></div>
+    <div class="bn-item" data-nav="mybuddy"><span class="bn-ico">🐾</span><span>伙伴</span></div>
     <div class="bn-item" data-nav="progress"><span class="bn-ico">🌱</span><span>成长</span></div>
     <div class="bn-item" data-nav="me"><span class="bn-ico">👤</span><span>我的</span></div>
   </div>
@@ -3009,7 +3006,7 @@ function go(view) {
     const el = $('view-' + v); if (el) el.classList.toggle('active', v === view);
   });
   // 底部 4 Tab：首页 / 学习 / 成长 / 我的
-  const TAB = { home: 'home', study: 'study', mistakes: 'study', dictation: 'study', homework: 'study', progress: 'progress', mybuddy: 'progress', pethouse: 'progress', me: 'me' };
+  const TAB = { home: 'home', study: 'study', mistakes: 'study', dictation: 'study', homework: 'study', mybuddy: 'mybuddy', pethouse: 'mybuddy', progress: 'progress', me: 'me' };
   const tab = TAB[view] || '';
   [...document.querySelectorAll('.bn-item')].forEach(b => b.classList.toggle('active', b.dataset.nav === tab));
   try { window.scrollTo(0, 0); } catch (_) {}
