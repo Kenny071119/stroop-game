@@ -3332,7 +3332,7 @@ function applyPet(id) {
 function renamePet() {
   if (!selectedPetId()) return;
   const n = prompt('给伙伴取个名字：', petName());
-  if (n && n.trim()) { DB.write(pKey('petName'), n.trim()); renderMyBuddy(); renderHome(); }
+  if (n && n.trim()) { DB.write(pKey('petName'), n.trim()); renderHome(); }
 }
 /* ---- 升级弹窗（页5）---- */
 function showLevelUp(li) {
