@@ -843,25 +843,29 @@
   .gs-icon svg { width:92%; height:92%; display:block; animation:treegrow .6s cubic-bezier(.2,.9,.3,1.4) both; }
   @keyframes treegrow { from{ transform:scale(.6); opacity:.3 } to{ transform:none; opacity:1 } }
 
-  /* ===== 宠物养成系统 ===== */
-  /* 宠物图：PNG 优先，缺图自动回退 emoji（pa-img 覆盖在 pa-emoji 上）*/
+  /* ===== 学习伙伴系统 ===== */
   .pa-emoji { line-height:1; display:block; }
-  .pa-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
-  /* 首页宠物条 */
-  .pet-strip { display:flex; align-items:center; gap:13px; cursor:pointer; background:linear-gradient(135deg,#FFF3E6,#FFFBF4); }
-  .pet-strip .ps-pet { position:relative; width:54px; height:54px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; border-radius:15px; background:linear-gradient(135deg,#FFF0DE,#FFE4C7); overflow:hidden; }
-  .pet-strip .ps-pet .pa-emoji { font-size:32px; animation:petbob 3s ease-in-out infinite; }
-  .pet-strip .ps-info { flex:1; min-width:0; }
-  .pet-strip .ps-name { font-size:15.5px; font-weight:800; color:var(--brand-ink); margin-bottom:5px; }
-  .pet-strip .ps-lv { font-size:14px; font-weight:800; color:var(--fox-deep); white-space:nowrap; flex:0 0 auto; }
-  .pet-strip.pet-empty { background:linear-gradient(135deg,#EAF7EA,#F6FBF2); border:1px dashed #B9D8AE; }
-  @keyframes petbob { 0%,100%{ transform:translateY(0) rotate(0) } 50%{ transform:translateY(-4px) rotate(-3deg) } }
-  /* 宠物页 */
-  .pet-stage-card { text-align:center; padding:22px 16px 18px; border-radius:var(--card-radius); background:linear-gradient(160deg,var(--tint,#FFE0CE),#FFFFFF 78%); box-shadow:var(--card-shadow); border:var(--card-border); margin-bottom:14px; }
-  .pet-big { position:relative; width:160px; height:160px; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; }
-  .pet-big .pa-emoji { font-size:104px; animation:petbob 3s ease-in-out infinite; filter:drop-shadow(0 8px 14px rgba(120,90,50,.2)); }
+  @keyframes petbob { 0%,100%{ transform:translateY(0) rotate(0) } 50%{ transform:translateY(-4px) rotate(-2deg) } }
+  /* 首页：选中动物的整张大图 + 8 个透明点击区（2 行 × 4 列，盖在卡片上跳转）*/
+  .hg-wrap { position:relative; width:100%; border-radius:18px; overflow:hidden; box-shadow:var(--card-shadow); }
+  .hg-img { display:block; width:100%; height:auto; }
+  .hg-zones { position:absolute; left:1.5%; top:3%; width:97%; height:75%; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(2,1fr); gap:1%; }
+  .hg-zone { display:block; cursor:pointer; border-radius:14px; -webkit-tap-highlight-color:transparent; }
+  .hg-zone:active { background:rgba(255,255,255,.28); }
+  /* 选择学习伙伴：名册大图 + 6 格点击区（3 列 × 2 行）*/
+  .pick-wrap { position:relative; width:100%; border-radius:18px; overflow:hidden; box-shadow:var(--card-shadow); }
+  .pick-img { display:block; width:100%; height:auto; }
+  .pick-zones { position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); }
+  .pick-zone { display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .pick-zone:not(.disabled):active { background:rgba(127,179,106,.28); }
+  .pick-zone.disabled { cursor:not-allowed; background:rgba(90,74,57,.5); }
+  .pz-soon { color:#fff; font-weight:800; font-size:13px; background:rgba(0,0,0,.3); padding:4px 10px; border-radius:999px; }
+  /* 伙伴主页 */
+  .buddy-stage { text-align:center; padding:20px 16px 18px; border-radius:var(--card-radius); background:linear-gradient(160deg,var(--tint,#FFEAD6),#FFFFFF 80%); box-shadow:var(--card-shadow); border:var(--card-border); margin-bottom:14px; }
+  .buddy-big { position:relative; width:172px; height:172px; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; border-radius:24px; overflow:hidden; }
+  .buddy-big .pa-emoji { font-size:108px; animation:petbob 3s ease-in-out infinite; filter:drop-shadow(0 8px 14px rgba(120,90,50,.2)); }
   .pet-bounce { animation:petpop .6s cubic-bezier(.2,.9,.3,1.5); }
-  @keyframes petpop { 0%{ transform:scale(1) } 30%{ transform:scale(1.18) rotate(-6deg) } 60%{ transform:scale(.94) rotate(4deg) } 100%{ transform:scale(1) } }
+  @keyframes petpop { 0%{ transform:scale(1) } 30%{ transform:scale(1.14) rotate(-5deg) } 60%{ transform:scale(.95) rotate(3deg) } 100%{ transform:scale(1) } }
   .pet-name-row { display:flex; align-items:center; justify-content:center; gap:8px; }
   .pet-name { font-size:21px; font-weight:800; color:var(--ink); }
   .pet-rename { background:none; border:none; font-size:15px; cursor:pointer; opacity:.6; padding:2px 4px; }
@@ -875,31 +879,93 @@
   .pf-food:active { transform:scale(.88); background:var(--brand-soft); }
   .pet-road { background:var(--card); border-radius:var(--inner-radius); padding:14px; box-shadow:var(--card-shadow); border:var(--card-border); margin-bottom:12px; }
   .pr-title { font-size:14px; font-weight:800; color:var(--ink); margin-bottom:12px; }
-  .pr-steps { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
-  .pr-step { flex:0 0 auto; width:76px; text-align:center; opacity:.5; }
-  .pr-step.on { opacity:1; }
-  .pr-step.cur { transform:scale(1.06); }
-  .pr-art { position:relative; width:54px; height:54px; margin:0 auto 5px; display:flex; align-items:center; justify-content:center; border-radius:13px; background:var(--bg-soft); overflow:hidden; }
-  .pr-step.cur .pr-art { background:var(--brand-soft); box-shadow:0 0 0 2px var(--brand); }
-  .pr-art .pa-emoji { font-size:30px; }
-  .pr-n { font-size:11.5px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .pr-xp { font-size:10.5px; color:var(--ink-3); }
-  /* 孵蛋选择层 */
-  .egg-picker { position:fixed; inset:0; z-index:300; background:rgba(59,42,30,.55); display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(3px); }
-  .ep-card { background:var(--card); border-radius:24px; padding:22px 18px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.3); max-height:90vh; overflow:auto; }
-  .ep-title { font-size:19px; font-weight:800; color:var(--ink); text-align:center; }
-  .ep-sub { font-size:13px; color:var(--ink-dim); text-align:center; margin:5px 0 16px; }
-  .egg-choices { display:flex; flex-direction:column; gap:11px; }
-  .egg-choice { display:flex; align-items:center; gap:13px; padding:13px; border:2px solid var(--line); border-radius:16px; background:linear-gradient(135deg,var(--tint,#fff),#fff); cursor:pointer; text-align:left; transition:transform .12s, border-color .12s; }
-  .egg-choice:active { transform:scale(.97); border-color:var(--brand); }
-  .ec-egg { position:relative; width:56px; height:56px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
-  .ec-egg .pa-emoji { font-size:40px; animation:petbob 2.6s ease-in-out infinite; }
-  .ec-name { font-size:16px; font-weight:800; color:var(--ink); }
-  .ec-evo { font-size:13px; color:var(--ink-dim); margin-top:2px; }
-  .ep-preview { position:relative; width:120px; height:120px; margin:6px auto 12px; display:flex; align-items:center; justify-content:center; }
-  .ep-preview .pa-emoji { font-size:80px; animation:petbob 2.6s ease-in-out infinite; }
-  .ep-name-input { width:100%; text-align:center; font-size:17px; font-weight:700; padding:12px; border:2px solid var(--line); border-radius:14px; margin-bottom:14px; }
-  .ep-cancel { display:block; margin:12px auto 0; background:none; border:none; color:var(--ink-dim); font-size:13px; cursor:pointer; }
+  /* 升级任务清单 */
+  .task-list { display:flex; flex-direction:column; gap:8px; }
+  .task-row { display:flex; align-items:center; gap:10px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .tr-ico { font-size:20px; flex:0 0 auto; }
+  .tr-name { flex:1; font-size:13.5px; font-weight:700; color:var(--ink); }
+  .tr-xp { font-size:12.5px; font-weight:800; color:var(--brand-ink); white-space:nowrap; }
+  /* 伙伴图鉴 */
+  .buddy-dex { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .dex-item { border:2px solid var(--line); border-radius:14px; background:var(--bg-soft); padding:8px 4px 6px; cursor:pointer; transition:transform .12s, border-color .12s; }
+  .dex-item:active { transform:scale(.95); }
+  .dex-item.on { border-color:var(--brand); background:var(--brand-soft); }
+  .dex-art { position:relative; width:56px; height:56px; margin:0 auto 4px; display:flex; align-items:center; justify-content:center; border-radius:13px; overflow:hidden; }
+  .dex-art .pa-emoji { font-size:32px; }
+  .dex-n { font-size:11.5px; font-weight:700; color:var(--ink); text-align:center; }
+  /* 选择学习伙伴标题 */
+  .bd-pick-head { text-align:center; font-size:19px; font-weight:800; color:var(--ink); margin:4px 0 16px; }
+
+  /* ===== 首页（页3）===== */
+  .home-top { display:flex; align-items:center; gap:12px; margin:4px 2px 14px; }
+  .home-pet-ava { width:58px; height:58px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:36px; border-radius:50%; background:linear-gradient(135deg,#FFF0DE,#FFE4C7); box-shadow:0 4px 12px rgba(224,122,46,.22); cursor:pointer; }
+  .home-greet { flex:1; min-width:0; }
+  .hg-line { font-size:16px; font-weight:800; color:var(--ink); }
+  .hg-line .fb-name { cursor:pointer; color:var(--brand-ink); }
+  .hg-streak { font-size:13px; font-weight:700; color:#E5894B; margin-top:3px; }
+  .xp-card { cursor:pointer; }
+  .xp-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .xp-lv { font-size:15px; font-weight:800; color:var(--brand-ink); }
+  .xp-num { font-size:13px; font-weight:800; color:var(--ink-dim); }
+  .sec-title { font-size:15px; font-weight:800; color:var(--ink); margin:4px 2px 10px; }
+  .task-entry { display:flex; align-items:center; gap:12px; background:var(--card); border:var(--card-border); border-radius:var(--inner-radius); padding:13px 14px; margin-bottom:10px; box-shadow:var(--card-shadow); cursor:pointer; transition:transform .12s; }
+  .task-entry:active { transform:scale(.98); }
+  .te-ico { font-size:24px; flex:0 0 auto; }
+  .te-txt { flex:1; min-width:0; }
+  .te-name { font-size:15px; font-weight:800; color:var(--ink); }
+  .te-sub { font-size:12.5px; color:var(--ink-dim); margin-top:2px; }
+  .te-arrow { color:var(--brand-ink); font-weight:800; flex:0 0 auto; }
+  /* ===== 选择伙伴（页1）===== */
+  .ps-bigtitle { text-align:center; font-size:22px; font-weight:800; color:var(--ink); margin:6px 0 4px; }
+  .ps-bigsub { text-align:center; font-size:13px; color:var(--ink-dim); margin-bottom:18px; }
+  .petsel-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .petsel-card { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; padding:16px 10px 14px; border:2px solid var(--line); border-radius:18px; background:linear-gradient(160deg,var(--tint,#fff),#fff 85%); cursor:pointer; transition:transform .14s, border-color .14s, box-shadow .14s; }
+  .petsel-card:active { transform:scale(.96); }
+  .petsel-card.sel { border-color:var(--brand); box-shadow:0 8px 22px rgba(127,179,106,.3); }
+  .psc-check { position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .psc-ava { font-size:54px; line-height:1; margin-bottom:6px; }
+  .psc-name { font-size:16px; font-weight:800; color:var(--ink); }
+  .psc-type { font-size:12px; color:var(--ink-dim); margin-top:2px; }
+  /* ===== 伙伴加入成功（页2）===== */
+  .joined-wrap { text-align:center; padding:30px 16px; }
+  .joined-burst { font-size:40px; }
+  .joined-title { font-size:26px; font-weight:800; color:var(--ink); margin-top:6px; }
+  .joined-sub { font-size:15px; color:var(--ink-dim); margin-top:4px; }
+  .joined-pet { width:160px; height:160px; margin:18px auto 0; display:flex; align-items:center; justify-content:center; font-size:104px; border-radius:36px; background:linear-gradient(160deg,var(--tint,#FFEAD6),#fff 80%); box-shadow:var(--card-shadow); animation:petbob 3s ease-in-out infinite; }
+  .joined-name { font-size:18px; font-weight:800; color:var(--ink); margin-top:12px; }
+  /* ===== 我的伙伴（页4）技能盒 ===== */
+  .skill-box { font-size:15px; font-weight:800; color:var(--brand-ink); background:var(--brand-soft); border:1px solid #C3E2BD; border-radius:12px; padding:12px 14px; }
+  .skill-box .hint { font-weight:600; }
+  /* ===== 宠物之家（页6）===== */
+  .house-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .house-slot { text-align:center; padding:14px 6px 10px; border:2px solid var(--line); border-radius:16px; background:var(--bg-soft); }
+  .house-slot.owned { cursor:pointer; }
+  .house-slot.cur { border-color:var(--brand); background:var(--brand-soft); }
+  .house-slot.locked { opacity:.7; }
+  .hs-ava { font-size:42px; line-height:1; }
+  .hs-name { font-size:12.5px; font-weight:800; color:var(--ink); margin-top:5px; }
+  .hs-tag { font-size:11px; font-weight:700; color:var(--brand-ink); margin-top:4px; }
+  .hs-tag.cur { color:#fff; background:var(--brand); border-radius:999px; padding:2px 8px; display:inline-block; }
+  .hs-tag.lock { color:var(--ink-3); }
+  /* ===== 学习 hub ===== */
+  .study-grid { display:flex; flex-direction:column; gap:12px; }
+  .study-card { display:flex; flex-direction:column; align-items:flex-start; padding:18px; border-radius:18px; color:#fff; cursor:pointer; box-shadow:var(--card-shadow); transition:transform .14s; }
+  .study-card:active { transform:scale(.98); }
+  .study-card.sc-err { background:linear-gradient(135deg,#FF9A8B,#F2627E); }
+  .study-card.sc-dict { background:linear-gradient(135deg,#6FB1FC,#4364F7); }
+  .study-card.sc-hw { background:linear-gradient(135deg,#FBC07A,#F2914E); }
+  .sc-ico { font-size:30px; }
+  .sc-name { font-size:18px; font-weight:800; margin-top:6px; }
+  .sc-sub { font-size:13px; opacity:.92; margin-top:2px; }
+  /* ===== 升级弹窗（页5）===== */
+  .lvup-modal { position:fixed; inset:0; z-index:320; background:rgba(59,42,30,.6); display:flex; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(3px); }
+  .lvup-card { background:var(--card); border-radius:26px; padding:26px 22px; width:100%; max-width:340px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.3); animation:lvupPop .45s cubic-bezier(.2,.9,.3,1.5); }
+  @keyframes lvupPop { from{ transform:scale(.7); opacity:0 } to{ transform:none; opacity:1 } }
+  .lvup-burst { font-size:38px; }
+  .lvup-pet { font-size:80px; line-height:1; margin:2px 0; animation:petbob 2.6s ease-in-out infinite; }
+  .lvup-title { font-size:24px; font-weight:800; color:var(--fox-deep); }
+  .lvup-lv { font-size:18px; font-weight:800; color:var(--brand-ink); margin-top:4px; }
+  .lvup-say { font-size:14px; color:var(--ink-dim); margin-top:8px; }
 
   /* 每个功能页的小狐狸引导语 */
   .fox-guide { display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#FFF6E9,#FFEFD9); border:1px solid #F3E2C8; border-radius:14px; padding:10px 13px; margin:0 0 14px; }
@@ -1006,50 +1072,61 @@
   <div class="profile-menu" id="profile-menu" style="display:none;"></div>
 
   <!-- ============ 视图：首页 Hub ============ -->
+  <!-- ============ 视图：首页（页3）============ -->
   <div id="view-home" class="view active">
-    <!-- 小狐狸主动开口 -->
-    <div class="fox-hero">
-      <div class="fox-hero-img" id="hero-fox"></div>
-      <div class="fox-bubble">
-        <div class="fb-top"><span id="hero-greet">你好呀</span> · <span class="fb-name" id="hh-profile"><span id="home-avatar">🦊</span><span id="home-name">小朋友</span> ▾</span></div>
-        <div class="ai-tip" id="ai-tip">小狐狸正在看你今天的学习…</div>
+    <!-- 顶部：伙伴头像 + 问候 + 连续天数 -->
+    <div class="home-top">
+      <div class="home-pet-ava" id="home-pet-ava" data-go="mybuddy">🦊</div>
+      <div class="home-greet">
+        <div class="hg-line"><span id="hero-greet">你好呀</span>，<span class="fb-name" id="hh-profile"><span id="home-avatar">🦊</span><span id="home-name">小朋友</span> ▾</span></div>
+        <div class="hg-streak" id="hg-streak">🔥 连续学习 0 天</div>
       </div>
     </div>
-    <div class="hero-stats">
-      <span class="hstat chip-streak" id="chip-streak">🔥 连续 0 天</span>
-      <span class="hstat chip-lv" id="chip-level">Lv.1 学习萌新</span>
-    </div>
-
-    <div class="path-head">今天，和小狐狸一起做这几件事</div>
-    <div class="today-path" id="today-path"></div>
-
-    <section class="card pet-strip" id="pet-strip">
-      <div class="ps-pet" id="home-pet"><span class="pa-emoji">🥚</span></div>
-      <div class="ps-info">
-        <div class="ps-name" id="home-pet-name">我的宠物</div>
-        <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
-        <div class="hint" id="growth-next" style="margin-top:5px;">做作业、听写、讲错题、打卡都能让宠物长大</div>
-      </div>
-      <div class="ps-lv" id="home-pet-lv">Lv.1</div>
+    <!-- 经验系统 -->
+    <section class="card xp-card" data-go="mybuddy">
+      <div class="xp-top"><span class="xp-lv" id="home-lv">Lv.1 学习萌新</span><span class="xp-num" id="home-xp">0 / 100 XP</span></div>
+      <div class="xp-bar"><div class="xp-fill" id="home-xpfill"></div></div>
     </section>
-
-    <section class="card" id="tb-check" style="display:none;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:6px;">📖 教材进度复查</div>
-      <div class="hint" id="tbc-say" style="margin-bottom:10px;"></div>
-      <div class="row" id="tbc-buttons">
-        <button class="btn-primary btn-sm" id="tbc-add" style="flex:1;">➕ 有，添加新学的</button>
-        <button class="btn-ghost btn-sm" id="tbc-none" style="flex:1;">今天没有</button>
-      </div>
-      <div id="tbc-panel" style="display:none;"></div>
-    </section>
-
-
+    <!-- 今日任务 -->
+    <div class="sec-title">📋 今日任务</div>
+    <div id="home-tasks"></div>
   </div>
 
-  <!-- ============ 视图：我的宠物 ============ -->
-  <div id="view-pet" class="view">
-    <div class="view-title">🐣 我的宠物</div>
-    <div id="pet-body"></div>
+  <!-- ============ 视图：选择学习伙伴（页1）============ -->
+  <div id="view-petselect" class="view">
+    <div class="ps-bigtitle">选择你的学习伙伴</div>
+    <div class="ps-bigsub">选一个小伙伴，它会一直陪你学习、和你一起升级～</div>
+    <div class="petsel-grid" id="petsel-grid"></div>
+    <button class="btn-primary" id="petsel-confirm" disabled style="width:100%;margin-top:16px;" onclick="confirmPetSelect()">选好了，就它了</button>
+  </div>
+
+  <!-- ============ 视图：伙伴加入成功（页2）============ -->
+  <div id="view-petjoined" class="view">
+    <div id="petjoined-body" class="joined-wrap"></div>
+  </div>
+
+  <!-- ============ 视图：我的伙伴（页4）============ -->
+  <div id="view-mybuddy" class="view">
+    <div class="view-title">🐾 我的伙伴</div>
+    <div id="mybuddy-body"></div>
+  </div>
+
+  <!-- ============ 视图：宠物之家（页6）============ -->
+  <div id="view-pethouse" class="view">
+    <div class="view-title">🏠 宠物之家</div>
+    <div class="fox-guide"><img class="fg-fox-img" src="icons/badge.png" alt="小狐狸"><span class="fg-text"><b>这里是宠物之家！</b>体验过的小伙伴都住在这儿，点一下就能换上～</span></div>
+    <div id="pethouse-body"></div>
+  </div>
+
+  <!-- ============ 视图：学习（hub）============ -->
+  <div id="view-study" class="view">
+    <div class="view-title">📚 学习</div>
+    <div class="fox-guide"><img class="fg-fox-img" src="icons/errors.png" alt="小狐狸"><span class="fg-text"><b>今天想学点什么？</b>小狐狸都在这儿陪着你～</span></div>
+    <div class="study-grid">
+      <div class="study-card sc-err" data-go="mistakes"><span class="sc-ico">📝</span><div class="sc-name">错题辅导</div><div class="sc-sub">拍卷子，一步步教懂</div></div>
+      <div class="study-card sc-dict" data-go="dictation"><span class="sc-ico">🔊</span><div class="sc-name">听写小帮手</div><div class="sc-sub">小狐狸报读，你来写</div></div>
+      <div class="study-card sc-hw" data-go="homework"><span class="sc-ico">📒</span><div class="sc-name">今日任务</div><div class="sc-sub">记作业、打勾、攒经验</div></div>
+    </div>
   </div>
 
   <!-- ============ 视图：错题辅导 ============ -->
@@ -1097,7 +1174,7 @@
   <!-- 三步分屏容器（裁切横向溢出，承载滑动切换）-->
   <div class="screens-wrap" id="screens-wrap">
 
-  <!-- 第一步：上传整张卷子 → 识别 + 拆题 -->
+  <!-- 第一步：拍/选整张卷子 → 找题 + 拆题 -->
   <section class="card screen active" id="step1">
     <div class="card-title">
       <span>① 拍张卷子，小狐狸来找题</span>
@@ -1105,7 +1182,7 @@
     </div>
     <label class="cam-card">
       <svg class="cam-icon" viewBox="0 0 64 64"><rect x="6" y="18" width="52" height="36" rx="9" fill="#5DA666"/><path d="M22 18l4-6h12l4 6Z" fill="#5DA666"/><circle cx="32" cy="37" r="11" fill="#fff"/><circle cx="32" cy="37" r="7" fill="#5DA666"/><circle cx="49" cy="27" r="2.4" fill="#fff"/></svg>
-      <div class="cam-text">拍照 / 选卷子上传</div>
+      <div class="cam-text">拍张卷子 / 从相册选</div>
       <div class="cam-sub">把整张卷子拍清楚，可以拍好几张</div>
       <input type="file" id="file-album" accept="image/*" multiple>
     </label>
@@ -1136,7 +1213,7 @@
     <div id="q-grid" class="q-grid"></div>
     <div id="q-peek" class="q-peek" style="display:none;"></div>
     <div class="row" style="margin-top:14px;">
-      <button class="btn-ghost" id="btn-back-1">← 重新上传</button>
+      <button class="btn-ghost" id="btn-back-1">← 重新拍</button>
       <button class="btn-primary" id="btn-to-collection">下一步：整理错题 →</button>
     </div>
   </section>
@@ -1187,7 +1264,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
         <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--brand-ink);background:var(--brand-soft);border:1px solid #C3E2BD;border-radius:8px;padding:9px 13px;">
-          <span id="hw-photo-label">📷 拍照·自动分科</span>
+          <span id="hw-photo-label">📷 拍张作业·自动整理</span>
           <input type="file" id="hw-photo" accept="image/*" style="display:none;">
         </label>
         <button class="btn-ghost btn-sm" id="hw-unit-btn" style="color:#9A6B16;background:#FFF6E6;border-color:#F0DCB0;">📖 从教材选单元</button>
@@ -1200,7 +1277,7 @@
 
   <!-- ============ 视图：听写 ============ -->
   <div id="view-dictation" class="view">
-    <div class="view-title">🔊 智能听写</div>
+    <div class="view-title">🔊 听写小帮手</div>
     <div class="fox-guide"><img class="fg-fox-img" src="icons/dictation.png" alt="小狐狸"><span class="fg-text"><b>准备好了吗？</b>小狐狸来帮你听写，一个一个念给你写～</span></div>
 
     <!-- 开始听写：主操作，醒目大按钮 -->
@@ -1261,8 +1338,12 @@
 
   <!-- ============ 视图：学习进度 ============ -->
   <div id="view-progress" class="view">
-    <div class="view-title">🌳 成长树</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/tree.png" alt="小狐狸"><span class="fg-text"><b>你的成长树长多高啦？</b>看看你和小狐狸一起的成长～</span></div>
+    <div class="view-title">🌱 我的成长</div>
+    <div class="fox-guide"><img class="fg-fox-img" src="icons/tree.png" alt="小狐狸"><span class="fg-text"><b>你和小伙伴一起长大啦！</b>看看学过的内容，还有这几天的打卡记录～</span></div>
+    <div class="row" style="margin-bottom:14px;">
+      <button class="btn-ghost" style="flex:1;" data-go="mybuddy">🐾 我的伙伴</button>
+      <button class="btn-ghost" style="flex:1;" data-go="pethouse">🏠 宠物之家</button>
+    </div>
     <section class="card">
       <div class="card-title"><span>📖 教材进度</span></div>
       <div id="tb-progress"></div>
@@ -1358,29 +1439,24 @@
     小狐狸 AI 学习助手 · v53（错题大相机卡 + 听写大按钮 + 两行问候·移植示例）
   </footer>
 
-  <!-- 底部导航：今天 / 宠物 / 我；其它功能都从首页卡进，避免重复入口 -->
+  <!-- 底部导航：首页 / 学习 / 成长 / 我的 -->
   <div class="bottom-nav" id="bottom-nav">
-    <div class="bn-item active" data-nav="home"><span class="bn-ico">🦊</span><span>今天</span></div>
-    <div class="bn-item" data-nav="pet"><span class="bn-ico">🐣</span><span>宠物</span></div>
-    <div class="bn-item" data-nav="me"><span class="bn-ico">👤</span><span>我</span></div>
+    <div class="bn-item active" data-nav="home"><span class="bn-ico">🏠</span><span>首页</span></div>
+    <div class="bn-item" data-nav="study"><span class="bn-ico">📚</span><span>学习</span></div>
+    <div class="bn-item" data-nav="progress"><span class="bn-ico">🌱</span><span>成长</span></div>
+    <div class="bn-item" data-nav="me"><span class="bn-ico">👤</span><span>我的</span></div>
   </div>
 </div>
 
-<!-- 孵蛋：领养宠物 -->
-<div id="egg-picker" class="egg-picker" style="display:none;">
-  <div class="ep-card">
-    <div class="ep-stage-pick">
-      <div class="ep-title">🥚 挑一只蛋，开始养成</div>
-      <div class="ep-sub">做作业、打卡、听写都能让它长大、进化！</div>
-      <div class="egg-choices" id="egg-choices"></div>
-    </div>
-    <div class="ep-stage-name" style="display:none;">
-      <div class="ep-title">给它取个名字吧</div>
-      <div class="ep-preview" id="ep-preview"></div>
-      <input id="ep-name-input" class="ep-name-input" maxlength="8" placeholder="点这里输入名字" spellcheck="false">
-      <button class="btn-primary" style="width:100%;" onclick="confirmHatch()">🐣 就是你啦！</button>
-    </div>
-    <button class="ep-cancel" onclick="document.getElementById('egg-picker').style.display='none'">下次再说</button>
+<!-- 升级弹窗（页5）-->
+<div id="levelup-modal" class="lvup-modal" style="display:none;">
+  <div class="lvup-card">
+    <div class="lvup-burst">🎉</div>
+    <div class="lvup-pet" id="lvup-pet">🦊</div>
+    <div class="lvup-title">升级啦！</div>
+    <div class="lvup-lv" id="lvup-lv">Lv.3 学习小达人</div>
+    <div class="lvup-say">恭喜你和伙伴一起升级了！</div>
+    <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="document.getElementById('levelup-modal').style.display='none'">太棒啦 🎈</button>
   </div>
 </div>
 
@@ -2191,13 +2267,13 @@ $('btn-recognize').addEventListener('click', async () => {
   const original = btn.textContent;
   const texts = [];
   for (let i = 0; i < images.length; i++) {
-    btn.innerHTML = `<span class="spinner"></span>识别中 ${i + 1}/${images.length}…`;
+    btn.innerHTML = `<span class="spinner"></span>小狐狸在看 ${i + 1}/${images.length} 张…`;
     try {
       const t = await recognizeImage(images[i]);
       if (t && t.trim()) texts.push(t.trim());
     } catch (err) {
       btn.innerHTML = original; btn.disabled = false;
-      alert('第 ' + (i + 1) + ' 张图片识别失败：' + (err.message || err));
+      alert('第 ' + (i + 1) + ' 张小狐狸没看清：' + (err.message || err));
       return;
     }
   }
@@ -2258,7 +2334,7 @@ $('btn-back-2').addEventListener('click', () => goStep(2));
 
 /* 看卷子原图弹层 */
 function openImgModal() {
-  if (!images.length) { alert('这次没有上传图片（用的是粘贴文字）'); return; }
+  if (!images.length) { alert('这次没有卷子照片（用的是打字输入）'); return; }
   $('img-modal-body').innerHTML = images.map(im => `<img src="${im.dataURL}" alt="卷子原图">`).join('');
   $('img-modal').style.display = 'flex';
 }
@@ -2867,19 +2943,25 @@ document.addEventListener('click', (e) => {
 
 /* ---- 视图路由：home | mistakes | homework | progress | me ---- */
 function go(view) {
-  ['home', 'pet', 'mistakes', 'homework', 'dictation', 'progress', 'me'].forEach(v => {
+  ['home', 'petselect', 'petjoined', 'study', 'mybuddy', 'pethouse', 'mistakes', 'homework', 'dictation', 'progress', 'me'].forEach(v => {
     const el = $('view-' + v); if (el) el.classList.toggle('active', v === view);
   });
-  const tab = (view === 'me') ? 'me' : (view === 'pet') ? 'pet' : 'home';   // 作业/进度/错题都属于"首页区"，统一高亮首页
+  // 底部 4 Tab：首页 / 学习 / 成长 / 我的
+  const TAB = { home: 'home', study: 'study', mistakes: 'study', dictation: 'study', homework: 'study', progress: 'progress', mybuddy: 'progress', pethouse: 'progress', me: 'me' };
+  const tab = TAB[view] || '';
   [...document.querySelectorAll('.bn-item')].forEach(b => b.classList.toggle('active', b.dataset.nav === tab));
   try { window.scrollTo(0, 0); } catch (_) {}
   if (view !== 'dictation' && typeof dictStop === 'function') dictStop();   // 离开听写 → 停止报读
   if (view === 'home') renderHome();
-  else if (view === 'pet') renderPet();
+  else if (view === 'petselect') renderPetSelect();
+  else if (view === 'petjoined') renderPetJoined();
+  else if (view === 'mybuddy') renderMyBuddy();
+  else if (view === 'pethouse') renderPetHouse();
   else if (view === 'homework') renderHomework();
   else if (view === 'progress') renderProgress();
   else if (view === 'mistakes') renderTextbook();
   else if (view === 'dictation') renderDictVoices();
+  // view==='study' 为静态卡片，无需渲染
 }
 // 底部导航
 $('bottom-nav').addEventListener('click', (e) => {
@@ -2891,14 +2973,6 @@ document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]'); if (!g) return;
   go(g.dataset.go);
 });
-// 首页宠物条：有宠物→进宠物页；没宠物→直接弹孵蛋
-$('pet-strip').addEventListener('click', () => { if (loadPet()) go('pet'); else openEggPicker(); });
-// 孵蛋：选物种
-$('egg-choices').addEventListener('click', (e) => {
-  const c = e.target.closest('.egg-choice'); if (!c) return;
-  chooseEgg(c.dataset.species);
-});
-$('ep-name-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmHatch(); });
 
 /* ===== 听写：录入词表 + 浏览器语音报读 + 自查 ===== */
 const Dict = { words: [], idx: 0, running: false, paused: false, lang: 'zh-CN', rate: 0.85, repeat: 2, gap: 5000 };
@@ -3049,7 +3123,7 @@ $('dict-reveal').addEventListener('click', () => {
 });
 $('dict-photo').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0]; e.target.value = ''; if (!file) return;
-  const lab = $('dict-photo-label'); const old = lab.textContent; lab.textContent = '识别中…';
+  const lab = $('dict-photo-label'); const old = lab.textContent; lab.textContent = '小狐狸在看…';
   try {
     const dataURL = await downscaleDataURL(await fileToDataURL(file), 1500, 0.85);
     const words = await recognizeWordList(dataURL, $('dict-subject').value);
@@ -3058,8 +3132,8 @@ $('dict-photo').addEventListener('change', async (e) => {
       $('dict-input').value = (cur ? cur + '\n' : '') + words.join('\n');
       updateDictCount();
       lab.textContent = '已加 ' + words.length + ' 个 ✓'; setTimeout(() => { lab.textContent = old; }, 1600);
-    } else { alert('没识别到字词，换张清楚点的图试试～'); lab.textContent = old; }
-  } catch (err) { alert('识别失败：' + (err.message || err)); lab.textContent = old; }
+    } else { alert('小狐狸没看清字词，换张清楚点的再拍～'); lab.textContent = old; }
+  } catch (err) { alert('小狐狸没看清：' + (err.message || err)); lab.textContent = old; }
 });
 if (window.speechSynthesis) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => { try { speechSynthesis.getVoices(); renderDictVoices(); } catch (_) {} }; } catch (_) {} }
 
@@ -3073,43 +3147,7 @@ function tbProgressSummary() {
   return parts.join('、');
 }
 function setTbCheckToday() { DB.write(pKey('tbCheck'), todayStr()); }
-function renderTbCheck() {
-  const card = $('tb-check'); if (!card) return;
-  const bk = defaultBookKey();
-  const hasCatalog = ['math', 'english', 'chinese'].some(k => { const tb = TEXTBOOKS[k]; return bk && tb && tb.books[bk]; });
-  const due = hasCatalog && (DB.read(pKey('tbCheck'), '') !== todayStr());   // 当天问过就不再问
-  card.style.display = due ? 'block' : 'none';
-  if (!due) return;
-  $('tbc-panel').style.display = 'none'; $('tbc-panel').innerHTML = '';
-  $('tbc-buttons').style.display = 'flex';
-  const total = ['math', 'english', 'chinese'].reduce((s, k) => { const tb = TEXTBOOKS[k]; const book = bk && tb && tb.books[bk]; return s + (book ? getTBDone(k, bk).length : 0); }, 0);
-  $('tbc-say').textContent = total
-    ? ('上次记录：' + tbProgressSummary() + '。这几天有没有新学的课文 / 单元？有就点「添加」补上，没有就保持不变。')
-    : '先把已经学过的课文 / 单元标一下吧～以后每次只补「新学的」就行，不用全勾。';
-}
-function renderTbcPanel() {
-  const bk = defaultBookKey(); let html = '';
-  [['math', '📐 数学'], ['english', '🔤 英语'], ['chinese', '📖 语文']].forEach(([key, label]) => {
-    const tb = TEXTBOOKS[key]; const book = bk && tb && tb.books[bk]; if (!book) return;
-    const done = getTBDone(key, bk);
-    const todo = book.units.map((u, i) => ({ u: u, i: i + 1 })).filter(x => done.indexOf(x.i) < 0);
-    html += '<div class="tbp-block"><div class="tbp-head">' + label + (todo.length ? ' · 还没学的（点一下 = 标为学过）' : '') + '</div>';
-    html += todo.length
-      ? ('<div class="unit-pick">' + todo.map(x => '<span class="unit-chip" data-key="' + key + '" data-book="' + bk + '" data-unit="' + x.i + '">' + x.i + '. ' + esc(x.u) + '</span>').join('') + '</div>')
-      : '<div class="hint">已全部学过 🎉</div>';
-    html += '</div>';
-  });
-  html += '<button class="btn-primary btn-sm" id="tbc-done" style="width:100%;margin-top:4px;">完成</button>';
-  $('tbc-panel').innerHTML = html;
-}
-$('tbc-add').addEventListener('click', () => { $('tbc-buttons').style.display = 'none'; renderTbcPanel(); $('tbc-panel').style.display = 'block'; });
-$('tbc-none').addEventListener('click', () => { setTbCheckToday(); renderHome(); });
-$('tbc-panel').addEventListener('click', (e) => {
-  if (e.target.closest('#tbc-done')) { setTbCheckToday(); renderHome(); renderTextbook(); return; }
-  const c = e.target.closest('.unit-chip'); if (!c) return;
-  toggleTBUnit(c.dataset.key, c.dataset.book, Number(c.dataset.unit));
-  c.classList.toggle('done', getTBDone(c.dataset.key, c.dataset.book).indexOf(Number(c.dataset.unit)) >= 0);
-});
+/* （首页"教材进度复查"卡已随首页改版移除；教材进度仍可在「进度」页 renderTextbook 中查看/勾选）*/
 
 /* ---- 首页 Hub 动态内容 ---- */
 /* ---- 成长体系：经验值 / 等级（从已有数据推算，无需埋点）---- */
@@ -3192,163 +3230,119 @@ function renderAICard() {
   loadAITip();
 }
 
-/* ===== 宠物养成系统（作业→经验→升级→进化；复用 totalXP/levelInfo 引擎）=====
- *  美术由用户供图：icons/pets/<species>-<stage>.png（stage 1~6，1=蛋 6=最终形态）。
- *  没放图时自动用 emoji 占位，放了 PNG 自动覆盖。宠物按档案存：pKey('pet')={species,name,born}。
+/* ===== 学习伙伴 · 6 页流程（产品原型：选择→加入→首页→我的伙伴→升级弹窗→宠物之家）=====
+ *  纯外观主题（技能只展示、不改经验）；经验仍由 totalXP() 从真实学习数据自动算。
+ *  按档案存 localStorage：selectedPet / petName / petLevel / petXP / studentXP / ownedPets。
+ *  形象暂用 emoji 占位；待用户给 6 张单只透明 PNG 后可在 petEmoji() 处换成 <img>。
  */
-const PET_SPECIES = {
-  dragon: { label: '小火龙', tint: '#FFE0CE', stages: [
-    { n: '龙蛋', e: '🥚' }, { n: '破壳龙宝', e: '🐣' }, { n: '小火龙', e: '🦎' },
-    { n: '飞天龙', e: '🐲' }, { n: '烈焰龙', e: '🐉' }, { n: '神龙', e: '✨' }] },
-  cat: { label: '奶牛猫', tint: '#EAEFF6', stages: [
-    { n: '猫窝蛋', e: '🥚' }, { n: '小奶猫', e: '🐱' }, { n: '调皮猫', e: '🐈' },
-    { n: '威风大猫', e: '😺' }, { n: '御猫', e: '😻' }, { n: '魔法猫神', e: '🪄' }] },
-  blob: { label: '团子精灵', tint: '#E2F3E0', stages: [
-    { n: '团子蛋', e: '🥚' }, { n: '小团子', e: '🟢' }, { n: '跳跳团', e: '🟩' },
-    { n: '表情团', e: '😊' }, { n: '进化团', e: '⭐' }, { n: '团子王', e: '🌟' }] },
-};
-const PET_EVO_XP = [0, 30, 80, 160, 300, 500];   // 各进化阶段所需「总经验」（stage 1~6）
-const PET_FOODS = [{ e: '🍖', say: '肉肉！我最爱了！' }, { e: '🍎', say: '甜甜的，谢谢你～' }, { e: '🍰', say: '哇，蛋糕！好幸福～' }, { e: '🐟', say: '小鱼干，嚼嚼嚼！' }];
-
-function loadPet() { return DB.read(pKey('pet'), null); }
-function savePet(p) { DB.write(pKey('pet'), p); }
-function petStage(xp) { let s = 1; for (let i = 0; i < PET_EVO_XP.length; i++) if (xp >= PET_EVO_XP[i]) s = i + 1; return s; }
-function petStageInfo(species, xp) {
-  const sp = PET_SPECIES[species] || PET_SPECIES.dragon;
-  const s = petStage(xp);
-  return { sp: sp, stage: s, stageName: sp.stages[s - 1].n, emoji: sp.stages[s - 1].e, nextAt: (s < PET_EVO_XP.length ? PET_EVO_XP[s] : null) };
+const PETS = [
+  { id: 'fox',      name: '学霸狐',     emoji: '🦊', type: '均衡型', skill: '全科经验加成 +5%', tint: '#FFEAD6' },
+  { id: 'owl',      name: '博士猫头鹰', emoji: '🦉', type: '阅读型', skill: '阅读经验加成 +5%', tint: '#ECE6F7' },
+  { id: 'rabbit',   name: '运动兔',     emoji: '🐰', type: '坚持型', skill: '连续打卡奖励 +5%', tint: '#E6F0FF' },
+  { id: 'panda',    name: '计算熊猫',   emoji: '🐼', type: '数学型', skill: '数学经验加成 +5%', tint: '#EAF4E2' },
+  { id: 'parrot',   name: '英语鹦鹉',   emoji: '🦜', type: '英语型', skill: '英语经验加成 +5%', tint: '#FFF0DE' },
+  { id: 'squirrel', name: '松鼠探险家', emoji: '🐿️', type: '探索型', skill: '探索经验加成 +5%', tint: '#FBEDDD' },
+];
+const TASK_REWARDS = [
+  { icon: '📝', name: '完成一项作业', xp: '+5 经验' },
+  { icon: '🔥', name: '当天作业全做完', xp: '+20 经验' },
+  { icon: '📖', name: '学会一个新单元', xp: '+3 经验' },
+  { icon: '🔊', name: '练听写 / 讲错题', xp: '陪你一起练' },
+];
+function petOf(id) { return PETS.find(p => p.id === id) || null; }
+function selectedPetId() { const id = DB.read(pKey('selectedPet'), null); return petOf(id) ? id : null; }
+function petName() { const id = selectedPetId(); const n = DB.read(pKey('petName'), ''); return n || (petOf(id) ? petOf(id).name : ''); }
+function ownedPets() { const a = DB.read(pKey('ownedPets'), []); return Array.isArray(a) ? a : []; }
+// 把真实经验镜像进原型要求的键（每次渲染时同步）
+function syncPetStats() { const xp = totalXP(), li = levelInfo(xp); DB.write(pKey('studentXP'), xp); DB.write(pKey('petXP'), li.into); DB.write(pKey('petLevel'), li.level); return li; }
+// 选 / 换伙伴：写 selectedPet + 收进图鉴 + 不误弹升级
+function applyPet(id) {
+  const p = petOf(id); if (!p) return;
+  DB.write(pKey('selectedPet'), id);
+  if (!DB.read(pKey('petName'), '')) DB.write(pKey('petName'), p.name);
+  const own = ownedPets(); if (own.indexOf(id) < 0) { own.push(id); DB.write(pKey('ownedPets'), own); }
+  DB.write(pKey('lvSeen'), levelInfo(totalXP()).level);
+  syncPetStats();
 }
-// 宠物图：PNG 优先，加载成功则隐藏 emoji；缺图/失败则移除 img，emoji 占位
-function petArt(species, stage) {
-  const sp = PET_SPECIES[species] || PET_SPECIES.dragon;
-  const e = sp.stages[Math.min(Math.max(stage, 1), 6) - 1].e;
-  return '<span class="pa-emoji">' + e + '</span>'
-    + '<img class="pa-img" alt="" src="icons/pets/' + species + '-' + stage + '.png"'
-    + ' onload="this.previousElementSibling.style.display=\'none\'" onerror="this.remove()">';
-}
-// 进化提醒（只在已领养且阶段提升时弹一次）
-function checkPetEvolution(pet, stage) {
-  const seen = DB.read(pKey('petStageSeen'), 0);
-  if (stage > seen) {
-    if (seen > 0) { const s = PET_SPECIES[pet.species].stages[stage - 1]; showToast('🎉 ' + (pet.name || '宠物') + ' 进化啦！变成「' + s.n + '」' + s.e); }
-    DB.write(pKey('petStageSeen'), stage);
-  }
-}
-/* ---- 孵蛋：领养流程 ---- */
-let _pendingSpecies = null;
-function openEggPicker() {
-  const el = $('egg-picker'); if (!el) return;
-  el.querySelector('.ep-stage-pick').style.display = '';
-  el.querySelector('.ep-stage-name').style.display = 'none';
-  $('egg-choices').innerHTML = Object.keys(PET_SPECIES).map(k => {
-    const sp = PET_SPECIES[k];
-    return '<button class="egg-choice" data-species="' + k + '" style="--tint:' + sp.tint + '">'
-      + '<div class="ec-egg">' + petArt(k, 1) + '</div>'
-      + '<div><div class="ec-name">' + sp.label + '</div>'
-      + '<div class="ec-evo">' + sp.stages.slice(1).map(s => s.e).join(' → ') + '</div></div></button>';
-  }).join('');
-  el.style.display = 'flex';
-}
-function chooseEgg(species) {
-  _pendingSpecies = species;
-  const el = $('egg-picker');
-  el.querySelector('.ep-stage-pick').style.display = 'none';
-  el.querySelector('.ep-stage-name').style.display = '';
-  $('ep-preview').innerHTML = petArt(species, 1);
-  $('ep-name-input').value = '';
-  setTimeout(() => $('ep-name-input').focus(), 60);
-}
-function confirmHatch() {
-  if (!_pendingSpecies) return;
-  const name = ($('ep-name-input').value || '').trim() || PET_SPECIES[_pendingSpecies].label;
-  savePet({ species: _pendingSpecies, name: name, born: todayStr() });
-  DB.write(pKey('petStageSeen'), petStage(totalXP()));   // 领养瞬间不弹"进化"
-  $('egg-picker').style.display = 'none';
-  showToast('🥚 你领养了「' + name + '」，做作业陪它长大吧！');
-  go('pet');
-}
-/* ---- 宠物页 ---- */
 function renamePet() {
-  const pet = loadPet(); if (!pet) return;
-  const n = prompt('给宠物取个名字：', pet.name || '');
-  if (n && n.trim()) { pet.name = n.trim(); savePet(pet); renderPet(); }
+  if (!selectedPetId()) return;
+  const n = prompt('给伙伴取个名字：', petName());
+  if (n && n.trim()) { DB.write(pKey('petName'), n.trim()); renderMyBuddy(); renderHome(); }
 }
-function petMoodLine(pet, inf) {
-  const items = getDayItems(todayStr()), undone = items.filter(x => !x.done).length;
-  if (items.length && undone === 0) return '今天的作业全做完啦，我吃得饱饱的，好开心！';
-  if (undone > 0) return '主人加油～还差 ' + undone + ' 项作业，做完我就更有精神！';
-  if (inf.nextAt == null) return '我已经是最强形态啦，谢谢你一直陪着我！';
-  return '今天还没记作业呢，快带我一起学习、一起长大吧～';
+/* ---- 升级弹窗（页5）---- */
+function showLevelUp(li) {
+  const p = petOf(selectedPetId());
+  if ($('lvup-pet')) $('lvup-pet').textContent = p ? p.emoji : '🎉';
+  if ($('lvup-lv')) $('lvup-lv').textContent = 'Lv.' + li.level + ' ' + li.name;
+  if ($('levelup-modal')) $('levelup-modal').style.display = 'flex';
 }
-let _feedBusy = false;
-function petFeed(i) {
-  if (_feedBusy) return; _feedBusy = true;
-  const f = PET_FOODS[i] || PET_FOODS[0];
-  const big = $('pet-big'); if (big) { big.classList.remove('pet-bounce'); void big.offsetWidth; big.classList.add('pet-bounce'); }
-  const m = $('pet-mood'); if (m) m.textContent = f.e + ' ' + f.say;
-  setTimeout(() => { _feedBusy = false; }, 650);
+function checkLevelUp(li) {
+  const seen = DB.read(pKey('lvSeen'), 0);
+  if (li.level > seen) { if (seen > 0) showLevelUp(li); DB.write(pKey('lvSeen'), li.level); }
 }
-function renderPet() {
-  const host = $('pet-body'); if (!host) return;
-  const pet = loadPet();
-  if (!pet) {
-    host.innerHTML = '<div class="empty-fox"><span style="font-size:72px;display:inline-block">🥚</span>'
-      + '<div class="ef-text">还没有宠物哦～<br>挑一只蛋，做作业陪它一起长大、进化吧！</div>'
-      + '<button class="btn-primary" style="margin-top:14px;" onclick="openEggPicker()">🥚 去领养一只</button></div>';
-    return;
-  }
-  const xp = totalXP(), li = levelInfo(xp), inf = petStageInfo(pet.species, xp);
-  const base = PET_EVO_XP[inf.stage - 1], top = inf.nextAt == null ? base : inf.nextAt;
-  const pct = inf.nextAt == null ? 100 : Math.round((xp - base) / (top - base) * 100);
+/* ---- 页1：选择学习伙伴 ---- */
+let _selPending = null;
+function petSelectPick(id) { _selPending = id; renderPetSelect(); }
+function confirmPetSelect() { if (!_selPending) return; applyPet(_selPending); go('petjoined'); }
+function renderPetSelect() {
+  const grid = $('petsel-grid'); if (!grid) return;
+  if (!_selPending) _selPending = selectedPetId();
+  grid.innerHTML = PETS.map(p => '<button class="petsel-card' + (p.id === _selPending ? ' sel' : '') + '" style="--tint:' + p.tint + '" onclick="petSelectPick(\'' + p.id + '\')">'
+    + (p.id === _selPending ? '<span class="psc-check">✓</span>' : '')
+    + '<div class="psc-ava">' + p.emoji + '</div><div class="psc-name">' + p.name + '</div><div class="psc-type">' + p.type + '</div></button>').join('');
+  $('petsel-confirm').disabled = !_selPending;
+}
+/* ---- 页2：伙伴加入成功 ---- */
+function renderPetJoined() {
+  const id = _selPending || selectedPetId(); const p = petOf(id);
+  if (!p) { go('petselect'); return; }
+  $('petjoined-body').innerHTML =
+    '<div class="joined-burst">🎉</div>'
+    + '<div class="joined-title">太棒了！</div>'
+    + '<div class="joined-sub">你的学习伙伴已加入！</div>'
+    + '<div class="joined-pet" style="--tint:' + p.tint + '">' + p.emoji + '</div>'
+    + '<div class="joined-name">' + esc(petName()) + ' · ' + p.name + '</div>'
+    + '<button class="btn-primary" style="width:100%;margin-top:20px;" onclick="go(\'home\')">开始学习之旅 →</button>';
+}
+/* ---- 页4：我的伙伴 ---- */
+function renderMyBuddy() {
+  const host = $('mybuddy-body'); if (!host) return;
+  const id = selectedPetId(); if (!id) { go('petselect'); return; }
+  const p = petOf(id), li = syncPetStats();
+  const pct = Math.round(li.into / li.need * 100);
   host.innerHTML =
-    '<div class="pet-stage-card" style="--tint:' + inf.sp.tint + '">'
-    + '<div class="pet-big" id="pet-big">' + petArt(pet.species, inf.stage) + '</div>'
-    + '<div class="pet-name-row"><span class="pet-name">' + esc(pet.name) + '</span>'
+    '<div class="buddy-stage" style="--tint:' + p.tint + '">'
+    + '<div class="buddy-big">' + p.emoji + '</div>'
+    + '<div class="pet-name-row"><span class="pet-name">' + esc(petName()) + '</span>'
     + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
-    + '<div class="pet-stage-name">' + inf.stageName + ' · Lv.' + li.level + ' ' + li.name + '</div>'
-    + '<div class="pet-mood" id="pet-mood">' + esc(petMoodLine(pet, inf)) + '</div>'
-    + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="pet-xp-fill"></div></div>'
-    + '<div class="pet-xp-text">' + (inf.nextAt == null ? '🌟 已是最终形态 · 总经验 ' + xp : '距离进化还差 ' + (inf.nextAt - xp) + ' 经验（' + xp + ' / ' + inf.nextAt + '）') + '</div>'
+    + '<div class="pet-stage-name">' + p.name + ' · ' + p.type + '</div>'
+    + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="mb-xpfill"></div></div>'
+    + '<div class="pet-xp-text">Lv.' + li.level + ' ' + li.name + ' · ' + li.into + ' / ' + li.need + ' XP</div>'
     + '</div>'
-    + '<div class="pet-feed"><div class="pf-title">🍱 喂喂它（陪伴一下，不影响经验哦）</div><div class="pf-foods">'
-    + PET_FOODS.map((f, i) => '<button class="pf-food" onclick="petFeed(' + i + ')">' + f.e + '</button>').join('')
+    + '<div class="pet-road"><div class="pr-title">✨ 伙伴技能</div><div class="skill-box">' + p.skill
+    + '<div class="hint" style="margin-top:4px;">陪伴属性，和你一起做任务、一起成长～</div></div></div>'
+    + '<div class="pet-road"><div class="pr-title">⭐ 怎么和伙伴一起升级</div><div class="task-list">'
+    + TASK_REWARDS.map(t => '<div class="task-row"><span class="tr-ico">' + t.icon + '</span><span class="tr-name">' + t.name + '</span><span class="tr-xp">' + t.xp + '</span></div>').join('')
     + '</div></div>'
-    + '<div class="pet-road"><div class="pr-title">🗺️ 进化之路</div><div class="pr-steps">'
-    + inf.sp.stages.map((s, i) => {
-        const st = i + 1, on = st <= inf.stage, cur = st === inf.stage;
-        return '<div class="pr-step' + (on ? ' on' : '') + (cur ? ' cur' : '') + '">'
-          + '<div class="pr-art">' + (on ? petArt(pet.species, st) : '<span class="pa-emoji">❔</span>') + '</div>'
-          + '<div class="pr-n">' + (on ? s.n : '？？？') + '</div>'
-          + '<div class="pr-xp">' + PET_EVO_XP[i] + ' 经验</div></div>';
-      }).join('')
-    + '</div></div>'
-    + '<div class="hint" style="text-align:center;margin-top:8px;">做作业、听写、讲错题、打卡都能让它长大 🌱<br>'
-    + '<a href="#" onclick="go(\'homework\');return false;" style="color:var(--brand-ink);font-weight:800;">去做今天的作业 →</a></div>';
-  animateBar($('pet-xp-fill'), pct);
-  checkPetEvolution(pet, inf.stage);
+    + '<div class="row"><button class="btn-ghost" style="flex:1;" onclick="go(\'pethouse\')">🏠 宠物之家</button>'
+    + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>';
+  animateBar($('mb-xpfill'), pct);
 }
-function renderHomePet(xp, li) {
-  const strip = $('pet-strip'); if (!strip) return;
-  const pet = loadPet();
-  if (!pet) {
-    strip.classList.add('pet-empty');
-    $('home-pet').innerHTML = '<span class="pa-emoji">🥚</span>';
-    $('home-pet-name').textContent = '领养一只宠物吧！';
-    $('home-pet-lv').textContent = '🥚';
-    $('growth-next').textContent = '点这里挑一只蛋，做作业陪它长大';
-    animateBar($('xp-fill'), 0);
-    return;
-  }
-  strip.classList.remove('pet-empty');
-  const inf = petStageInfo(pet.species, xp);
-  const base = PET_EVO_XP[inf.stage - 1], top = inf.nextAt == null ? base : inf.nextAt;
-  const pct = inf.nextAt == null ? 100 : Math.round((xp - base) / (top - base) * 100);
-  $('home-pet').innerHTML = petArt(pet.species, inf.stage);
-  $('home-pet-name').textContent = pet.name + ' · ' + inf.stageName;
-  $('home-pet-lv').textContent = 'Lv.' + li.level;
-  $('growth-next').textContent = inf.nextAt == null ? '🌟 已进化到最终形态，太厉害啦！' : ('再得 ' + (inf.nextAt - xp) + ' 经验就能进化！');
-  animateBar($('xp-fill'), pct);
-  checkPetEvolution(pet, inf.stage);
+/* ---- 页6：宠物之家（收集系统）---- */
+function renderPetHouse() {
+  const host = $('pethouse-body'); if (!host) return;
+  const cur = selectedPetId(), own = ownedPets();
+  host.innerHTML = '<div class="house-grid">'
+    + PETS.map(p => {
+        const owned = own.indexOf(p.id) >= 0, isCur = p.id === cur;
+        return '<div class="house-slot' + (owned ? ' owned' : ' locked') + (isCur ? ' cur' : '') + '"'
+          + (owned && !isCur ? ' onclick="applyPet(\'' + p.id + '\');renderPetHouse();renderHome();showToast(\'已换成 ' + p.name + '\')"' : '')
+          + '><div class="hs-ava">' + (owned ? p.emoji : '🔒') + '</div>'
+          + '<div class="hs-name">' + (owned ? p.name : '未解锁') + '</div>'
+          + (isCur ? '<div class="hs-tag cur">使用中</div>' : (owned ? '<div class="hs-tag">点击换上</div>' : '<div class="hs-tag lock">选过即解锁</div>'))
+          + '</div>';
+      }).join('')
+    + '</div><div class="hint" style="text-align:center;margin-top:12px;">在「选择伙伴」里体验过的小伙伴会留在这里，方便随时换回来～</div>';
 }
 /* ===== 小狐狸情绪（独立 SVG，至少 5 套：开心/鼓励/思考/庆祝/升级）===== */
 function foxSVG(m) {
@@ -3375,25 +3369,32 @@ function foxState() {
   return { mood: mood, greet: greet, line: line };
 }
 
+/* ---- 页3：首页（顶部伙伴+问候+连续天数 / 等级XP / 今日任务）---- */
 function renderHome() {
-  if (!$('hero-greet')) return;
-  const st = streakCount();
-  $('chip-streak').textContent = '🔥 连续 ' + st + ' 天';
-  const xp = totalXP(), li = levelInfo(xp);
-  $('chip-level').textContent = 'Lv.' + li.level + ' ' + li.name;
-  // 升级检测（保留：用于狐狸庆祝表情）
-  const seen = DB.read(pKey('lvSeen'), 0);
-  const leveledUp = li.level > seen && seen > 0;
-  if (li.level > seen) { if (leveledUp) showToast('🎉 升级啦！Lv.' + li.level + ' ' + li.name); DB.write(pKey('lvSeen'), li.level); }
-  // 首页宠物条（替代旧成长树）
-  renderHomePet(xp, li);
-  // 狐狸情绪 + 动态欢迎语
-  const fs = foxState();
-  $('hero-fox').innerHTML = foxSVG(leveledUp ? 'levelup' : fs.mood);
-  $('hero-greet').textContent = fs.greet;
-  $('ai-tip').textContent = fs.line;
-  renderTodayPath();
-  renderTbCheck();
+  if (!$('home-body')) return;
+  const id = selectedPetId();
+  if (!id) { go('petselect'); return; }   // 没选伙伴 → 先去选择页
+  const p = petOf(id), li = syncPetStats(), st = streakCount();
+  const prof = curProfile();
+  if ($('home-pet-ava')) $('home-pet-ava').textContent = p.emoji;
+  if ($('home-avatar')) $('home-avatar').textContent = (prof && prof.emoji) ? prof.emoji : '🦊';
+  if ($('home-name')) $('home-name').textContent = prof ? prof.name : '小朋友';
+  if ($('hero-greet')) $('hero-greet').textContent = foxState().greet;
+  if ($('hg-streak')) $('hg-streak').textContent = '🔥 连续学习 ' + st + ' 天';
+  if ($('home-lv')) $('home-lv').textContent = 'Lv.' + li.level + ' ' + li.name;
+  if ($('home-xp')) $('home-xp').textContent = li.into + ' / ' + li.need + ' XP';
+  animateBar($('home-xpfill'), Math.round(li.into / li.need * 100));
+  // 今日任务（记作业 / 听写 / 错题讲解）
+  const items = getDayItems(todayStr()), done = items.filter(x => x.done).length;
+  const tasks = [
+    { ico: '📝', name: '记作业 · 做作业', sub: items.length ? ('今天 ' + done + ' / ' + items.length + ' 完成') : '还没记今天的作业', go: 'homework' },
+    { ico: '🔊', name: '练听写', sub: '拍生字表，小狐狸来报读', go: 'dictation' },
+    { ico: '📖', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
+  ];
+  $('home-tasks').innerHTML = tasks.map(t => '<div class="task-entry" data-go="' + t.go + '"><span class="te-ico">' + t.ico + '</span>'
+    + '<div class="te-txt"><div class="te-name">' + t.name + '</div><div class="te-sub">' + esc(t.sub) + '</div></div>'
+    + '<span class="te-arrow">▶</span></div>').join('');
+  checkLevelUp(li);   // 升级 → 弹窗（页5）
 }
 // 今日路径：小狐狸排好今天该做的几件事（作业用真数据，听写/错题为引导步骤）
 function renderTodayPath() {
@@ -3503,18 +3504,18 @@ function toggleHwDone(id) {
   const items = getDayItems(hwDate); const it = items.find(x => x.id === id); if (!it) return;
   const before = totalXP();
   it.done = !it.done; saveHomeworkDay(hwDate, items); renderHomework();
-  if (it.done) onPetXPGain(before, totalXP());   // 打勾 → 宠物涨经验/进化反馈
+  if (it.done) onPetXPGain(before, totalXP());   // 打勾 → 伙伴涨经验/升级反馈
 }
-// 完成作业后给宠物即时反馈：进化优先弹进化，否则弹"+经验"
+// 完成作业后给伙伴即时反馈：升级→弹升级弹窗(页5)，否则弹"+经验"
 function onPetXPGain(before, after) {
-  const pet = loadPet(); if (!pet || after <= before) return;
-  const s0 = petStage(before), s1 = petStage(after);
-  if (s1 > s0) {
-    const s = PET_SPECIES[pet.species].stages[s1 - 1];
-    showToast('🎉 ' + (pet.name || '宠物') + ' 进化成「' + s.n + '」' + s.e + '！');
-    DB.write(pKey('petStageSeen'), s1);
+  if (!selectedPetId() || after <= before) return;
+  const l0 = levelInfo(before).level, li = levelInfo(after);
+  syncPetStats();
+  if (li.level > l0) {
+    showLevelUp(li);
+    DB.write(pKey('lvSeen'), li.level);
   } else {
-    showToast('🍖 ' + (pet.name || '宠物') + ' +' + (after - before) + ' 经验');
+    showToast('✨ ' + petName() + ' +' + (after - before) + ' 经验');
   }
 }
 function removeHwItem(id) { saveHomeworkDay(hwDate, getDayItems(hwDate).filter(x => x.id !== id)); renderHomework(); }
@@ -3604,7 +3605,7 @@ $('hw-photo').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  const label = $('hw-photo-label'); const old = label.textContent; label.textContent = '识别中…';
+  const label = $('hw-photo-label'); const old = label.textContent; label.textContent = '小狐狸在整理…';
   try {
     const dataURL = await downscaleDataURL(await fileToDataURL(file), 1500, 0.82);   // 缩小但保留清晰度，利于手写识别
     let items = null;
@@ -3618,10 +3619,10 @@ $('hw-photo').addEventListener('change', async (e) => {
     // 回退：老办法（OCR 按行拆，全部归到当前选中的科目）
     const raw = await recognizeImage({ file, dataURL });
     const lines = cleanOCRText(raw).split(/\n+/).map(s => s.replace(/^[\s\-•·.、)）\d]+/, '').trim()).filter(s => s.length >= 2);
-    if (!lines.length) alert('没识别到内容，换张清楚点的图试试～');
+    if (!lines.length) alert('小狐狸没看清，换张清楚点的再拍～');
     else addHomeworkItems($('hw-add-subject').value, lines);
     label.textContent = old;
-  } catch (err) { alert('识别失败：' + (err.message || err)); label.textContent = old; }
+  } catch (err) { alert('小狐狸没看清：' + (err.message || err)); label.textContent = old; }
 });
 
 /* ---- 教材进度卡（按当前科目 + 当前孩子的年级显示）---- */
@@ -3665,7 +3666,7 @@ renderProfile();
 { const p = curProfile(); setGradeSelect(p && p.gradeLabel ? p.gradeLabel : ''); applyGrade($('grade-select')); }   // 应用当前孩子的年级（档案优先）
 renderTextbook();
 renderHomework();
-go('home');   // 进入首页
+go(selectedPetId() ? 'home' : 'petselect');   // 首次无伙伴 → 选择页；否则进首页
 try { document.querySelectorAll('.fg-fox').forEach(el => el.innerHTML = foxSVG('happy')); } catch (_) {}   // 每个功能页的小狐狸引导头像
 
 /* ===== Twemoji：把所有 emoji 换成 Twitter 彩色卡通图，统一好看 =====
