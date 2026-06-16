@@ -1266,7 +1266,7 @@
 
   </div><!-- /screens-wrap -->
 
-  <div class="page-fox"><img src="icons/badge.png" alt="小狐狸"></div>
+  <div class="page-fox"><img data-petimg src="icons/pets/fox.png" alt="小伙伴"></div>
   </div><!-- /view-mistakes -->
 
   <!-- ============ 视图：每日作业 ============ -->
@@ -1299,7 +1299,7 @@
       <div class="unit-pick" id="hw-unit-pick" style="display:none;"></div>
       <div id="hw-list"></div>
     </section>
-    <div class="page-fox"><img src="icons/badge.png" alt="小狐狸"></div>
+    <div class="page-fox"><img data-petimg src="icons/pets/fox.png" alt="小伙伴"></div>
   </div><!-- /view-homework -->
 
   <!-- ============ 视图：听写 ============ -->
@@ -1360,7 +1360,7 @@
       </div>
       <div class="hint" style="margin-top:10px;">嗓音带 ✨ 的更自然；用 <b>Microsoft Edge</b> 打开有"自然"语音。</div>
     </details>
-    <div class="page-fox"><img src="icons/badge.png" alt="小狐狸"></div>
+    <div class="page-fox"><img data-petimg src="icons/pets/fox.png" alt="小伙伴"></div>
   </div><!-- /view-dictation -->
 
   <!-- ============ 视图：学习进度 ============ -->
@@ -1388,7 +1388,7 @@
       <div class="card-title"><span>🏅 成就徽章</span><span class="badge-count" id="badge-count"></span></div>
       <div id="badge-body"></div>
     </section>
-    <div class="page-fox"><img src="icons/tree.png" alt="小狐狸"></div>
+    <div class="page-fox"><img data-petimg src="icons/pets/fox.png" alt="小伙伴"></div>
   </div>
 
   <!-- ============ 视图：我的 ============ -->
@@ -2128,7 +2128,7 @@ function renderCollection() {
     .filter(q => selected.has(q.id))
     .sort((a, b) => a.id - b.id);
   if (!chosen.length) {
-    list.innerHTML = '<div class="empty-fox"><img src="icons/errors.png" alt=""><div class="ef-text">还没选错题呢～<br>点「← 上一步」回去，点一点你做错的题，小狐狸来帮你讲！</div></div>';
+    list.innerHTML = '<div class="empty-fox"><img src="icons/pets/' + (selectedPetId() || 'fox') + '.png" alt=""><div class="ef-text">还没选错题呢～<br>点「← 上一步」回去，点一点你做错的题，小狐狸来帮你讲！</div></div>';
     return;
   }
   list.innerHTML = chosen.map(q => `
@@ -3295,7 +3295,11 @@ function petFace(id) {
 }
 // 功能图标随选中动物切换：icons/pets/ic-<动物>-<功能>.png（fox/owl/rabbit/panda/parrot/squirrel × mistakes/dict/homework/growth/level/streak/badge/plan）
 function petIcon(func) { return 'icons/pets/ic-' + (selectedPetId() || 'fox') + '-' + func + '.png'; }
-function applyPetIcons() { document.querySelectorAll('[data-func]').forEach(el => { el.src = petIcon(el.dataset.func); }); }
+function applyPetIcons() {
+  document.querySelectorAll('[data-func]').forEach(el => { el.src = petIcon(el.dataset.func); });
+  const av = 'icons/pets/' + (selectedPetId() || 'fox') + '.png';   // 写死的狐狸照片(底部小伙伴/空状态)也换成所选动物
+  document.querySelectorAll('[data-petimg]').forEach(el => { el.src = av; });
+}
 function selectedPetId() { const id = DB.read(pKey('selectedPet'), null); return petOf(id) ? id : null; }
 function petName() { const id = selectedPetId(); const n = DB.read(pKey('petName'), ''); return n || (petOf(id) ? petOf(id).name : ''); }
 function ownedPets() { const a = DB.read(pKey('ownedPets'), []); return Array.isArray(a) ? a : []; }
@@ -3623,7 +3627,7 @@ function renderHomework() {
   $('hw-progress').textContent = items.length ? `完成 ${done}/${items.length}` : '今天还没记作业';
   $('hw-bar-fill').style.width = pct + '%';
   const list = $('hw-list');
-  if (!items.length) { list.innerHTML = `<div class="empty-fox"><img src="icons/today.png" alt=""><div class="ef-text">今天还没有作业哦～<br>在上面记一下，或点 📷 拍张老师发的作业，小狐狸帮你拆成清单！</div></div>`; return; }
+  if (!items.length) { list.innerHTML = `<div class="empty-fox"><img src="icons/pets/${selectedPetId() || 'fox'}.png" alt=""><div class="ef-text">今天还没有作业哦～<br>在上面记一下，或点 📷 拍张老师发的作业，小狐狸帮你拆成清单！</div></div>`; return; }
   const groups = {};
   items.forEach(i => { (groups[i.subject] = groups[i.subject] || []).push(i); });
   list.innerHTML = HW_SUBJECTS.filter(s => groups[s]).map(s => `
