@@ -1140,26 +1140,26 @@
   <!-- ============ 视图：宠物之家（页6）============ -->
   <div id="view-pethouse" class="view">
     <div class="view-title">🏠 宠物之家</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-badge.png" alt="小狐狸"><span class="fg-text"><b>这里是宠物之家！</b>体验过的小伙伴都住在这儿，点一下就能换上～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="badge" src="icons/pets/ic-fox-badge.png" alt="小狐狸"><span class="fg-text"><b>这里是宠物之家！</b>体验过的小伙伴都住在这儿，点一下就能换上～</span></div>
     <div id="pethouse-body"></div>
   </div>
 
   <!-- ============ 视图：学习（hub）============ -->
   <div id="view-study" class="view">
     <div class="view-title">📚 学习</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-homework.png" alt="小狐狸"><span class="fg-text"><b>今天想学点什么？</b>小狐狸都在这儿陪着你～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="homework" src="icons/pets/ic-fox-homework.png" alt="小狐狸"><span class="fg-text"><b>今天想学点什么？</b>小狐狸都在这儿陪着你～</span></div>
     <div class="study-grid">
       <!-- 错题辅导(搜题)入口已暂时隐藏；加回只需恢复下面这张卡：
       <div class="study-card sc-err" data-go="mistakes"><span class="sc-ico">📝</span><div class="sc-name">错题辅导</div><div class="sc-sub">拍卷子，一步步教懂</div></div> -->
-      <div class="study-card sc-dict" data-go="dictation"><img class="sc-ico-img" src="icons/ic-dict.png" alt=""><div class="sc-name">听写小帮手</div><div class="sc-sub">小狐狸报读，你来写</div></div>
-      <div class="study-card sc-hw" data-go="homework"><img class="sc-ico-img" src="icons/ic-homework.png" alt=""><div class="sc-name">今日任务</div><div class="sc-sub">记作业、打勾、攒经验</div></div>
+      <div class="study-card sc-dict" data-go="dictation"><img class="sc-ico-img" data-func="dict" src="icons/pets/ic-fox-dict.png" alt=""><div class="sc-name">听写小帮手</div><div class="sc-sub">小狐狸报读，你来写</div></div>
+      <div class="study-card sc-hw" data-go="homework"><img class="sc-ico-img" data-func="homework" src="icons/pets/ic-fox-homework.png" alt=""><div class="sc-name">今日任务</div><div class="sc-sub">记作业、打勾、攒经验</div></div>
     </div>
   </div>
 
   <!-- ============ 视图：错题辅导 ============ -->
   <div id="view-mistakes" class="view">
     <div class="view-title">📝 错题辅导</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-mistakes.png" alt="小狐狸"><span class="fg-text"><b>小狐狸来帮你分析错题吧！</b>拍张卷子，我一步一步教你弄懂～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="mistakes" src="icons/pets/ic-fox-mistakes.png" alt="小狐狸"><span class="fg-text"><b>小狐狸来帮你分析错题吧！</b>拍张卷子，我一步一步教你弄懂～</span></div>
     <div class="mode-switch subject-switch" id="subject-switch">
       <button class="mode-btn active" data-subject="math">📐 数学</button>
       <button class="mode-btn" data-subject="english">🔤 英语</button>
@@ -1272,7 +1272,7 @@
   <!-- ============ 视图：每日作业 ============ -->
   <div id="view-homework" class="view">
     <div class="view-title">📚 今日任务</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-homework.png" alt="小狐狸"><span class="fg-text"><b>今天有哪些任务呢？</b>记下来，我们一起来完成吧！</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="homework" src="icons/pets/ic-fox-homework.png" alt="小狐狸"><span class="fg-text"><b>今天有哪些任务呢？</b>记下来，我们一起来完成吧！</span></div>
     <section class="card">
       <div class="card-title"><span>今日作业</span><span class="hw-progress" id="hw-progress"></span></div>
       <div class="hw-datebar">
@@ -1305,7 +1305,7 @@
   <!-- ============ 视图：听写 ============ -->
   <div id="view-dictation" class="view">
     <div class="view-title">🔊 听写小帮手</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-dict.png" alt="小狐狸"><span class="fg-text"><b>准备好了吗？</b>小狐狸来帮你听写，一个一个念给你写～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="dict" src="icons/pets/ic-fox-dict.png" alt="小狐狸"><span class="fg-text"><b>准备好了吗？</b>小狐狸来帮你听写，一个一个念给你写～</span></div>
 
     <!-- 开始听写：主操作，醒目大按钮 -->
     <section class="card">
@@ -1366,7 +1366,7 @@
   <!-- ============ 视图：学习进度 ============ -->
   <div id="view-progress" class="view">
     <div class="view-title">🌱 我的成长</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-growth.png" alt="小狐狸"><span class="fg-text"><b>你和小伙伴一起长大啦！</b>看看学过的内容，还有这几天的打卡记录～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="growth" src="icons/pets/ic-fox-growth.png" alt="小狐狸"><span class="fg-text"><b>你和小伙伴一起长大啦！</b>看看学过的内容，还有这几天的打卡记录～</span></div>
     <div class="row" style="margin-bottom:14px;">
       <button class="btn-ghost" style="flex:1;" data-go="mybuddy">🐾 我的伙伴</button>
       <button class="btn-ghost" style="flex:1;" data-go="pethouse">🏠 宠物之家</button>
@@ -1394,7 +1394,7 @@
   <!-- ============ 视图：我的 ============ -->
   <div id="view-me" class="view">
     <div class="view-title">👤 我的</div>
-    <div class="fox-guide"><img class="fg-fox-img" src="icons/ic-level.png" alt="小狐狸"><span class="fg-text"><b>我的小天地</b>管理小朋友、备份数据～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="level" src="icons/pets/ic-fox-level.png" alt="小狐狸"><span class="fg-text"><b>我的小天地</b>管理小朋友、备份数据～</span></div>
     <section class="card">
       <div class="card-title"><span>👨‍👩‍👧 小朋友档案</span></div>
       <div id="me-profiles"></div>
@@ -2985,6 +2985,7 @@ function go(view) {
   const tab = TAB[view] || '';
   [...document.querySelectorAll('.bn-item')].forEach(b => b.classList.toggle('active', b.dataset.nav === tab));
   try { window.scrollTo(0, 0); } catch (_) {}
+  if (typeof applyPetIcons === 'function') applyPetIcons();   // 功能图标跟随当前伙伴
   if (view !== 'dictation' && typeof dictStop === 'function') dictStop();   // 离开听写 → 停止报读
   if (view === 'home') renderHome();
   else if (view === 'petselect') renderPetSelect();
@@ -3291,6 +3292,9 @@ function petFace(id) {
     + '<img class="pa-img" alt="" src="icons/pets/' + (id || 'x') + '.png"'
     + ' onload="this.previousElementSibling.style.display=\'none\'" onerror="this.remove()">';
 }
+// 功能图标随选中动物切换：icons/pets/ic-<动物>-<功能>.png（fox/owl/rabbit/panda/parrot/squirrel × mistakes/dict/homework/growth/level/streak/badge/plan）
+function petIcon(func) { return 'icons/pets/ic-' + (selectedPetId() || 'fox') + '-' + func + '.png'; }
+function applyPetIcons() { document.querySelectorAll('[data-func]').forEach(el => { el.src = petIcon(el.dataset.func); }); }
 function selectedPetId() { const id = DB.read(pKey('selectedPet'), null); return petOf(id) ? id : null; }
 function petName() { const id = selectedPetId(); const n = DB.read(pKey('petName'), ''); return n || (petOf(id) ? petOf(id).name : ''); }
 function ownedPets() { const a = DB.read(pKey('ownedPets'), []); return Array.isArray(a) ? a : []; }
@@ -3304,6 +3308,7 @@ function applyPet(id) {
   const own = ownedPets(); if (own.indexOf(id) < 0) { own.push(id); DB.write(pKey('ownedPets'), own); }
   DB.write(pKey('lvSeen'), levelInfo(totalXP()).level);
   syncPetStats();
+  if (typeof applyPetIcons === 'function') applyPetIcons();   // 立刻把全 app 功能图标换成这只
 }
 function renamePet() {
   if (!selectedPetId()) return;
@@ -3428,12 +3433,12 @@ function renderHome() {
   // 今日任务（记作业 / 听写 / 错题讲解）
   const items = getDayItems(todayStr()), done = items.filter(x => x.done).length;
   const tasks = [
-    { img: 'ic-homework', name: '记作业 · 做作业', sub: items.length ? ('今天 ' + done + ' / ' + items.length + ' 完成') : '还没记今天的作业', go: 'homework' },
-    { img: 'ic-dict', name: '练听写', sub: '拍生字表，小狐狸来报读', go: 'dictation' },
+    { func: 'homework', name: '记作业 · 做作业', sub: items.length ? ('今天 ' + done + ' / ' + items.length + ' 完成') : '还没记今天的作业', go: 'homework' },
+    { func: 'dict', name: '练听写', sub: '拍生字表，小狐狸来报读', go: 'dictation' },
     // 错题讲解(搜题)入口已暂时隐藏 —— view-mistakes 代码保留，加回只需恢复这一行：
-    // { img: 'ic-mistakes', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
+    // { func: 'mistakes', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
   ];
-  $('home-tasks').innerHTML = tasks.map(t => '<div class="task-entry" data-go="' + t.go + '"><img class="te-ico-img" src="icons/' + t.img + '.png" alt="">'
+  $('home-tasks').innerHTML = tasks.map(t => '<div class="task-entry" data-go="' + t.go + '"><img class="te-ico-img" src="' + petIcon(t.func) + '" alt="">'
     + '<div class="te-txt"><div class="te-name">' + t.name + '</div><div class="te-sub">' + esc(t.sub) + '</div></div>'
     + '<span class="te-arrow">▶</span></div>').join('');
   checkLevelUp(li);   // 升级 → 弹窗（页5）
