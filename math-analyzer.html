@@ -3519,10 +3519,10 @@ function renderTodayPath() {
   const items = getDayItems(todayStr());
   const undone = items.filter(x => !x.done).length;
   const steps = [];
-  if (!items.length) steps.push({ icon: 'today', title: '记今天的作业', sub: '拍照或手输，小狐狸帮你盯', go: 'homework', done: false });
+  if (!items.length) steps.push({ icon: 'today', title: '记今天的作业', sub: '拍照或手输，' + petN() + '帮你盯', go: 'homework', done: false });
   else if (undone > 0) steps.push({ icon: 'today', title: '完成今天的作业', sub: '还剩 ' + undone + ' 项，做完就打卡 🔥', go: 'homework', done: false });
   else steps.push({ icon: 'today', title: '今天的作业全做完啦', sub: '太棒了，已打卡', go: 'homework', done: true });
-  steps.push({ icon: 'dictation', title: '练一练听写', sub: '拍生字表，小狐狸来报读', go: 'dictation', done: false });
+  steps.push({ icon: 'dictation', title: '练一练听写', sub: '拍生字表，' + petN() + '来报读', go: 'dictation', done: false });
   steps.push({ icon: 'errors', title: '讲讲做错的题', sub: '拍下卷子，AI 一步步教你', go: 'mistakes', done: false });
   el.innerHTML = steps.map(s => '<div class="path-step' + (s.done ? ' done' : '') + '" data-go="' + s.go + '">'
     + '<img class="ps-icon" src="icons/' + s.icon + '.png" alt="">'
