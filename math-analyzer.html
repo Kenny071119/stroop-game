@@ -936,7 +936,11 @@
   .joined-sub { font-size:15px; color:var(--ink-dim); margin-top:4px; }
   .joined-pet { width:160px; height:160px; margin:18px auto 0; display:flex; align-items:center; justify-content:center; font-size:104px; border-radius:36px; background:linear-gradient(160deg,var(--tint,#FFEAD6),#fff 80%); box-shadow:var(--card-shadow); animation:petbob 3s ease-in-out infinite; }
   .joined-name { font-size:18px; font-weight:800; color:var(--ink); margin-top:12px; }
-  /* ===== 我的伙伴（页4）技能盒 ===== */
+  /* ===== 我的伙伴（页4）状态行 + 技能盒 ===== */
+  .pet-stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+  .pet-stat { background:var(--card); border:var(--card-border); border-radius:var(--inner-radius); box-shadow:var(--card-shadow); padding:12px 6px; text-align:center; }
+  .pet-stat .ps-k { font-size:11.5px; color:var(--ink-dim); font-weight:600; }
+  .pet-stat .ps-v { font-size:15px; font-weight:800; color:var(--ink); margin-top:4px; }
   .skill-box { font-size:15px; font-weight:800; color:var(--brand-ink); background:var(--brand-soft); border:1px solid #C3E2BD; border-radius:12px; padding:12px 14px; }
   .skill-box .hint { font-weight:600; }
   /* ===== 宠物之家（页6）===== */
@@ -1396,7 +1400,7 @@
   <div id="view-me" class="view">
     <div class="view-title">👤 我的</div>
     <div class="fox-guide"><img class="fg-fox-img" data-func="level" src="icons/pets/ic-fox-level.png" alt="小狐狸"><span class="fg-text"><b>我的小天地</b>管理小朋友、备份数据～</span></div>
-    <div class="hint" style="text-align:center;margin:-4px 0 12px;opacity:.6;">build 0616-2310 · 看到这行=已是最新版（动态图标+6页流程）</div>
+    <div class="hint" style="text-align:center;margin:-4px 0 12px;opacity:.6;">build 0617-mvp · 看到这行=已是最新版（动态图标+6页流程）</div>
     <section class="card">
       <div class="card-title"><span>👨‍👩‍👧 小朋友档案</span></div>
       <div id="me-profiles"></div>
@@ -3356,20 +3360,53 @@ function renderPetJoined() {
     + '<div class="joined-name">' + esc(petName()) + ' · ' + p.name + '</div>'
     + '<button class="btn-primary" style="width:100%;margin-top:20px;" onclick="go(\'home\')">开始学习之旅 →</button>';
 }
-/* ---- 页4：我的伙伴 ---- */
+/* ---- 成长阶段 + 宠物成长数据结构（对应 要求.txt 规格）---- */
+function growthStageOf(level) { return level <= 3 ? '幼年期' : level <= 6 ? '成长期' : level <= 10 ? '进阶期' : '高级形态'; }
+function petMoodWord() {
+  const items = getDayItems(todayStr()), undone = items.filter(x => !x.done).length;
+  if (items.length && undone === 0) return '😄 超开心';
+  if (undone > 0) return '💪 加油中';
+  if (streakDays() >= 3) return '🥰 满足';
+  return '🙂 等你来';
+}
+function streakDays() { return streakCount(); }
+// 宠物成长状态：统一的数据结构，方便后续扩展（经验仍由真实学习数据 totalXP 推算）
+function getPetState() {
+  const id = selectedPetId(), p = petOf(id), li = levelInfo(totalXP());
+  const items = getDayItems(todayStr());
+  return {
+    petType: id || null,
+    petName: petName() || (p ? p.name : ''),
+    level: li.level,
+    currentXP: li.into,
+    maxXP: li.need,
+    mood: petMoodWord(),
+    streakDays: streakCount(),
+    totalStudyTasks: totalHwDone(),
+    growthStage: growthStageOf(li.level),
+    todayDone: items.filter(x => x.done).length,
+    todayTotal: items.length,
+  };
+}
+/* ---- 页4：我的伙伴（展示完整成长状态）---- */
 function renderMyBuddy() {
   const host = $('mybuddy-body'); if (!host) return;
   const id = selectedPetId(); if (!id) { go('petselect'); return; }
-  const p = petOf(id), li = syncPetStats();
-  const pct = Math.round(li.into / li.need * 100);
+  const p = petOf(id), s = getPetState(); syncPetStats();
+  const pct = Math.round(s.currentXP / s.maxXP * 100);
   host.innerHTML =
     '<div class="buddy-stage" style="--tint:' + p.tint + '">'
     + '<div class="buddy-big">' + petFace(p.id) + '</div>'
-    + '<div class="pet-name-row"><span class="pet-name">' + esc(petName()) + '</span>'
+    + '<div class="pet-name-row"><span class="pet-name">' + esc(s.petName) + '</span>'
     + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
-    + '<div class="pet-stage-name">' + p.name + ' · ' + p.type + '</div>'
+    + '<div class="pet-stage-name">' + p.name + ' · ' + p.type + ' · ' + s.growthStage + '</div>'
     + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="mb-xpfill"></div></div>'
-    + '<div class="pet-xp-text">Lv.' + li.level + ' ' + li.name + ' · ' + li.into + ' / ' + li.need + ' XP</div>'
+    + '<div class="pet-xp-text">Lv.' + s.level + ' ' + levelInfo(totalXP()).name + ' · ' + s.currentXP + ' / ' + s.maxXP + ' XP</div>'
+    + '</div>'
+    + '<div class="pet-stat-row">'
+    + '<div class="pet-stat"><div class="ps-k">当前心情</div><div class="ps-v">' + s.mood + '</div></div>'
+    + '<div class="pet-stat"><div class="ps-k">连续学习</div><div class="ps-v">🔥 ' + s.streakDays + ' 天</div></div>'
+    + '<div class="pet-stat"><div class="ps-k">今日任务</div><div class="ps-v">' + (s.todayTotal ? s.todayDone + ' / ' + s.todayTotal : '未记') + '</div></div>'
     + '</div>'
     + '<div class="pet-road"><div class="pr-title">✨ 伙伴技能</div><div class="skill-box">' + p.skill
     + '<div class="hint" style="margin-top:4px;">陪伴属性，和你一起做任务、一起成长～</div></div></div>'
