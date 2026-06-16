@@ -1166,11 +1166,11 @@
   <!-- ============ 视图：学习（hub）============ -->
   <div id="view-study" class="view">
     <div class="view-title">📚 学习</div>
-    <div class="fox-guide"><img class="fg-fox-img" data-func="homework" src="icons/pets/ic-fox-homework.png" alt="小狐狸"><span class="fg-text"><b>今天想学点什么？</b>小狐狸都在这儿陪着你～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="homework" src="icons/pets/ic-fox-homework.png" alt="小狐狸"><span class="fg-text"><b>今天想学点什么？</b><span class="pn">小狐狸</span>都在这儿陪着你～</span></div>
     <div class="study-grid">
       <!-- 错题辅导(搜题)入口已暂时隐藏；加回只需恢复下面这张卡：
       <div class="study-card sc-err" data-go="mistakes"><span class="sc-ico">📝</span><div class="sc-name">错题辅导</div><div class="sc-sub">拍卷子，一步步教懂</div></div> -->
-      <div class="study-card sc-dict" data-go="dictation"><img class="sc-ico-img" data-func="dict" src="icons/pets/ic-fox-dict.png" alt=""><div class="sc-name">听写小帮手</div><div class="sc-sub">小狐狸报读，你来写</div></div>
+      <div class="study-card sc-dict" data-go="dictation"><img class="sc-ico-img" data-func="dict" src="icons/pets/ic-fox-dict.png" alt=""><div class="sc-name">听写小帮手</div><div class="sc-sub"><span class="pn">小狐狸</span>报读，你来写</div></div>
       <div class="study-card sc-hw" data-go="homework"><img class="sc-ico-img" data-func="homework" src="icons/pets/ic-fox-homework.png" alt=""><div class="sc-name">今日任务</div><div class="sc-sub">记作业、打勾、攒经验</div></div>
     </div>
   </div>
@@ -1178,7 +1178,7 @@
   <!-- ============ 视图：错题辅导 ============ -->
   <div id="view-mistakes" class="view">
     <div class="view-title">📝 错题辅导</div>
-    <div class="fox-guide"><img class="fg-fox-img" data-func="mistakes" src="icons/pets/ic-fox-mistakes.png" alt="小狐狸"><span class="fg-text"><b>小狐狸来帮你分析错题吧！</b>拍张卷子，我一步一步教你弄懂～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="mistakes" src="icons/pets/ic-fox-mistakes.png" alt="小狐狸"><span class="fg-text"><b><span class="pn">小狐狸</span>来帮你分析错题吧！</b>拍张卷子，我一步一步教你弄懂～</span></div>
     <div class="mode-switch subject-switch" id="subject-switch">
       <button class="mode-btn active" data-subject="math">📐 数学</button>
       <button class="mode-btn" data-subject="english">🔤 英语</button>
@@ -1332,7 +1332,7 @@
   <!-- ============ 视图：听写 ============ -->
   <div id="view-dictation" class="view">
     <div class="view-title">🔊 听写小帮手</div>
-    <div class="fox-guide"><img class="fg-fox-img" data-func="dict" src="icons/pets/ic-fox-dict.png" alt="小狐狸"><span class="fg-text"><b>准备好了吗？</b>小狐狸来帮你听写，一个一个念给你写～</span></div>
+    <div class="fox-guide"><img class="fg-fox-img" data-func="dict" src="icons/pets/ic-fox-dict.png" alt="小狐狸"><span class="fg-text"><b>准备好了吗？</b><span class="pn">小狐狸</span>来帮你听写，一个一个念给你写～</span></div>
 
     <!-- 开始听写：主操作，醒目大按钮 -->
     <section class="card">
@@ -1498,7 +1498,7 @@
   </section>
 
   <footer>
-    小狐狸 AI 学习助手 · v53（错题大相机卡 + 听写大按钮 + 两行问候·移植示例）
+    <span class="pn">小狐狸</span>学习助手 · build 0617
   </footer>
 
   <!-- 底部导航：首页 / 学习 / 成长 / 我的 -->
@@ -2329,13 +2329,13 @@ $('btn-recognize').addEventListener('click', async () => {
   const original = btn.textContent;
   const texts = [];
   for (let i = 0; i < images.length; i++) {
-    btn.innerHTML = `<span class="spinner"></span>小狐狸在看 ${i + 1}/${images.length} 张…`;
+    btn.innerHTML = `<span class="spinner"></span>${petN()}在看 ${i + 1}/${images.length} 张…`;
     try {
       const t = await recognizeImage(images[i]);
       if (t && t.trim()) texts.push(t.trim());
     } catch (err) {
       btn.innerHTML = original; btn.disabled = false;
-      alert('第 ' + (i + 1) + ' 张小狐狸没看清：' + (err.message || err));
+      alert('第 ' + (i + 1) + ' 张' + petN() + '没看清：' + (err.message || err));
       return;
     }
   }
@@ -3014,6 +3014,7 @@ function go(view) {
   [...document.querySelectorAll('.bn-item')].forEach(b => b.classList.toggle('active', b.dataset.nav === tab));
   try { window.scrollTo(0, 0); } catch (_) {}
   if (typeof applyPetIcons === 'function') applyPetIcons();   // 功能图标跟随当前伙伴
+  if (typeof applyPetText === 'function') applyPetText();      // "小狐狸"等文字跟随当前伙伴昵称
   if (view !== 'dictation' && typeof dictStop === 'function') dictStop();   // 离开听写 → 停止报读
   if (view === 'home') renderHome();
   else if (view === 'petselect') renderPetSelect();
@@ -3186,7 +3187,7 @@ $('dict-reveal').addEventListener('click', () => {
 });
 $('dict-photo').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0]; e.target.value = ''; if (!file) return;
-  const lab = $('dict-photo-label'); const old = lab.textContent; lab.textContent = '小狐狸在看…';
+  const lab = $('dict-photo-label'); const old = lab.textContent; lab.textContent = petN() + '在看…';
   try {
     const dataURL = await downscaleDataURL(await fileToDataURL(file), 1500, 0.85);
     const words = await recognizeWordList(dataURL, $('dict-subject').value);
@@ -3195,8 +3196,8 @@ $('dict-photo').addEventListener('change', async (e) => {
       $('dict-input').value = (cur ? cur + '\n' : '') + words.join('\n');
       updateDictCount();
       lab.textContent = '已加 ' + words.length + ' 个 ✓'; setTimeout(() => { lab.textContent = old; }, 1600);
-    } else { alert('小狐狸没看清字词，换张清楚点的再拍～'); lab.textContent = old; }
-  } catch (err) { alert('小狐狸没看清：' + (err.message || err)); lab.textContent = old; }
+    } else { alert(petN() + '没看清字词，换张清楚点的再拍～'); lab.textContent = old; }
+  } catch (err) { alert(petN() + '没看清：' + (err.message || err)); lab.textContent = old; }
 });
 if (window.speechSynthesis) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => { try { speechSynthesis.getVoices(); renderDictVoices(); } catch (_) {} }; } catch (_) {} }
 
@@ -3299,13 +3300,17 @@ function renderAICard() {
  *  形象暂用 emoji 占位；待用户给 6 张单只透明 PNG 后可在 petEmoji() 处换成 <img>。
  */
 const PETS = [
-  { id: 'fox',      name: '学霸狐',     emoji: '🦊', type: '均衡型', skill: '全科经验加成 +5%', tint: '#FFEAD6' },
-  { id: 'owl',      name: '博士猫头鹰', emoji: '🦉', type: '阅读型', skill: '阅读经验加成 +5%', tint: '#ECE6F7' },
-  { id: 'rabbit',   name: '运动兔',     emoji: '🐰', type: '坚持型', skill: '连续打卡奖励 +5%', tint: '#E6F0FF' },
-  { id: 'panda',    name: '计算熊猫',   emoji: '🐼', type: '数学型', skill: '数学经验加成 +5%', tint: '#EAF4E2' },
-  { id: 'parrot',   name: '英语鹦鹉',   emoji: '🦜', type: '英语型', skill: '英语经验加成 +5%', tint: '#FFF0DE' },
-  { id: 'squirrel', name: '松鼠探险家', emoji: '🐿️', type: '探索型', skill: '探索经验加成 +5%', tint: '#FBEDDD' },
+  { id: 'fox',      name: '学霸狐',     nick: '小狐狸', emoji: '🦊', type: '均衡型', skill: '全科经验加成 +5%', tint: '#FFEAD6' },
+  { id: 'owl',      name: '博士猫头鹰', nick: '小博士', emoji: '🦉', type: '阅读型', skill: '阅读经验加成 +5%', tint: '#ECE6F7' },
+  { id: 'rabbit',   name: '运动兔',     nick: '小兔',   emoji: '🐰', type: '坚持型', skill: '连续打卡奖励 +5%', tint: '#E6F0FF' },
+  { id: 'panda',    name: '计算熊猫',   nick: '熊猫',   emoji: '🐼', type: '数学型', skill: '数学经验加成 +5%', tint: '#EAF4E2' },
+  { id: 'parrot',   name: '英语鹦鹉',   nick: '鹦鹉',   emoji: '🦜', type: '英语型', skill: '英语经验加成 +5%', tint: '#FFF0DE' },
+  { id: 'squirrel', name: '松鼠探险家', nick: '小松鼠', emoji: '🐿️', type: '探索型', skill: '探索经验加成 +5%', tint: '#FBEDDD' },
 ];
+// 伙伴昵称：用户取了名字就用名字，否则用该动物昵称（默认狐狸=小狐狸）。所有"小狐狸"文字都改用它
+function petN() { const c = DB.read(pKey('petName'), ''); const p = petOf(selectedPetId()); return c || (p ? p.nick : '小狐狸'); }
+// 把 HTML 里 class="pn" 的占位文字设为当前昵称（go/换伙伴时调用）
+function applyPetText() { document.querySelectorAll('.pn').forEach(el => { el.textContent = petN(); }); }
 const TASK_REWARDS = [
   { icon: '📝', name: '完成一项作业', xp: '+5 经验' },
   { icon: '🔥', name: '当天作业全做完', xp: '+20 经验' },
@@ -3341,6 +3346,7 @@ function applyPet(id) {
   DB.write(pKey('lvSeen'), levelInfo(totalXP()).level);
   syncPetStats();
   if (typeof applyPetIcons === 'function') applyPetIcons();   // 立刻把全 app 功能图标换成这只
+  if (typeof applyPetText === 'function') applyPetText();      // 文字昵称也立刻更新
 }
 function renamePet() {
   if (!selectedPetId()) return;
@@ -3499,7 +3505,7 @@ function renderHome() {
   const items = getDayItems(todayStr()), done = items.filter(x => x.done).length;
   const tasks = [
     { func: 'homework', name: '记作业 · 做作业', sub: items.length ? ('今天 ' + done + ' / ' + items.length + ' 完成') : '还没记今天的作业', go: 'homework' },
-    { func: 'dict', name: '练听写', sub: '拍生字表，小狐狸来报读', go: 'dictation' },
+    { func: 'dict', name: '练听写', sub: '拍生字表，' + petN() + '来报读', go: 'dictation' },
     // 错题讲解(搜题)入口已暂时隐藏 —— view-mistakes 代码保留，加回只需恢复这一行：
     // { func: 'mistakes', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
   ];
@@ -3696,7 +3702,7 @@ function renderHomework() {
   $('hw-progress').textContent = items.length ? `完成 ${done}/${items.length}` : '今天还没记作业';
   $('hw-bar-fill').style.width = pct + '%';
   const list = $('hw-list');
-  if (!items.length) { list.innerHTML = `<div class="empty-fox"><img src="icons/pets/${selectedPetId() || 'fox'}.png" alt=""><div class="ef-text">今天还没有作业哦～<br>在上面记一下，或点 📷 拍张老师发的作业，小狐狸帮你拆成清单！</div></div>`; return; }
+  if (!items.length) { list.innerHTML = `<div class="empty-fox"><img src="icons/pets/${selectedPetId() || 'fox'}.png" alt=""><div class="ef-text">今天还没有作业哦～<br>在上面记一下，或点 📷 拍张老师发的作业，${petN()}帮你拆成清单！</div></div>`; return; }
   const groups = {};
   items.forEach(i => { (groups[i.subject] = groups[i.subject] || []).push(i); });
   list.innerHTML = HW_SUBJECTS.filter(s => groups[s]).map(s => `
@@ -3773,7 +3779,7 @@ $('hw-photo').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  const label = $('hw-photo-label'); const old = label.textContent; label.textContent = '小狐狸在整理…';
+  const label = $('hw-photo-label'); const old = label.textContent; label.textContent = petN() + '在整理…';
   try {
     const dataURL = await downscaleDataURL(await fileToDataURL(file), 1500, 0.82);   // 缩小但保留清晰度，利于手写识别
     let items = null;
@@ -3787,10 +3793,10 @@ $('hw-photo').addEventListener('change', async (e) => {
     // 回退：老办法（OCR 按行拆，全部归到当前选中的科目）
     const raw = await recognizeImage({ file, dataURL });
     const lines = cleanOCRText(raw).split(/\n+/).map(s => s.replace(/^[\s\-•·.、)）\d]+/, '').trim()).filter(s => s.length >= 2);
-    if (!lines.length) alert('小狐狸没看清，换张清楚点的再拍～');
+    if (!lines.length) alert(petN() + '没看清，换张清楚点的再拍～');
     else addHomeworkItems($('hw-add-subject').value, lines, 'teacher');
     label.textContent = old;
-  } catch (err) { alert('小狐狸没看清：' + (err.message || err)); label.textContent = old; }
+  } catch (err) { alert(petN() + '没看清：' + (err.message || err)); label.textContent = old; }
 });
 
 /* ---- 教材进度卡（按当前科目 + 当前孩子的年级显示）---- */
