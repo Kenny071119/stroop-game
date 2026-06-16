@@ -1223,7 +1223,7 @@
   <!-- 第一步：拍/选整张卷子 → 找题 + 拆题 -->
   <section class="card screen active" id="step1">
     <div class="card-title">
-      <span>① 拍张卷子，小狐狸来找题</span>
+      <span>① 拍张卷子，<span class="pn">小狐狸</span>来找题</span>
       <span class="badge-source" id="recog-source"></span>
     </div>
     <label class="cam-card">
@@ -1234,19 +1234,19 @@
     </label>
     <div class="preview-list" id="preview-list"></div>
     <div class="row">
-      <button class="btn-primary" id="btn-recognize" disabled>交给小狐狸找题 →</button>
+      <button class="btn-primary" id="btn-recognize" disabled>交给<span class="pn">小狐狸</span>找题 →</button>
     </div>
     <div class="tips-card">
       <div class="tips-title">💡 小提示</div>
-      · 拍清楚题目，效果更好<br>· 一道题尽量拍正、拍全<br>· 光线足一点，小狐狸看得更准
+      · 拍清楚题目，效果更好<br>· 一道题尽量拍正、拍全<br>· 光线足一点，<span class="pn">小狐狸</span>看得更准
     </div>
     <details class="backup">
       <summary>没有照片？也可以把题目打字进来</summary>
-      <textarea id="paste-input" placeholder="把题目打进来，每道题带个题号（如 1. 2. 3.），小狐狸会自动拆题。"></textarea>
-      <button class="btn-ghost btn-sm" id="btn-paste-split">交给小狐狸找题</button>
+      <textarea id="paste-input" placeholder="把题目打进来，每道题带个题号（如 1. 2. 3.），会自动拆题。"></textarea>
+      <button class="btn-ghost btn-sm" id="btn-paste-split">交给<span class="pn">小狐狸</span>找题</button>
     </details>
     <details class="backup" id="ocr-debug" style="display:none;">
-      <summary>🔧 没找对？看看小狐狸读到的原文（家长用）</summary>
+      <summary>🔧 没找对？看看<span class="pn">小狐狸</span>读到的原文（家长用）</summary>
       <pre id="ocr-debug-pre" style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:var(--ink-dim);background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:220px;overflow:auto;margin-top:8px;"></pre>
     </details>
   </section>
@@ -1270,7 +1270,7 @@
       <span>③ 我的错题本</span>
       <button class="btn-ghost btn-sm" id="btn-copy">复制全部</button>
     </div>
-    <div class="step-desc">每道错题点「💬 问小狐狸」说说<b>哪里不懂</b>，小狐狸一步步带你想明白～聊完点下面「看看我哪里弱」。</div>
+    <div class="step-desc">每道错题点「💬 问<span class="pn">小狐狸</span>」说说<b>哪里不懂</b>，<span class="pn">小狐狸</span>一步步带你想明白～聊完点下面「看看我哪里弱」。</div>
     <div id="collection-list"></div>
     <div class="row" style="margin-top:14px;">
       <button class="btn-primary" id="btn-summarize">看看我哪里弱</button>
@@ -2164,7 +2164,7 @@ function renderCollection() {
       </div>
       ${images.length ? `<div class="col-imgs">${images.map(im => `<img class="col-img" src="${im.dataURL}" data-id="${q.id}" alt="题目原图（点开放大）">`).join('')}</div>` : ''}
       <div class="col-actions">
-        <button class="btn-ask" data-id="${q.id}">💬 问小狐狸（说说哪里不懂）</button>
+        <button class="btn-ask" data-id="${q.id}">💬 问${petN()}（说说哪里不懂）</button>
         ${images.length ? `<button class="btn-view" data-act="view" data-id="${q.id}">🖼 看原图</button>` : ''}
       </div>
       <div class="chat" data-id="${q.id}" style="display:${openChats.has(q.id) ? 'block' : 'none'}">
@@ -2508,7 +2508,7 @@ $('btn-summarize').addEventListener('click', async () => {
   const items = questions
     .filter(q => selected.has(q.id) && chats[q.id] && chats[q.id].some(m => m.role === 'user'))
     .map(q => ({ label: q.label, question: q.text, messages: chats[q.id] }));
-  if (!items.length) { alert('先对至少一道错题「问小狐狸」说说哪里不懂，再来总结～'); return; }
+  if (!items.length) { alert('先对至少一道错题「问' + petN() + '」说说哪里不懂，再来总结～'); return; }
   const box = $('weak-summary');
   box.style.display = 'block';
   $('btn-copy-summary').style.display = 'none';
@@ -3287,7 +3287,7 @@ function renderAICard() {
   const stats = todaySubjectStats().filter(x => x.total);
   $('ai-report').innerHTML = stats.length
     ? stats.map(x => { const pct = x.total ? Math.round(x.done / x.total * 100) : 0; return '<div class="air-row"><span class="air-s">' + x.s + '</span><div class="air-bar"><div class="air-fill" style="width:' + pct + '%"></div></div><span class="air-n">' + x.done + '/' + x.total + '</span></div>'; }).join('')
-    : '<div class="hint" style="margin-bottom:2px;">今天还没记作业～记下来，小狐狸帮你盯进度。</div>';
+    : '<div class="hint" style="margin-bottom:2px;">今天还没记作业～记下来，' + petN() + '帮你盯进度。</div>';
   loadAITip();
 }
 
