@@ -1,0 +1,2793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>错题录入整理</title>
+<style>
+  :root {
+    --bg: #F7F1E7;
+    --bg-soft: #FBF6EE;
+    --card: #FFFFFF;
+    --ink: #3B362E;
+    --ink-dim: #9A8D7B;
+    --line: #ECE2D2;
+    --brand: #4C8DFF;
+    --brand-soft: #E9F1FF;
+    --brand-ink: #2E6BD6;
+    --good: #5AA84F;
+    --bad: #E5645E;
+    --warn: #D99A2B;
+    --purple: #9B7BE0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  /* Twemoji 卡通表情：与文字同高对齐；pointer-events:none 让点击穿透到按钮，避免点到表情时按钮失灵 */
+  img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -.12em; display: inline-block; pointer-events: none; }
+  html, body { min-height: 100%; }
+  body {
+    background:
+      radial-gradient(720px 380px at 92% -6%, rgba(155,123,224,.12), transparent 60%),
+      radial-gradient(720px 420px at 4% 0%, rgba(76,141,255,.12), transparent 55%),
+      radial-gradient(640px 520px at 100% 102%, rgba(217,154,43,.10), transparent 60%),
+      linear-gradient(180deg, #FBF6ED 0%, #F4EDE1 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    transition: background-image .45s ease;
+  }
+  /* 每一步一张背景图（嵌入，按步骤切换）；叠一层暖白让卡片/文字更清楚 */
+  body.bgstep { background-attachment: fixed; background-size: cover; background-position: center; }
+  #app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+
+  /* ===== 模式切换 ===== */
+  .mode-switch {
+    display: inline-flex;
+    gap: 3px;
+    padding: 3px;
+    background: #FFFFFF;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .mode-btn {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-dim);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 16px;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .mode-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, #5C9BFF, #6A6CFF);
+    box-shadow: 0 3px 10px rgba(76,141,255,.35);
+  }
+
+  /* ===== 顶部 ===== */
+  header {
+    padding: 24px 4px 18px;
+  }
+  header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    background: linear-gradient(95deg, #4C8DFF 0%, #8166E0 52%, #E0688F 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  header p {
+    font-size: 13.5px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    max-width: 92%;
+  }
+
+  /* ===== 通用卡片 ===== */
+  .card {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 20px rgba(120,100,70,.10);
+    animation: rise .34s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .card-title {
+    position: relative;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: .3px;
+    margin-bottom: 12px;
+    padding-left: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 2px; bottom: 2px;
+    width: 4px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, var(--brand), var(--purple));
+  }
+  .card-title > span:first-child { flex: 1; }
+
+  /* ===== 输入区 ===== */
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.6;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--brand); }
+  textarea::placeholder { color: #B7AB97; }
+
+  .hint {
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    line-height: 1.7;
+  }
+  .hint code {
+    background: var(--bg-soft);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--brand);
+    font-size: 12px;
+  }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: opacity .15s, transform .05s;
+    color: #fff;
+  }
+  button:active { transform: scale(.98); }
+  button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+  .btn-primary {
+    background: linear-gradient(135deg, #5C9BFF 0%, #4C8DFF 60%, #6A6CFF 100%);
+    box-shadow: 0 6px 16px rgba(76,141,255,.34);
+    flex: 1;
+  }
+  .btn-ghost {
+    background: #FFFFFF;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+  }
+  .btn-ghost:hover { border-color: var(--brand); color: var(--ink); }
+  .btn-sm { padding: 8px 12px; font-size: 13px; }
+
+  /* ===== API Key / 警告 ===== */
+  .warn-banner {
+    font-size: 13px;
+    line-height: 1.6;
+    font-weight: 600;
+    color: #B0433D;
+    background: rgba(255,77,79,.12);
+    border: 1px solid rgba(255,77,79,.4);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .field {
+    width: 100%;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 14px;
+    font-family: inherit;
+    padding: 11px 12px;
+    outline: none;
+  }
+  .field:focus { border-color: var(--brand); }
+  .field::placeholder { color: #B7AB97; }
+  .model-row { display: flex; gap: 10px; margin-top: 10px; }
+  .model-row label {
+    flex: 1;
+    font-size: 12px;
+    color: var(--ink-dim);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  select.field { cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+
+  /* ===== 步骤进度条 ===== */
+  .stepper { display: flex; align-items: flex-start; margin: 2px 2px 18px; }
+  .stepper .step {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    flex: 0 0 auto; user-select: none;
+  }
+  .stepper .dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    background: var(--bg-soft); border: 1px solid var(--line); color: var(--ink-dim);
+    transition: transform .25s, background .25s, color .25s, box-shadow .25s;
+  }
+  .stepper .lbl { font-size: 11px; color: var(--ink-dim); white-space: nowrap; }
+  .stepper .bar { flex: 1; height: 2px; background: var(--line); border-radius: 2px; margin: 16px 8px 0; transition: background .3s; }
+  .stepper .bar.done { background: linear-gradient(90deg, #5C9BFF, #6A6CFF); }
+  .stepper .step.active .dot {
+    background: linear-gradient(135deg, #5C9BFF, #6A6CFF); color: #fff;
+    border-color: transparent; box-shadow: 0 4px 12px rgba(76,141,255,.45); transform: scale(1.08);
+  }
+  .stepper .step.active .lbl { color: var(--ink); font-weight: 600; }
+  .stepper .step.done .dot { background: var(--brand-soft); color: var(--brand-ink); border-color: #BBD2F5; }
+  .stepper .step.reached { cursor: pointer; }
+
+  /* ===== 分屏切换（方向感滑动）===== */
+  .screens-wrap { position: relative; overflow-x: clip; }
+  /* animation:none 关掉 .card 自带的 rise 动画，避免滑入结束后 rise 接管再闪一下 */
+  .screen { display: none; animation: none; }
+  .screen.active { display: block; }
+  /* 离场的页面临时绝对定位，让新旧两页在切换瞬间叠在一起一起动 */
+  .screen.leaving {
+    display: block;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    pointer-events: none;
+  }
+  @keyframes slideInRight { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: none; } }
+  @keyframes slideInLeft  { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+  @keyframes slideOutLeft  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-60px); } }
+  @keyframes slideOutRight { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(60px); } }
+  /* backwards：卡片一出现就采用动画起始帧（透明），消除“先闪现完整卡片一帧”的问题 */
+  .screen.in-fwd  { animation: slideInRight .4s cubic-bezier(.22,.61,.36,1) backwards; }
+  .screen.in-back { animation: slideInLeft  .4s cubic-bezier(.22,.61,.36,1) backwards; }
+  .screen.out-fwd  { animation: slideOutLeft  .34s cubic-bezier(.4,0,.7,.4) forwards; }
+  .screen.out-back { animation: slideOutRight .34s cubic-bezier(.4,0,.7,.4) forwards; }
+  @media (prefers-reduced-motion: reduce) {
+    .screen.in-fwd, .screen.in-back, .screen.out-fwd, .screen.out-back { animation: none; }
+  }
+  .nav-bottom { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+  /* ===== 步骤说明 ===== */
+  .step-desc {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  .step-desc b { color: var(--ink); }
+
+  /* ===== 上传图片 ===== */
+  .tip-scan {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #9A6B16;
+    background: rgba(250,173,20,.10);
+    border: 1px solid rgba(250,173,20,.3);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .tip-scan b { color: var(--warn); }
+
+  /* ===== 备用粘贴 ===== */
+  .backup summary {
+    font-size: 13px;
+    color: var(--brand);
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .backup textarea { min-height: 120px; margin: 8px 0; }
+
+  /* ===== 题号勾选网格（第二步）===== */
+  .q-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qchip {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-soft);
+    user-select: none;
+  }
+  .qchip-main {
+    padding: 9px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .qchip.checked { border-color: var(--bad); }
+  .qchip.checked .qchip-main { background: var(--bad); color: #fff; }
+  .qchip-eye {
+    display: flex;
+    align-items: center;
+    padding: 0 9px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink-dim);
+    border-left: 1px solid var(--line);
+  }
+  .qchip.checked .qchip-eye { border-left-color: rgba(255,255,255,.3); }
+  .q-peek {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .q-peek .peek-num { font-weight: 700; color: var(--brand); margin-right: 6px; }
+  .q-peek .peek-head { font-size: 12px; color: var(--ink-dim); margin-bottom: 8px; }
+
+  /* ===== 我的错题集 ===== */
+  .col-item {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--bg-soft);
+  }
+  .col-row { display: flex; gap: 10px; align-items: flex-start; }
+
+  /* ===== 问AI 辅导 ===== */
+  .col-actions { margin-top: 10px; }
+  .btn-ask {
+    background: var(--brand-soft);
+    color: var(--brand-ink);
+    border: 1px solid #BBD2F5;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .chat { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .chat-log {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+  .chat-empty { font-size: 12px; color: var(--ink-dim); }
+  .chat-msg {
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 8px 11px;
+    border-radius: 10px;
+    max-width: 88%;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .chat-msg.user { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 3px; }
+  .chat-msg.assistant { align-self: flex-start; background: var(--bg); border: 1px solid var(--line); color: var(--ink); border-bottom-left-radius: 3px; }
+  .chat-msg.pending { color: var(--ink-dim); }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input-row .chat-input { flex: 1; }
+  .chat-send {
+    padding: 10px 16px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #5C9BFF, #6A6CFF);
+    box-shadow: 0 4px 12px rgba(76,141,255,.3);
+    border-radius: 10px;
+  }
+  .col-num {
+    flex-shrink: 0;
+    min-width: 44px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--bad);
+    border-radius: 6px;
+  }
+  .col-text { flex: 1; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .col-remove {
+    flex-shrink: 0;
+    width: 24px; height: 24px; line-height: 22px;
+    text-align: center;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .col-empty { font-size: 13px; color: var(--ink-dim); }
+  /* 错题本：以图为主，给用户看整页原题图（点开放大）；识别文字藏在幕后发给 AI */
+  .col-imgs { display: flex; flex-direction: column; gap: 8px; margin: 2px 0 10px; }
+  .col-img {
+    width: 100%; height: auto; display: block;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg-soft); cursor: zoom-in;
+  }
+  .col-img:active { transform: scale(.99); }
+  .col-hint { color: var(--ink-dim); font-size: 12px; font-style: normal; }
+  .btn-view {
+    background: #FFF6E6; color: #9A6B16; border: 1px solid #F0DCB0;
+    font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer;
+    margin-left: 8px;
+  }
+  /* 看原图弹层 */
+  .img-modal { position: fixed; inset: 0; z-index: 100; background: rgba(28,22,14,.92); display: flex; flex-direction: column; }
+  .img-modal-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; color: #fff; font-size: 14px; flex: 0 0 auto; }
+  .img-modal-close { background: rgba(255,255,255,.18); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; }
+  .img-modal-body { flex: 1; overflow: auto; padding: 0 12px 16px; -webkit-overflow-scrolling: touch; }
+  .img-modal-body img { width: 100%; border-radius: 8px; margin-bottom: 12px; display: block; }
+  .img-modal-tip { color: rgba(255,255,255,.7); font-size: 12px; text-align: center; padding: 0 0 10px; }
+  .uploader { display: flex; flex-direction: column; gap: 10px; }
+  .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .upload-btn-main { padding: 26px 12px; }
+  .upload-btn {
+    flex: 1;
+    min-width: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(180deg, rgba(76,141,255,.10), rgba(146,84,222,.08));
+    border: 1.5px dashed #C3D2EE;
+    border-radius: 12px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .upload-btn:hover { border-color: var(--brand); }
+  .upload-btn:active { transform: scale(.99); }
+  .upload-btn .ico { font-size: 20px; }
+  .upload-btn input[type=file] {
+    position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+  }
+  .preview-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .preview-thumb {
+    position: relative;
+    width: calc(33.333% - 7px);
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+  .preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .preview-thumb .remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 22px; height: 22px; line-height: 20px;
+    text-align: center;
+    background: rgba(0,0,0,.6);
+    color: #fff; border-radius: 50%;
+    font-size: 14px; cursor: pointer;
+  }
+  .preview-thumb .pending {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15,19,32,.55);
+  }
+
+  /* ===== 解析后的题目预览 ===== */
+  .parsed-item {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: var(--bg-soft);
+  }
+  .parsed-item .pi-q { font-size: 14px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
+  .parsed-item .pi-ans { font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .pi-ans .wrong { color: var(--bad); }
+  .pi-ans .right { color: var(--good); }
+  .pi-ans .label { color: var(--ink-dim); margin-right: 4px; }
+  .parsed-empty { font-size: 13px; color: var(--ink-dim); }
+
+  /* ===== 分析结果 ===== */
+  .result-q {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .ans-line { font-size: 13px; margin-bottom: 4px; }
+  .ans-line .label { color: var(--ink-dim); display: inline-block; min-width: 56px; }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .tag {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .tag-kp { background: var(--brand-soft); color: var(--brand-ink); }
+  .tag-err {
+    color: #fff;
+  }
+  .err-concept { background: #b13a3c; }   /* 概念不清 */
+  .err-read    { background: #b8860b; }   /* 审题失误 */
+  .err-calc    { background: #2f7d32; }   /* 计算错误 */
+  .err-method  { background: #6a3aa3; }   /* 方法没想到 */
+
+  .reason {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .reason b { color: var(--ink); font-weight: 600; }
+
+  /* ===== 汇总薄弱点 ===== */
+  .summary-block { margin-bottom: 16px; }
+  .summary-block:last-child { margin-bottom: 0; }
+  .summary-h { font-size: 13px; font-weight: 600; color: var(--ink-dim); margin-bottom: 10px; }
+  .bar-item { margin-bottom: 10px; }
+  .bar-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .bar-head .count { color: var(--ink-dim); }
+  .bar-track { height: 8px; background: var(--bg-soft); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width .4s ease; }
+
+  .advice {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 4px;
+    white-space: pre-wrap;
+  }
+
+  /* ===== 状态/加载 ===== */
+  .status {
+    font-size: 13px;
+    color: var(--ink-dim);
+    text-align: center;
+    padding: 24px 0;
+  }
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--line);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    vertical-align: -3px;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .badge-source {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand-ink);
+    background: rgba(76,141,255,.12);
+    border: 1px solid rgba(76,141,255,.25);
+    border-radius: 20px;
+    padding: 3px 9px;
+    white-space: nowrap;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: #B3A693;
+    padding: 16px 0 4px;
+  }
+  a { color: var(--brand); }
+
+  /* 步骤背景图（嵌入 base64，按步骤切换）*/
+  body.bg1 { background-image: linear-gradient(rgba(250,246,238,.58), rgba(250,246,238,.66)), url(data:image/jpeg;base64,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); }
+  body.bg2 { background-image: linear-gradient(rgba(250,246,238,.58), rgba(250,246,238,.66)), url(data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5Ojf/2wBDAQoKCg0MDRoPDxo3JR8lNzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzf/wAARCAGqAoADASIAAhEBAxEB/8QAGwABAQADAQEBAAAAAAAAAAAAAAEDBAUCBgf/xAA9EAACAgEBBgMFBQgBBAMBAAAAAQIDEQQFEiExQVETYXEiMlKBkQYUM0KhI1NicrHB0eE0FSRDgpKi8PH/xAAZAQEBAQEBAQAAAAAAAAAAAAAAAQIDBAX/xAAqEQEBAAIBAwQCAgICAwAAAAAAAQIRAxIhMQQTQVEUIjJhcYEjoTOx8P/aAAwDAQACEQMRAD8A/bvEh8SHiQ+JGoDh7tdOiNvxIfEh4kPiRqAe7Tojb8SHxIeJD4kamQPdp0NvxIfEh4kPiRqAe7Tojb8SHxIeJD4kagHu06I2/Eh8SHiQ+JGoB7tOiNrxIfEh4kPiRqAe7Tojc8SHxIniQ+JGpkD3adEbniQ+JE8SHxI1APdp0Rt+JD4kPEh8SNQo92nRG34kPiQ8SHxI1Mge7Toja8WHxIeLD4kahGT3avRG54tfxoeNX8aNIjJ71Pbje8Wv40PFr+NGiTJPfp7cb/jV/Gh41fxo0MkyPfv0e3HQ8av40PGr+NHPyMk/Iy+j246HjV/Gh41fxo5+QPyMvo9uN/xq/jQ8ar40aGSZH5GX0vtx0PHq+OI8er94jnAfkZfR7cdHx6v3iHj1fHE5uS5H5GX0e3HR8ar40PGq+NHOyXI/Iy+j246HjVfGh41fxo5+RkfkZfSe3HR8av40Txq/jRoAfkZfR7cdDxq/jRPGq+NGhkg/Iy+j246Hj1fGh49XxxOeB+Rl9Htx0PHq/eIePV+8Rzj1Guc+S4dx7+V8Q9uN/wAer95E9KyMllSTRq10Rjxl7TMyO2OeV8s3GfDJvLuXeXcxA11Jpl3l3RHNdzGQdRpfvVH7yJ7U4tJprDNL7om8ynl5y+BlUZw9x70e0ua+ZnHPL5auOPw2d5dy70e5gjLPRp9mU11M6Zt5d0N6PdGEDqNM29HuN6PdGIDqNMu8u43l3MQHUaZd5dzx49X7xHjKbwmsmpqYSUnKKxHuyXOw03fHq/eRH3mnOPEjn1OYs9XkqRn3KadP7xV+8iT7xT+8ic0D3KmnS+8U/vIj7xT+8icwD3KadP7xT+8iPvFP7yJyxke5TTqfeKf3kTIpKSUovKfJnHzk6mm/49foawzuVGsAU87sgKQAACgUAAAABCgCAuBgggLgmBoAAABSACkAAAAQjRSMzVeSHpomDFVCFIQACBVAAAABBkwUEV5wD1gMaHkFIAKiFAoCKVEB6jCUuSyZI0N+88ehqY2+EtkYj3GmUvJeZsRhGPJHo6zi+2bl9MUKYx58X5mXAB1kk8M72AEKgCkAAAAAABJRyuDa80VFA8bti5SjL1WCx3vzJL0Z6AEk2l7Mc/PB43rH+SK9ZHsAFnHtYz5EcFLjLL8s8D0APKSXCKSDWVh8V2KANWyjc4x4r+hhOiYrKIz4rgzNx+hpgyTqlHmuHdGPBlEBcEIIRlIAOtpv+PX6HKOppvwIeh04vKVrFIU4uwQpqW6t7zjTFSw8OcuWfLuLdLJb4bRTBpr/ABd6E0lZHi0nzXdGceSzQACoAFAAFXEqIVRbPcYpcWejUx+028KHdl3V2PQNaibTdXZDdj2RQNI87kexHWvM9gai7rG6/MjhLsZQTohusDTXMhsHlxi+iM9C9TAQzutdGzy6n0aM3CtdUYiYMjrkun0PLi10Zi41dvGCHpkwYqvILgYIICgKgKAiAoAgPSi3yTZ6VU3+UsxtNsY3TMqJdWke1TFc22anHlU6o1cHqMJS5RZtqEY8kim5w/dZ62CND/M8GWNUY9M+p7B0mGMZuVqAoNoAAAAQCkYAAAAAAAAAAAAAABQABAAABSACgADxOqEua+aPRQNWenf5HnyZglFxeJJpnRPMoxksSWTNxHPxkmDZs07jxjxX6mBmLNI8nU03/Hr9DmYOnpvwK/Q6cXlK1wAcnUOVJTpsdL4Ris+I+Sj3OqYNZp1qK0sJzi8xzyfkZyjeGWnNTcboS074ZyrJrjY+3odeqcba1OPJ/p5HKhjd8J5UX7neLXT1Rm0t7qse+8JvE10T6S9GcMOT9u7pnjuOiC4KelwQFwQoIyRjj1JBdT2bxjNoADSAJlZxnj2Ek3yk0vICnl2QTw5cSxio8igRtJZ6EjZGTwnx9D0AAJKKksSSZIwUXlN+meAHoEbwuTfoFJS5P5AUAAAABMZ6EcIvnFHoDUHjwodh4MOz+p7Bnpx+l3WPwYef1Hgw8/qZAOjH6N1j8GHn9R4MOxkA6Mfo3Xnw4fCipJckvoUF1AABUAAAAAAAAAQAUEKAAAAhQBAAABQBAC4AgAAFIUACAACkAAACgAAAYZamuEpRllNeXMzllMfKyW+GYEi1JJrkymkDFbTGfHk+5lAGjOuUH7S4dzoaf8Cv0PJkhwgkkXCarNa2CNFKctOryCgmhz9oUYzdFPdfv46PpI1cyl7WE7IcJR+JHaaymmk1yaOTbpbK9TGEZKFf5bG+Lj1j6nn5eK27jrhn21W1oNTGf7BzTko70Hni4/5RuGpGivTqvwljFibbeXx4Pj8zbO+Msmq55eeweoxy89CRjn0Mh0kZtAAaZCSTaxF4fckpNy3I8+r7I9dAPMYqKwufV9WegAAAAAAAAAA4cwAAAAAAAAAAAAAAAAAAAAgAAFIAKAAAAAgKAIUAAAAAAAgAAAAAAABSFAgAAAAAAAAAApAUCSTcWk8PucuyE42Sjxk1zaR1R8jly8Xua7t4Z9LFpY7tEefHi8mUA6YzU0zbu7AAVAyx91GIyx91GsUrWw0DIMJ9Dn0tbYged3xpPDari8cH7z/wenVGCc473BZaT5k1V3DJJRUouMkmnzTPcFGUVJNtNZR63UuhelNuVr9nX3xgtLe69yW9uSy0/nzOoocePE9ATGQuVoADSAecPdxnpkjb47uMiKwsN5fcCVw3Fzy3xb7s9AAAAAAAAFIAAAAFIAAAAAAAAAAAAAAAAAAAEBQBAUAAAAAAAAAAAAAAAEKAAAEAAAAAAAAAAAAAACgQAAUAAAAAAI5LKWVntkCgAAZY+6jEZY+6jWKViB5akuUvk0ejKvFbgpSrjwcXlr16nqTUYuT5JZZHj3ksS5ZwYpT30oz9mOfa4cwaZoJKEUlhY4LsUkZRl7rT9COyCeN5ZA9AJprKPMt9vEXFLvzYHokt58IvC6sRjhcW2/MoEjFRXAoAAFIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAApAAKQoEAAFBCgQAAAAAAAAAACkKAAAA1bNI56pXb+FlPHXgbQGtgAABlj7qMRlj7qNYpWCMt7o16nmVj5KEs9DIeZyUY7zMqiU5L2ml6HqKSWEuBQAAAAAAAABSAAAAAAAAAACkKBCkAAAAAAAKQAAAAAAAAAAAAAAAAAAABAUgApCgAAAAAAgYAAAAAAAAAFIAKQAACkAAAAAAAAAFIUAAAAAAAAAZY+6jEZY8kaxSsQwnzQBlQAAAAAAAAAAAAAKQAAAAAAFBCgQAAAAAAAAAAAAAAAAAAAAAAAAAgApAAAAApCgCFAAAACFAEAAAAAAAAAAApABSAoEAAAAAAABQQICkKAABAKARtJZb4ADNH3UaNl7bxDgu5t0PNMG+xcLupXkAEUNbXX+FViEsWN8PQ2TU19CnB2RT31jl1Ry5rlML0t8euqbYKtoSjFKyO8++eJ0k8pM5FWmv3oSVbxlPidc5+myzsvW3zTGX9QAHpcQAAAAAAAAAAAAAAAAAoEAAAAAAAAAAAAAAAAAIBQAAAAAAAQAAAABSAACkAFAAEAAAAAAAAAAAAAAAAAAAAAAAAKQoAAAAABGzUtt33w91Hu+3Psx5dWYDFqKkdHT/gw9DnI6On/Bh6G+PyleQYdTqqdNFO6e7nkubZh0+09LfPcjNxlnC31jIXcbgACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAApAAAAAAAAAQCkAAAAAAAoACIpACgAUAAAIAAAKQAUgAAAAAAAAAAAAAAAAAFIUAAY7bo1+b7Ae20llvCNW6/ezGHBdWYrLJWP2n8jzzMXLaKikQMinS0/4EPQ5uTpaf8CHodOPylfJ6m2eoulZY+Lf08jXhyf8zMpjq4wT75f6mXF9HsfUu/Tbs3mdbw2+q6G8cLYc93Vyh0lB/od01HbG7gACtAMGs8VVfsc5zxxzwe9O7HTHxff6mer9unTXT+u2QAGmQAAAAAAAAAAAAAAAAAAAAAAAAAAAABCgAAAAIUgAAAAAAAAAAAACgAAAAAEBQAIykAAAAAAAAAAAAAAAAAAFAAHmye5ByYGO+3cW7H3v6Gm8t8Stttt8WyI527QwUAAEAQVHS0/4MPQ5iOnp/wAGHodOPylfI8uJ4qWKoeiLa8VTf8LJHhCPojLi3dlPGvq88/0Pouh8xspuW1qIrlHLf0PpzUdcPAACtgAAAAAAABSAAAAAAAAACkAAAAAAAAAAAAAAAAAAAAAQpAAAAAAAAAAAAAACggAoIAAAAAAAAAAAAAAAAAoAAgAAKCFAGtq5e7H5myamp/E+RL4GHAKDCIAUCAoAI6Wn/Bh6HNR0tP8Agw9DfH5Svi7J/wDb2J80i2WbkeHPoa10vYfnhfqepvek22R59uj9nY720d7nu1yZ9OfP/ZeH7XUT7RUfq/8AR9Aajtx/xAJNRTcmklxbb5HC2h9oYVNw0UFY/wB5L3fl3DWWUx8u6D4qzbO0LJZeplHygkkbGg+0OpqtitU/Gpbw5NYkvNdysTmx2+tBE8pNPKfJlI6gAAAACkAAAAAAAAAAAAAAAAAAAAAAAAAAFIAAAAEAAAAAAAAAAAFAhQQCkKAIAAAAAAAAAAAAAAAAAABSACggAGDVR92XyM5JRUotMl7jSB6lFxeHzIYRMEPWAB5BRgAkdHT/AIEPQ5x0dP8Agw9Dpx+Ur4O5cI+ckGyWZcoJ/Fn9CvHIy8z6L7MwxpLZ/FZj6I6t1kKa5WWyUYRWXJ9DT2LDwtl05wt5Obz5nzu3trffbvBpl/28Hw/jff8Awajt1dGMXa21rNdNwrzDTp8I9Zeb/wAHNlJYbbwl1Dkoxy2kkuZiWbHvtYj+VP8AqyvNbbd16xvLLzjsN1vgllvgj0dn7O7Od961Nq/ZVv2c/ml/oGM6rp9LpoOvT1QlzjCKfrgygEe6AAAAACkAAAAAAAAAAAAAAUCFBAAAAAAAAAAAAAEApAAAACgwAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQQoHiytTXZ9zWlFxeGuJuElFSWGsksGmDLOlrjHj5GJrHMzpEAAA6FH4MPQ56OhR+DD0N8flK+CteJw+Z4W9OaiucnhFuX7RfymfZzhHVwtt9yrNkvRcf64MvL8up9o9b910sNn0vE5QSm10j2+Z8vjJm1eonqtRZfa/bnLL8vI11mctxcl7z/sdGc8uq7ZXHxZL93Hl/EzIM4SSSWDLpNLdrdRGin3pc30iu7CSbbGy9nz1+o3FmNceM59l/k+zpqhTVGqqKjCKwkjDoNJVotNGilcFxcnzk+7Nkj18eHTAAEdAAAAAAAAAAAAAAAAAAACkAAAAAAAAAAAAAAAIUgAAAAAAAAAAAAAFAAEAAAAAAAAGAAAKQAAAAAAAAAUgYFIDk1T1FX2j1MXFvTW1Qe9ngpJf/kS3SybdchSFQKaWz9ctZLUw3VGVF0q2l1XRm6BCTgp8/qegBqTrcHx5dzybkoqSaZqSTTafNGbEQ39P+DD0NA36PwYehvDylfAWZdr/lRisk4rdT97mbLWbJ/I0r5p3S8ngzPLyZdnmfsxzzb4JeYrioxws56t9WeIS35OfRcI/wB2bVGmsvlCNeG5d3jBq5TGbqY43K6jxBSnOMIRcpyeIxXNn1Gg2NqNPW0tdKmU8OSqgs+mWedj6SnQzduoi3c+CljKivI3trbW0uy6K7bd+fiPEI1rLfc545zLvK9mPHcPMY3s3WRe9XtbUb3TfimvmbGzNVPU0zV8VHUUzddsVyyuq8mjzHaVNujq1VDcoXe5nh65MFFjr1NmpSW9akpx6PHJ+pjLmwxy1XaYZZTbqg0NlXamzx1q7ITkp5gorGIm+dccplNxizV1QApUQAAAAAAAAAAUgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAACkAAAAAAAAAAAoEBQBAAAAAAAAAAAAKAIAAObqU1tCa71xZ0kcraM3DaNbxwnXhM5c1mOO668X8nRptVkP4lwZkzxOZpbJLWQX5Zxa+Z1FHI4uT3Mdxnkx6a5Wzq6dPq7pwTTvm95t+fA6rOE7a4x42Ljl5+Z0tl66vaGir1NTbjLK4rDyuDHHnvs3y4am42yA19TqIVSipSx1Z13J5cZLfDZNfULE0+6Ng19TzihfCMRv0fgw9DQN+j8GHoXDylfExjhX2S92tb36cP1ONYpYwn7UuB2NfYq9BOK9623HyXH+uDkUvfslLovZX9xi8mf02tnaeN2qqplwg3x9EfVwrrrS3IRjhYWFyRzvs/snxV981GVBJ+GuWX39D3qne5uFcnudHjizxertln09/o8P1r1tHaEaYqEFv2dIrmzzdG3aGh+7ayEK6nxUYrMl556MybO2fGFjljNsuMpPjg7VGnhGLzBJp8Hnmu5z4eLPPvLp6M88ce2ttFTn4KrcIuuKwoutYXpg4aW1NDKKrs+/0N4cZJKyPz6n0mkrgpaiEZb27fLPDlnDwLNGpVyc3FSy2muGEds+C2eduePJJ8OfobZffILEoz3sSjJYaO6c/R2xdqhZGLsivYl1x69joI16bHpxsTlu6AA9DkAAADHqL4aemVtje6u3U1NNtXT3zUGpVyfLe5P5hNt8ABQAAAAAAAAAAAAAAKBAAAAAAAAAAAAAEAAAAAAAAAAAFAEBSAAGAAAAAIAAAAAAAAAADDqdZptIs6m+Ff8z4/Qb0slvhmByLftBpuWmpv1D/hhhfVmCW1tpXP9lpaKF3tm5P6Iz1xr28vns7+Dmbarfg12pca5/ozQlLX2xf3naE4xf5aYqC+pqyq0tKlLx7ZS87W8+pz5Zc8LJGsOnHKW105WKChavyyUjs76fLkfPQsVmnS8sM86baG0PHj4jr+7xeMRj7Ukeb0mdtuLpz46krQm9266p8o2NfqdH7EPGz9RQ+dWokvr/8Aw09Yoy2hfKGd2bUllYM32WtjTtLaNDklvqFkU3j1N8H68lldOa9XFLH1HDqcDX2ePv2Qaalndw+iOltSzw9m6qeeVMv6HxemtlDTQeWsQ4Hryw648uGfRdvvKZb1Fc31gn+hrznvTb+hj0Fj/wClaSLbbdSzklz3INrn0F7dnPzXuMlLink6NH4MPQ5Olg66Yp8+Z1aH+xh6GsPKV8BtWWa693kk5L1b/wBIbD2bLWamNbz4UPasfl2+ZrWWb9kY9M8vQ+42RoVotFCDX7SftTfn2+QebDHqybFzjXpnGCUVhRSXRGi4J8exu6yP7DPaSNFz9lryPF6i/t3fS4p27M+mokowmpNN8WlyZuReDFp5WNJvw/DcVu4zn5mVs9XHJMZI5ZW292poZr77tGPa6L+sUbVkY2RcZJOL6M5mh2ZbptqanVy1LlC5v2Mf19Oh1Yo1LUrm62t1312x4HTS4ZOdraKqVFVQxKcsvi3n6nRjwil2WDlhNcmX+msrvGNWWtjHU+C4PGcb2eptHh0VO1WuC311PZ0kvywAAo5m32/ukMcvEWfocGPvNdHxPqNp0+PorIrmlvL5HzElhZXNcUZycs/L6HZGqd1PhWPM4dX1RvnzOiv8DUV2Z4Zw/Rn0yLK3jdwAKVpAAAAAAAAAAAAAAAAAAAAAAAAAAAIUgAIACkAAFIABSAACkApCgCAAAAAAAAAAAAADPjtt37219Q0/dah9EfY9T4i+ud11t6WVZOUuD8zhz3tI9XpZOq2pHU29LJfU3tnx1WtpnOE1mLflwzg5cn4WXJNY7o7n2YeNA2+bx+vEnD3tta9VJJJPlp36XUwlnURtcf4EeK5UL3NPKbXPe4n0suUjmeH4mqvb8o/oerHLqunz88emba+gkrN9Yx1SFsp1zlGLUVnPIx6f9lfjvwLqpcU+6PnccnF6jX9vZnbycG/6a98n4ik223HiznRlu7arS/8AJU4/Q3NQnuwfaRqahKvXaK19Ld1/M9HJ+nqF4v39M+r2vPc+zt3Hj4MV9cHy7jjS4XPcwd37RTxsFxjzlZCH6nESe6ov80ox/U9WPh5H1Wli4aeqPSMIr9DHffFzUN5cHjn1NrKivJHzlsndqe+X/VmJh17WZ9F3p9HjgdCj8GHoaGFHguS4HQo/Bh6Fw8pe74X7O6Nazayclmuhb8v7L6/0Ps7bYUx3rZKK8+p8xsXxdm1XcI+LdJNvnupckbE5ytlvWScpd2c8uSfDrwemsn7dnSt19F1c6/bSaxndOdG1xftPK6nngjBqLIVwlZOWIxWWePnxuff5ezHCY+Hc0d7lUoQSlJPq8ez3N5RZ8pXtWjSTolKx4teIOKzj/R39Pra5SlObeWkuHJJeR14Ob9ZM+zzcnHd7xbuCey8rPLmjUeritS5qzNbrSUUn72ef0ObtfbFWlpndYmopbuIrMpdkdsubCeO9YnHlW9GSv1cYqTlCvqzoN5PiKtuand8TTW7sJ8cbqZs1faHXJpS8KfrDH9Dlx8sm+rzXfL0+V1rw+uBwKtvXNZs09fyk0bEduw/Np5L0mjtOTH7crwck+HXBzVtvSv3o2x/9cm1pdbRqt5Uzy4801hoszxvis3jzk3Y2T5jXU+Bqp149nOY+jPpjQ2tpPHp8SC9uvj6rqWzbllNx8/Hm49v6H1Gz7PF0dU3z3cP1XA+Xse7KMuj4M7uwbN7STj8M/wCpMfLOPl0hnC4g4+3NY4L7tW+LWZtduxq9m7dQ1203JuvTSxFc5rm/Q5c5ycsuUnL1MSsed2PPq+x7rjnEYptt+rbMb25W2uxsTU22ysqsk5Rispvjg6xp7N0f3Wn2vxJ8ZeXkbhqeHXHwAAqgAAAAAAAAAAAAAAAABAKQAAAAAAAApABSACkBQAIUCAAAAAAAAAAAAAMOss8HSX2/BXJ/ofF1aiCrjGWVhH1P2hs8PZN/eeIfVnxZ5ue95Hu9Lj+trLrrnKmcYyymuZ9LsSnwtBBY5tfoj5Sa3tyPxTS/U+10S3NJSvJsvDP1tY9V/LGf5ZWvZfqc+l4dku82b057tbfzObR+DHz4np4p3rxc18NK+WNRLHSWTLfDNeV0eTBqU/Gb7s26Vv0JPqsHh9bjceWZT/7T0+ku+O4tC5fspZ6cTnbTz93Vi51zjL6M7EoKccd0crX+1orYrm4M7+ostxynzD0c1jlhfiuv9obE9FpIL3bLVL/6/wCzQrxPV6eHe1GHV6p6nQbHeedLb9Vhf2M2zI+JtXSxfRyl9D04/wANvNe10+j1tjhprZfwv9TlbLgrNZBvkpZ+h0dry3NJGPxSX0XE1dix9uU+0cfVmuPthaxl3ykdc6FH4MPQ5yOjp/wYehzw8t18vgYJ4lb5WRKmnykn6M8b6iTi5Lg8GjrNHO6vd3mlnPDjk6GGXAnZL3mnz9dFlm0FZbVKMKOFaa//AHqdSM7fyueTcwBlN+SSRqv7zJYbnj1PE6LLapVTScJLDUupujBJJPCuNpNjPTQlF2ucXLKT6GwqFX+TB0WeJLyFm+643U01EHwWcmZQd03Cmvfl1fJL1Z1dDsyFTjO/259OHBeiLjhckz5ccJ3c/SbOu1OJSThX3a4v0X92d/RaWrS0qFUUurfV+rMqSxwXAqlDecN+O+ucc8T048cx8PDycuWfl6KRrdTb4JdWeK7a7HiFkZPsmbcnA23onTJzrX7Kf/1Zn+zM3KN+eu6/nxOzbVC2uVdscxksNHN2Rp1o9TrKG8vMZRfeLz/czruzrV26U5xrhKc+EYptnyeptldbKx+/Y2/Q7u3bvD0Linh2SUflzZ87RGds1uRcpS4RS7EyqZ34WNbWIwTbb+bZ9BsvZ33ZK25ZufJfD/s97N2fHSpWWYlc+vSPob5ZFxx15AYdRqqdMv2s8PpFcWzlajbNmcUVRiu8uLFumrZHbB85DbOqhL23CX8O7/g79FquphbFNKcc4fQS7JlKyFIUqoAAAAAApAAAAAAAAQAAAAAAAACkAAAAAAAAAAAhQAAAAAAAAAAA4f2ss3dHTX1nZn6L/Z8ujufa2zOroq+Gty+r/wBHDPHy3edfT9PNcceq1vaqiP8AE5fRH2cFu0wXwwR8js2Hi7Tgvhh/Vn2MlzO3H/B5ee75f9NXWy3dNZ/KYKoYrivIy7S/AaX5ppGLebsjXGWHJ4yeji7S14ubvlI09RFJ+eT3ppuMZRfBp5wzY1svuc9ymtJtZ8SSy36GjXOU725ttyXFs8Xrc5ljNfD2el4rju35ZdPB2XTxKEY1yy9545nIuh+0trymlJxyux03H9vn4o/0NPUVbmqn5tSOeOeWfFJfh6OPDHDO2fLj7Ok7KdPW/wDwRnH/AOzZ3tjQitqxk5LEKnxfmcfR1qm7UR/jePmzo7PsX3y5/DBI+hLri28Nx3yadPbt37SqCaeIt8H3MuxfdsfTgjkai1WaqSxyaRv6K2dcM1Taz25M1lenicscerlsjuG/R+DD0ORpNTK+xVzhl/FHp6nYqW7VFeRjju288bj2rly0Ncua+qMctm1P8sP/AIm9w6p/QZXoTpjUys8ObLZcOkcfyyaJ/wBPlHlK1f8Atk6mV3Bnoxa9zP7ciWktXKx/+0Dw6Ll1rfyaO0eXFPmkT241ObJxvCuX/jXykeXCa51z+WGdl1w+E8umt918ye21Oe/TjNvON2ee26zY0+gt1GHdmEPhXN+rOjXp4b6eW/I2sJLsi48c+Uy57rUYadPXTBRriopcsIyLC82ebrYUwcrZKMf1Z8ttT7QSvk9PoOXJzXL/AH/Q7Y4ZZXpxjz5ZzGdWddbau26NCt1SU7XyiuJ86tRqdqarecMzfbovNnvZ2xrtZZ4tze6+cnxbPqdHoKtLBRril3fc7ax4v7y/6jjvPm7a1j/3XjR6GWl2dbF2ysssjl5fBY6I5znuvKfD+h9DHlzOPr9J4Fm9H8OXLyfY82duV26XHpnZn0OulOSqueX+WXfyZ7vzXtTS2dLYyql6+8v7nKTUZJP5M39ZqVPZ9Wofv0XQlL64f6MkN9jbOnnrLtPpaufGc2+UY8jc0Whq0cMQWZvnN82edFNW6nV3805quPpFf5ZtWTjXHenJRXdl7LJ8q3hZfBI5Ov2thuvSv1s/x/k1Np7Repk4VS3aI9eW95+hoJSl3jH9X/glrNy+nuVrlJ5blN8+rI4yl7zwuy/yWEeKjCPPoup1NHsmc8S1L3I/Aub/AME1tmTbR0WhlqrN2C3YL3pdv9n00IRhCMIrEYrCQrrhVBQrioxXJI9GpNOkmgFIVpQQoEAAAAAAABQQAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdQPjPtFZ4m17v4FGH0RzkZNba7tZfb8dkn+piTPBld5Wvr4TpxkdD7PQ39oTl2aX9/wCx9S+XzPmvsonKU5vvJ5+X+z6Xt6ZPVjNYR87ku+TKuftGf4Ue82/oaldmdfRHpl/0M20JZ1FUe0WzU03tbTq9cfoejGf8byZ3/ln+nbb3o7s0pR7SWTD9y00pqW5KDXwy4GYqPJZL2r3zt4Yns6qTjKNzWH1iams2PbbYp131e7jimdSPI9YEwxk1InXlLvb5tfZzV+NOauo9qWebNnQ/Z+/Tu1231NzafDJ3Eejr1bx6XPWsupxYfZ/Nkp2alcW37MDd02ytPp4KLlZZ19p4/obyBblbNViYzG7iVxjWt2uKivJG5X7i9DUNuHuL0NcflM3wsdr6yL/Gz6p/5Nivb2qTWdyXfj/lHGZD6t9LxX4fInrOafP/AKfRQ+0Mvz0p+jT/ALmaP2io/PVJfJny7ZGznfR8fxa6T13J8yPro7f0L4Obj68DNDauhs93UR+p8U5Puyc+aT9UYvovrJuev+8X3sdXp5e7dE9xtg+VsH8z4BNLkkvTgZK77IySjbOOX0mzF9FnPFdJ67jvnGvv4SinlyjjvlHN2pt/T6GOFLesfJLi36L+58q9bqFDeWosXk8P+xqqMbbM4k5yfGTllt/MYejy3+17f0Z+twk/Sbv9tzUazV7Wsxa2oSfCuPHPr3O9sjYMIJWamKz0h/n/AAb+zNj06GKaW9Zj2pvn8uyOhhL07Gc+aSdPHNRrDhtvXyXdIxUViKSSMGs1lGjq8XUT3Y9F1l6GDam1qNBHDand0gunr/g+S1V120LnZqZOXHhHoYx4/mtZ8vT2nl06PtHepzfhqyttuG9waXbPU6Ol2xHXzjp56SeJ8G1LKXmcrZ+zJ3yTccR7n0uk0tOjjuw3U2uvNmc+n4icfXfN7ORrNNOixwllxfuy7/7MSTnpdTVJ+9VJNea4o+itqhbBwmsxZwdoaazST3veqmnHe7dsnDWnTLHTobFe7sqqx8XY5T+bZpba1XKpy4vjL07GTYt8Y7DpnY8QrjLefZJsx6bZduus+96mSrVntRjjLS6foU8ySOfGLbTkuPSPb/Z0tLsu67Erf2UPPn9DrabR0adLwoe18T4sX6uurKXty7Ia+yY68rptHTpV+yj7XWT4tmc5Vmtul+dQXlwMErZS52Sl82NxrcdwHHo1FtcluuT48m+Z2Cy7WXYAUqhAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAASkorLMUr8PhBtAZQYlqIdVJfIqurfKaAyGHV2eDpbrfgrk/0M2Tm/aKzw9kX954h9WTK6lrWE3lI+KXTJJvEJPyKzxc8VvzeDwPsPo/svXu6Ry/h/qzty5fLBzthV+Hofml9EdCTPblNdnyJd7v24m0J41U8dIpGDQf86n+b+w1st7U2vP5sfRHnZ7/7+n1/seif+P8A08tu+X/b6Aq5kPS5njfRZEekeYnorFUIFKyqDCDKgbcPcXoaht1+5H0OnH5YzfmLnjmpL1izzK2OOaydyUIvnFfQxuiqXvVxPpfk36fHvB9VxvEQ3zqS0Gmlzrx6GOWzKOjkvmanqZ8xm8GX252+N9YN2Wy4/lumjFLZln5bl80anqMGfZza2+gp+0sGWWztUuThI8fc9XF5dWcdma97C/Ke1nPhj3/Yiuhn0M09VSn1sj/VGKVNyWHTNYMac6rIz3JpxafLsXrxs8p05S+H6lNrL48v0PmdufaBVZo0L3pvnYv7f5NPaO2tRr/2Wni66Xxfn69zBptKnJKMHOyT7ZbPnTCY975fSz5rl2xaWnptvs8Sxtvuz6PZuyXLE7ViPZ83/g3tm7KjTidyUrOi6ROnyMZ8m/DfHw675MddcaY7sFg1tdJb1abSzlJN8zJqtXXQsP2pvlFGhDfuuVtvHHu55L0ON8d3a34jZ02o8OWJPMf6G7bVXfXKuxZhNYZz5RT6HuN9kIpJrC5ZRiZaVy9kRjqdPDZ3HdjdKdr/AIE+C+bPpZJJZ4JI4uzKY6Cy+cXKbteePDHkZ7rLtTZuOSro6936muqM49ox6zaErJuqjLiubXU1vbfvS3V2j/k61Ol0yXDE35v+xnjRVHlVBfIaNWuJCtN+zBt98ZNuvSXT/Lur+LgdRJJYSS9AOlelr0aOFL3m96ffojYJvRXNojsj3LuRqR6B48WPn9B4sfMdUXVewePFj5jxI+f0HVDVeweVOPc9Jro0XcTQAAAAAAAAAAIAAAAAAAAAAAAAAAAYtRb4NMrMZaxwMpra2iy+MVCSwuafUxyWzG9PlrCS5TbHHaMN1b0Jb3XHI3VxRxaaZ3TcIYTS456HYrUlCKk8ySw33OPp+TPPfU682GOPh6AB6XBivfBZfUx5NbbizTV/M/6HIhOyHu2TXpJmLdV1x4+qb2+g5mOcePBHLhr74f8Akz6pM83bQunlOeFj8qwNxfayfQ1r2I+hxPtbao6Omv47M/Rf7OhRqJfdqkuHsLifO/aa6Vupqg23uQz6Zf8AoxyZzp1GuDC+5HGySS37KYfFNHpIyadJ66lfD7R58JvKR7+TLpwtfYbPju6Ovzbf6mWXCL9CUx3KK49oI86h7lNku0T15d6+VjNSPnbuMnLu2/1PWz/+fT/N/Yl6xGP8pdnv/v6f5v7Hqy/jXkx/nP8AL6EseZCxPC+myRPZ4R7NMVUCFDKoAFQNuv8ADj6GobVPGqPob4/LGfh8Zl9xk2ZaG5csMxvTXLnD9Tt7mP28Pt5fTED067Fzgzy8rnGS+Rrqx+0uOU+EIN+Pcm8u6LtFSKeXNJE34lRlTx1PUoxcG3FNt4XAwOxYPcrVuejIu3pZ5LH0O7sjTxjpo3NLfnnj2R894yR9Ls6cf+m0zbSShxb5LiZz8OvDrqba4I0dZrlD9nR7U+WeaX+TX1Wsne3XRlQ5OXVkoqVay/eONymP+Xfdvh5roed+1uUnx4mcA5W23ayaCMp5lwRFVc8FMSk08tcWj0peQ2PZ6jdZD3ZMx5A2Nhauz8zz6cD1G6M+bw/M1SEtamVjfQNOFkocnldmbNdkZ+T7BuZbewAFAABCgYAKUlybPStkvM8AbsNRmVy6o9xkpcmawNTOpcY2gYI2SXXPqZI2J+TNzKVi42PZCkNIAAAAAAAAAAAAABSAAUjaXM8uxdOJNrpVGKbaSTfNpcymN2PphHltvm2TqkXVZnJLm0Y52JJtJvB4Bm5LpzNqXTthBbmFF5OdvH0bWeaMcqKp+9XF/Izt1xykmnAxkxyjmR3paHTv8mPRkhoqYPeguPd8Rtr3I8UycaoRxjEUjh7RnGWutlKOcYjlPHJHfnRJe60zia3Zup8Wc4Rc4ybfmcs/DXDZ1d65851NY4p/xIxbNfi7SkkuCW6vqkZraLK3+0hKPqjLsDSyjq4zsi4qUk05LGVzHDP3jr6mz2rp9Zji/oau05bujn58DbT7cTnbWn+yqr+KR6ce+UeDO6xrlavgl9Dzs/8A51P839jNqoZrz5mPZ0X99qai2lLi8cj05fxryYfyj6A9RIWJ4X0ntHo8o9lZqghSsqCFKBtUfhQ9DVNqn8GHob4/5MZ+HJIAc3NHg8uMXzivoeiBWN1Vy5wR5lpKZc4IzAiNSWzqH0wY3sup8pNG+U11ZfadON+HNeyV0sZ4ey7EuE0zqlL7mf2z7eH04stl6hcnB/M26KNT4MKbprw4copm8C3kypOPGPEK1BYR6KTJzdHpYXPie3KtxSUWn6ZMWSZGxldvBJKPDrgxzk5PLI2TI2LmOMOH0Z5jywXJCCggA9DgQAMlTaeUeSgblM/EjnquZkNbSZzL0NgOsu4AAKAAAAABCkIBSAK9xm49T2rV14GEZLMrGbJWymnyaKajZVKS5Nmvc+06WyDArZdx4svL6GvcidNZwYfGl2RPFl5fQe5DprODBvy7ky3zbJ1w6Ww2lzaPLsivMwgda9LI7eyPLlJ9TyUm6ulIAAAAAAEEAYChCggjAYAjSfPiR1wfFxWe5RkivDqi+TaNbVaGV7rat9x9UbhSy2XcSyWarnS0Hs4kt48bkqXFpcE+R1CNJ80n6kyty80xkx8RgrmprKfyPaJKitvKW6+8WFXNcpp/zIbb2yI9oxKU1zhn0Z6VneE18jW4leymPxY9p/8AxL4q6Rn9BuJp7KY999IfVk3pPm0vQdUTTI3heZt0/hQ9DRTRvU/hR9DfFd5McnhxygGXNAOoAgKQKFIUgAAAAwBGRlfM8yAEAXIgAABkERQADAFAAA9JZ4Hk2NKuL9CkZaa/Dj5vmeykRHWIAAoCk6gAUgAhWCCApAoAAiAAigIVEAFBRCgAUBg0gUgAoAKgACgAUCEKyEAhQRQgKBCFDIqFIOhAADAgBQIUAAQoAgAIBv0fhQ9DQRv0/hQ9DtweaxyeH//Z); }
+  body.bg3 { background-image: linear-gradient(rgba(250,246,238,.58), rgba(250,246,238,.66)), url(data:image/jpeg;base64,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); }
+  /* ===== 本地档案栏 ===== */
+  .profile-bar { display:flex; align-items:center; gap:8px; margin:2px 0 10px; flex-wrap:wrap; }
+  .profile-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#fff; border:1px solid var(--line); border-radius:999px;
+    padding:5px 12px 5px 10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--ink);
+    box-shadow:0 2px 8px rgba(120,100,70,.08);
+  }
+  .profile-chip .pf-emoji { font-size:16px; }
+  .profile-chip .pf-caret { color:var(--ink-dim); font-size:11px; }
+  .profile-menu {
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:6px; margin:-4px 0 12px; box-shadow:0 8px 24px rgba(120,100,70,.16);
+  }
+  .profile-menu .pm-item {
+    display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:8px;
+    font-size:14px; cursor:pointer;
+  }
+  .profile-menu .pm-item:active { background:var(--bg-soft); }
+  .profile-menu .pm-item.active { background:var(--brand-soft); color:var(--brand-ink); font-weight:700; }
+  .profile-menu .pm-emoji { font-size:18px; }
+  .profile-menu .pm-name { flex:1; }
+  .profile-menu .pm-del { color:var(--ink-dim); font-size:13px; padding:2px 6px; border-radius:6px; }
+  .profile-menu .pm-add { color:var(--brand); font-weight:700; border-top:1px dashed var(--line); margin-top:4px; }
+
+  /* ===== 顶级分区标签 ===== */
+  .section-tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .sec-tab {
+    flex:1; text-align:center; font-size:14px; font-weight:700; color:var(--ink-dim);
+    background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 8px; cursor:pointer;
+  }
+  .sec-tab.active { color:#fff; background:linear-gradient(135deg,#5C9BFF,#6A6CFF); border-color:transparent; box-shadow:0 4px 12px rgba(76,141,255,.32); }
+
+  /* ===== 每日作业 ===== */
+  .hw-datebar { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .hw-nav { background:#fff; border:1px solid var(--line); border-radius:8px; color:var(--ink-dim); padding:8px 11px; cursor:pointer; font-size:14px; font-weight:600; }
+  .hw-progress { font-size:12px; color:var(--ink-dim); font-weight:600; }
+  .hw-bar-wrap { height:8px; background:var(--bg-soft); border-radius:5px; overflow:hidden; margin:0 0 16px; }
+  .hw-bar-fill { height:100%; width:0; background:linear-gradient(90deg,#5AA84F,#76c46b); border-radius:5px; transition:width .3s; }
+  .hw-add { display:flex; gap:8px; margin-bottom:10px; }
+  .hw-add select.field { width:auto; flex:0 0 auto; }
+  .hw-add input.field { flex:1; min-width:0; }
+  .hw-group { margin-bottom:12px; }
+  .hw-group h4 { font-size:13px; color:var(--ink-dim); margin-bottom:6px; padding-left:2px; font-weight:700; }
+  .hw-item { display:flex; align-items:center; gap:9px; padding:10px 12px; background:var(--bg-soft); border:1px solid var(--line); border-radius:10px; margin-bottom:8px; }
+  .hw-item.done { opacity:.62; }
+  .hw-check { width:22px; height:22px; flex:0 0 auto; border:2px solid #CFC4B2; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent; }
+  .hw-item.done .hw-check { background:var(--good); border-color:var(--good); color:#fff; }
+  .subject-tag { font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; flex:0 0 auto; }
+  .hw-text { flex:1; font-size:14px; line-height:1.5; word-break:break-word; }
+  .hw-item.done .hw-text { text-decoration:line-through; }
+  .hw-del { flex:0 0 auto; color:var(--ink-dim); cursor:pointer; font-size:14px; padding:2px 6px; }
+  .hw-empty { font-size:13px; color:var(--ink-dim); text-align:center; padding:22px 8px; line-height:1.7; }
+
+  /* ===== 视图路由 + 底部导航 ===== */
+  .view { display:none; animation: rise .3s ease both; }
+  .view.active { display:block; }
+  .view-title { font-size:20px; font-weight:800; color:var(--ink); margin:6px 2px 14px;
+    background:linear-gradient(95deg,#4C8DFF,#8166E0); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #app { padding-bottom: calc(env(safe-area-inset-bottom) + 78px); }
+  .bottom-nav {
+    position:fixed; left:0; right:0; bottom:0; z-index:50; max-width:640px; margin:0 auto;
+    display:flex; background:rgba(255,255,255,.96); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    border-top:1px solid var(--line); padding:6px 0 calc(env(safe-area-inset-bottom) + 4px);
+    box-shadow:0 -4px 20px rgba(120,100,70,.08);
+  }
+  .bn-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; color:var(--ink-dim); cursor:pointer; user-select:none; padding:4px 0; }
+  .bn-item .bn-ico { font-size:21px; line-height:1; filter:grayscale(.3) opacity(.7); }
+  .bn-item.active { color:var(--brand-ink); font-weight:700; }
+  .bn-item.active .bn-ico { filter:none; }
+
+  /* ===== 首页头部（点头像切换小朋友）===== */
+  .home-head { display:flex; align-items:center; gap:11px; padding:10px 2px 18px; cursor:pointer; }
+  .home-head .hh-avatar { font-size:32px; }
+  .home-head .hh-name { font-size:19px; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:5px; }
+  .home-head .hh-sub { font-size:12px; color:var(--ink-dim); margin-top:1px; }
+
+  /* ===== 首页彩色功能卡 ===== */
+  .hub-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .hub-card { position:relative; border-radius:18px; padding:15px 15px 17px; cursor:pointer; overflow:hidden;
+    min-height:104px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;
+    color:#fff; box-shadow:0 8px 20px rgba(120,100,70,.16); }
+  .hub-card:active { transform:scale(.985); }
+  .hub-card .hc-ico { font-size:30px; line-height:1; filter:drop-shadow(0 3px 4px rgba(0,0,0,.18)); }
+  .hub-card .hc-title { font-size:16px; font-weight:800; letter-spacing:.3px; }
+  .hub-card .hc-sub { font-size:11.5px; opacity:.95; margin-top:2px; font-weight:600; }
+  .hub-card.hc-mistakes { background:linear-gradient(135deg,#5C9BFF,#6A6CFF); }
+  .hub-card.hc-homework { background:linear-gradient(135deg,#FF9A8B,#F2627E); }
+  .hub-card.hc-progress { background:linear-gradient(135deg,#3FC6A8,#33A488); }
+  .hub-card.hc-textbook { background:linear-gradient(135deg,#FFB459,#F2912F); }
+
+  /* ===== 吉祥物助手卡 ===== */
+  .mascot-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 6px 20px rgba(120,100,70,.10); }
+  .mascot-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .mascot-ava { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#E9F1FF,#EDE9FF); display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .mascot-name { font-size:15px; font-weight:800; }
+  .mascot-say { font-size:14px; color:var(--ink); line-height:1.55; margin-bottom:12px; }
+  .mascot-chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .mascot-chip { font-size:13px; font-weight:600; color:var(--brand-ink); background:var(--brand-soft); border:1px solid #BBD2F5; border-radius:999px; padding:7px 13px; cursor:pointer; }
+
+  /* ===== 我的·档案管理 ===== */
+  .me-prof { display:flex; align-items:center; gap:10px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; background:var(--bg-soft); }
+  .me-prof.active { border-color:var(--brand); background:var(--brand-soft); }
+  .me-prof .mp-emoji { font-size:20px; }
+  .me-prof .mp-name { flex:1; font-weight:700; }
+  .me-prof .mp-act { color:var(--ink-dim); font-size:13px; padding:3px 7px; cursor:pointer; border-radius:6px; }
+
+  /* ===== 从教材选单元 / 教材进度 ===== */
+  .unit-pick { display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 12px; }
+  .unit-chip { font-size:13px; color:var(--ink); background:#FFF6E6; border:1px solid #F0DCB0; border-radius:8px; padding:8px 11px; cursor:pointer; }
+  .unit-chip:active { background:var(--brand-soft); }
+  .unit-chip.done { background:var(--brand-soft); border-color:#BBD2F5; color:var(--brand-ink); }
+  .unit-chip.cur { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:700; }
+  .hub-card.hub-wide { grid-column:1 / -1; flex-direction:row; align-items:center; gap:14px; min-height:auto; padding:16px 18px; }
+  .hub-card.hub-wide .hc-ico { font-size:28px; }
+  .tbp-block { margin-bottom:14px; }
+  .tbp-block:last-child { margin-bottom:0; }
+  .tbp-head { font-size:13px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .tbp-cur { font-weight:600; color:var(--brand-ink); margin-left:4px; }
+  .tbp-bar { height:10px; background:var(--bg-soft); border-radius:5px; overflow:hidden; margin:2px 0 6px; }
+  .tbp-fill { height:100%; background:linear-gradient(90deg,#5C9BFF,#6A6CFF); border-radius:5px; transition:width .3s; }
+  .tbp-meta { font-size:12px; color:var(--ink-dim); margin-bottom:8px; }
+  select.tbp-select.field { width:100%; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 档案下拉（点首页头像弹出）-->
+  <div class="profile-menu" id="profile-menu" style="display:none;"></div>
+
+  <!-- ============ 视图：首页 Hub ============ -->
+  <div id="view-home" class="view active">
+    <div class="home-head" id="hh-profile">
+      <span class="hh-avatar" id="home-avatar">🦊</span>
+      <div>
+        <div class="hh-name"><span id="home-name">小朋友</span> <span style="color:var(--ink-dim);font-size:13px;">▾</span></div>
+        <div class="hh-sub" id="home-sub"></div>
+      </div>
+    </div>
+
+    <section class="card" id="tb-check" style="display:none;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:6px;">📖 教材进度复查</div>
+      <div class="hint" id="tbc-say" style="margin-bottom:10px;"></div>
+      <div class="row" id="tbc-buttons">
+        <button class="btn-primary btn-sm" id="tbc-add" style="flex:1;">➕ 有，添加新学的</button>
+        <button class="btn-ghost btn-sm" id="tbc-none" style="flex:1;">今天没有</button>
+      </div>
+      <div id="tbc-panel" style="display:none;"></div>
+    </section>
+
+    <div class="hub-grid">
+      <div class="hub-card hc-mistakes" data-go="mistakes"><span class="hc-ico">📝</span><div><div class="hc-title">错题辅导</div><div class="hc-sub">拍卷子 · AI 讲题</div></div></div>
+      <div class="hub-card hc-homework" data-go="homework"><span class="hc-ico">📚</span><div><div class="hc-title">每日作业</div><div class="hc-sub" id="hub-hw-sub">今天还没记</div></div></div>
+      <div class="hub-card hc-progress hub-wide" data-go="progress"><span class="hc-ico">📊</span><div><div class="hc-title">学习进度 · 教材目录</div><div class="hc-sub" id="hub-pg-sub">看打卡 + 课本进度</div></div></div>
+    </div>
+
+    <div class="mascot-card">
+      <div class="mascot-head"><span class="mascot-ava">🐱</span><span class="mascot-name">我是小助手</span></div>
+      <div class="mascot-say" id="mascot-say">新的一天～先记一下今天的作业吧。</div>
+      <div class="mascot-chips">
+        <span class="mascot-chip" data-go="mistakes">📝 讲错题</span>
+        <span class="mascot-chip" data-go="homework">📚 今天作业</span>
+        <span class="mascot-chip" data-go="progress">📊 看进度</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 视图：错题辅导 ============ -->
+  <div id="view-mistakes" class="view">
+    <div class="view-title">📝 错题辅导</div>
+    <div class="mode-switch subject-switch" id="subject-switch">
+      <button class="mode-btn active" data-subject="math">📐 数学</button>
+      <button class="mode-btn" data-subject="english">🔤 英语</button>
+      <button class="mode-btn" data-subject="chinese">📖 语文</button>
+    </div>
+    <div class="grade-row" id="grade-row" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:12.5px;color:var(--ink-dim);font-weight:600;">🎓 年级</span>
+      <select id="grade-select" class="field" style="width:auto;flex:0 0 auto;padding:7px 30px 7px 12px;font-size:13px;">
+        <option value="general">不限年级（默认）</option>
+        <optgroup label="小学">
+          <option value="low">一年级</option>
+          <option value="low">二年级</option>
+          <option value="mid">三年级</option>
+          <option value="mid">四年级</option>
+          <option value="high">五年级</option>
+          <option value="high">六年级</option>
+        </optgroup>
+        <optgroup label="初中">
+          <option value="junior">初一（七年级）</option>
+          <option value="junior">初二（八年级）</option>
+          <option value="junior">初三（九年级）</option>
+        </optgroup>
+        <optgroup label="高中">
+          <option value="senior">高一</option>
+          <option value="senior">高二</option>
+          <option value="senior">高三</option>
+        </optgroup>
+      </select>
+    </div>
+  <!-- 步骤进度条 -->
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="1"><span class="dot">1</span><span class="lbl">上传卷子</span></div>
+    <div class="bar"></div>
+    <div class="step" data-step="2"><span class="dot">2</span><span class="lbl">勾选错题</span></div>
+    <div class="bar"></div>
+    <div class="step" data-step="3"><span class="dot">3</span><span class="lbl">错题本</span></div>
+  </div>
+
+  <!-- 三步分屏容器（裁切横向溢出，承载滑动切换）-->
+  <div class="screens-wrap" id="screens-wrap">
+
+  <!-- 第一步：上传整张卷子 → 识别 + 拆题 -->
+  <section class="card screen active" id="step1">
+    <div class="card-title">
+      <span>① 上传卷子，识别题目</span>
+      <span class="badge-source" id="recog-source"></span>
+    </div>
+    <div class="step-desc">上传整张卷子的照片（可多张），系统会识别全部文字、自动清理标签并按题号拆成一道道题。</div>
+    <div class="tip-scan">
+      💡 建议：先用<b>「扫描全能王」</b>把卷子扫描清晰、裁切干净再上传，识别效果最好。
+    </div>
+    <div class="uploader">
+      <div class="upload-actions">
+        <label class="upload-btn upload-btn-main">
+          <span class="ico">🖼️</span><span>选择 / 上传卷子图片</span>
+          <input type="file" id="file-album" accept="image/*" multiple>
+        </label>
+      </div>
+      <div class="preview-list" id="preview-list"></div>
+      <div class="row">
+        <button class="btn-primary" id="btn-recognize" disabled>识别并拆分题目</button>
+      </div>
+      <details class="backup" id="ocr-debug" style="display:none;">
+        <summary>🔧 识别原文（排查用，点开看模型到底返回了啥）</summary>
+        <pre id="ocr-debug-pre" style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:var(--ink-dim);background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:220px;overflow:auto;margin-top:8px;"></pre>
+      </details>
+      <details class="backup">
+        <summary>没有图片？点这里粘贴卷子文字</summary>
+        <textarea id="paste-input" placeholder="把卷子文字粘贴到这里，每道题最好带题号（如 1. 2. 3.），系统会自动拆题。"></textarea>
+        <button class="btn-ghost btn-sm" id="btn-paste-split">用这段文字拆分题目</button>
+      </details>
+      <div class="hint">
+        填入上方 API Key 后将调用<b>通义千问识图模型</b>真实识别（默认 qwen-vl-max-latest，只把题目原样读成文字）；未填写时用本地示例演示流程。
+      </div>
+    </div>
+  </section>
+
+  <!-- 第二步：勾选做错的题（只显示题号） -->
+  <section class="card screen" id="step2">
+    <div class="card-title"><span>② 勾选做错的题</span><span class="badge-source" id="sel-count">已选 0 题</span></div>
+    <div class="step-desc">点题号即可<b>勾选/取消</b>做错的题（做对的不用管）。点右侧 👁 看该题文字，点「🖼 看原图」看整张卷子。</div>
+    <div style="margin-bottom:10px;"><button class="btn-view" id="btn-view-step2">🖼 看卷子原图</button></div>
+    <div id="q-grid" class="q-grid"></div>
+    <div id="q-peek" class="q-peek" style="display:none;"></div>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn-ghost" id="btn-back-1">← 重新上传</button>
+      <button class="btn-primary" id="btn-to-collection">下一步：整理错题 →</button>
+    </div>
+  </section>
+
+  <!-- 我的错题集 + 问AI -->
+  <section class="card screen" id="collection">
+    <div class="card-title">
+      <span>③ 我的错题本</span>
+      <button class="btn-ghost btn-sm" id="btn-copy">复制全部</button>
+    </div>
+    <div class="step-desc">每道错题点「💬 问 AI」说说自己<b>哪里不懂</b>，AI 会一步步引导你想出来。聊完点下面「总结我的薄弱点」。</div>
+    <div id="collection-list"></div>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn-primary" id="btn-summarize">总结我的薄弱点</button>
+      <button class="btn-ghost" id="btn-copy-summary" style="display:none;flex:0 0 auto;">📋 复制总结</button>
+    </div>
+    <div id="weak-summary" class="advice" style="display:none;margin-top:12px;"></div>
+    <div class="row nav-bottom">
+      <button class="btn-ghost" id="btn-back-2">← 上一步</button>
+      <button class="btn-ghost" id="btn-restart">🔄 重新开始</button>
+    </div>
+  </section>
+
+  </div><!-- /screens-wrap -->
+
+  </div><!-- /view-mistakes -->
+
+  <!-- ============ 视图：每日作业 ============ -->
+  <div id="view-homework" class="view">
+    <div class="view-title">📚 每日作业</div>
+    <section class="card">
+      <div class="card-title"><span>今日作业</span><span class="hw-progress" id="hw-progress"></span></div>
+      <div class="hw-datebar">
+        <button class="hw-nav" id="hw-prev" title="前一天">◀</button>
+        <input type="date" id="hw-date" class="field" style="width:auto;flex:0 0 auto;">
+        <button class="hw-nav" id="hw-next" title="后一天">▶</button>
+        <button class="hw-nav" id="hw-today">今天</button>
+      </div>
+      <div class="hw-bar-wrap"><div class="hw-bar-fill" id="hw-bar-fill"></div></div>
+      <div class="hw-add">
+        <select id="hw-add-subject" class="field">
+          <option>语文</option><option>数学</option><option>英语</option><option>其他</option>
+        </select>
+        <input id="hw-add-input" class="field" placeholder="加一项作业，如：听写第3单元生字" spellcheck="false">
+        <button class="btn-primary btn-sm" id="hw-add-btn" style="flex:0 0 auto;">添加</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600;color:var(--brand-ink);background:var(--brand-soft);border:1px solid #BBD2F5;border-radius:8px;padding:9px 13px;">
+          <span id="hw-photo-label">📷 拍照拆清单</span>
+          <input type="file" id="hw-photo" accept="image/*" style="display:none;">
+        </label>
+        <button class="btn-ghost btn-sm" id="hw-unit-btn" style="color:#9A6B16;background:#FFF6E6;border-color:#F0DCB0;">📖 从教材选单元</button>
+      </div>
+      <div class="unit-pick" id="hw-unit-pick" style="display:none;"></div>
+      <div id="hw-list"></div>
+    </section>
+  </div><!-- /view-homework -->
+
+  <!-- ============ 视图：学习进度 ============ -->
+  <div id="view-progress" class="view">
+    <div class="view-title">📊 学习进度</div>
+    <section class="card">
+      <div class="card-title"><span>📖 教材进度</span></div>
+      <div id="tb-progress"></div>
+      <div class="hint" style="margin-top:8px;">勾选<b>已经学过</b>的单元（不用按顺序，乱序学也行）；辅导时 AI 会照这个判断哪些是还没学的超纲内容。记作业用「📖 从教材选单元」会自动勾上对应单元。</div>
+    </section>
+    <section class="card">
+      <div class="card-title"><span>近 7 天作业打卡</span></div>
+      <div id="progress-body"></div>
+      <div class="hint" style="margin-top:10px;">更多趋势（错题薄弱点变化、AI 本周小结）下个版本加上～</div>
+    </section>
+  </div>
+
+  <!-- ============ 视图：我的 ============ -->
+  <div id="view-me" class="view">
+    <div class="view-title">👤 我的</div>
+    <section class="card">
+      <div class="card-title"><span>👨‍👩‍👧 小朋友档案</span></div>
+      <div id="me-profiles"></div>
+      <button class="btn-primary" id="me-add-profile" style="margin-top:12px;width:100%;">➕ 新建小朋友</button>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span>⚙️ 模式</span></div>
+      <div class="mode-switch" id="mode-switch">
+        <button class="mode-btn" data-mode="app">🚀 正式版</button>
+        <button class="mode-btn" data-mode="test">🛠 测试版</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">正式版走后端（已部署），普通使用选这个；测试版自己填 Key 调试用。</div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span>💾 数据备份</span></div>
+      <div class="hint" style="margin-bottom:10px;">数据只存在本机浏览器。建议定期导出备份；换电脑、清了数据后可一键导回恢复。</div>
+      <div class="row">
+        <button class="btn-primary" id="btn-export" style="flex:1;">⬇️ 导出备份</button>
+        <label class="btn-ghost" style="flex:1;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          ⬆️ 导入恢复
+          <input type="file" id="import-file" accept="application/json,.json" style="display:none;">
+        </label>
+      </div>
+    </section>
+
+    <!-- API Key（仅「测试版」显示）-->
+    <section class="card" id="settings-card">
+      <div class="warn-banner">⚠️ 测试版：key 直接暴露在浏览器，仅供本地自测，请勿部署成公开网址或分享。正式版请用「🚀 正式版」模式 + 后端。</div>
+      <div class="card-title">
+        <span>⚙️ 通义千问 API Key</span>
+        <span class="badge-source" id="key-status"></span>
+      </div>
+      <input type="password" id="api-key" class="field" placeholder="粘贴阿里云百炼 API Key（sk-...）" autocomplete="off" spellcheck="false">
+      <div class="model-row">
+        <label>分析模型
+          <select id="text-model" class="field">
+            <option value="qwen-plus">qwen-plus（便宜·一般）</option>
+            <option value="qwen-turbo">qwen-turbo（最便宜最快）</option>
+            <option value="qwen3.7-plus">qwen3.7-plus（更强·均衡）</option>
+            <option value="qwen3.7-max" selected>qwen3.7-max（最强·讲题最好）</option>
+          </select>
+        </label>
+        <label>识图模型
+          <select id="ocr-model" class="field">
+            <option value="qwen-vl-max-latest">qwen-vl-max-latest（即将下线，不推荐）</option>
+            <option value="qwen-vl-plus" selected>qwen-vl-plus（推荐·纯文字）</option>
+            <option value="qwen-vl-ocr">qwen-vl-ocr（专用OCR·会带坐标）</option>
+          </select>
+        </label>
+      </div>
+      <label style="font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:5px;margin-top:10px;">
+        接口地址（直连会被 CORS 拦；本地代理填 http://localhost:8787/compatible-mode/v1）
+        <input type="text" id="api-base" class="field" value="https://dashscope.aliyuncs.com/compatible-mode/v1" spellcheck="false">
+      </label>
+      <div class="hint">
+        Key 仅保存在<b>浏览器内存</b>，不写入 localStorage，刷新页面后需重新填写。
+        填入 Key 后自动切换为通义千问真实调用；留空时使用本地示例。
+      </div>
+    </section>
+  </div><!-- /view-me -->
+
+  <!-- 旧版自动分析区域（保留隐藏，暂不使用）-->
+  <section id="results" style="display:none;"></section>
+  <section class="card" id="summary-card" style="display:none;">
+    <div class="card-title"><span>薄弱点汇总</span></div>
+    <div id="summary-body"></div>
+  </section>
+
+  <footer>
+    错题学习助手 · v36（教材进度记忆·每日只补新学的）
+  </footer>
+
+  <!-- 底部导航：只留导航必需的两个，功能都从首页彩色卡进，避免重复入口 -->
+  <div class="bottom-nav" id="bottom-nav">
+    <div class="bn-item active" data-nav="home"><span class="bn-ico">🏠</span><span>首页</span></div>
+    <div class="bn-item" data-nav="me"><span class="bn-ico">👤</span><span>我</span></div>
+  </div>
+</div>
+
+<!-- 看卷子原图弹层 -->
+<div id="img-modal" class="img-modal" style="display:none;">
+  <div class="img-modal-bar"><span>📄 卷子原图</span><button id="img-modal-close" class="img-modal-close">✕ 关闭</button></div>
+  <div class="img-modal-tip">手机上可双指放大查看</div>
+  <div class="img-modal-body" id="img-modal-body"></div>
+</div>
+
+<!-- Twemoji：把页面里的 emoji 换成 Twitter 彩色卡通图（加载失败则退回系统 emoji，不影响使用）-->
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
+
+<script>
+/* =========================================================================
+ *  数学错题分析工具
+ *  结构：解析输入 → 调用分析器(analyzeProblems) → 渲染结果 + 汇总
+ *
+ *  >>> AI 接入说明 <<<
+ *  真正的分析由 analyzeProblems() 完成。当前内置一个本地启发式 mock
+ *  分析器（mockAnalyzer），保证 UI 立即可用。后面接入国内可直连的模型时，
+ *  只需实现 createAIAnalyzer() 里的 callModel()，并把 ANALYZER 指向它即可，
+ *  UI / 解析 / 渲染 / 汇总都不用改。详见文件底部的「AI 接入位」。
+ * ========================================================================= */
+
+/* ---- 错误类型定义（与汇总、配色一一对应）---- */
+const ERROR_TYPES = {
+  concept: { label: '概念不清', cls: 'err-concept', color: '#b13a3c' },
+  read:    { label: '审题失误', cls: 'err-read',    color: '#b8860b' },
+  calc:    { label: '计算错误', cls: 'err-calc',    color: '#2f7d32' },
+  method:  { label: '方法没想到', cls: 'err-method', color: '#6a3aa3' },
+};
+
+/* =========================================================================
+ *  1. 文本清理 + 拆题
+ *  cleanOCRText：去掉 HTML 标签 / 代码围栏 / markdown 噪声。
+ *  splitQuestions：按题号把整张卷子拆成 [{ id, num, text }]。
+ * ========================================================================= */
+function cleanOCRText(raw) {
+  let t = String(raw || '');
+  t = t.replace(/\r\n/g, '\n');
+  // qwen-vl-ocr 坐标前缀：每行行首形如 "x,y,w,h,angle," 的一串数字（rotate_rect），去掉只留文字
+  t = t.replace(/^\s*-?\d+(?:\s*,\s*-?\d+){3,5}\s*[,，]\s*/gm, '');
+  // 行内残留的坐标括号片段（如 [452,232,49,775,90]）也清掉
+  t = t.replace(/[\[(]\s*-?\d+(?:\s*,\s*-?\d+){3,5}\s*[\])]/g, '');
+  t = t.replace(/```[a-zA-Z]*\n?/g, '').replace(/```/g, '');          // 代码围栏 ```html
+  t = t.replace(/<\s*br\s*\/?>/gi, '\n');                              // <br> → 换行
+  t = t.replace(/<\/?(h[1-6]|p|div|li|tr|table|tbody|thead|ul|ol|pre|blockquote)[^>]*>/gi, '\n'); // 块级标签 → 换行
+  t = t.replace(/<[^>]+>/g, '');                                       // 其余所有标签
+  t = t.replace(/&nbsp;/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+       .replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;/g, "'");
+  t = t.replace(/^[ \t]*[#>]+[ \t]*/gm, '');                           // 行首 markdown 标题/引用
+  t = t.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*/g, '');          // 粗体 / 星号
+  t = t.replace(/`/g, '');                                             // 反引号
+  // LaTeX 数学式 → 普通文字（模型有时把算式写成 \(18 \times 4\) 这种）
+  t = t.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '($1)/($2)'); // \frac{a}{b} → (a)/(b)
+  t = t.replace(/\\times/g, '×').replace(/\\div/g, '÷').replace(/\\cdot/g, '·')
+       .replace(/\\pm/g, '±').replace(/\\leq?\b/g, '≤').replace(/\\geq?\b/g, '≥')
+       .replace(/\\neq/g, '≠').replace(/\\sqrt/g, '√').replace(/\\pi/g, 'π')
+       .replace(/\\(?:left|right|displaystyle|quad|;|,)/g, '');
+  t = t.replace(/\\[()[\]]/g, ' ');                                    // 去掉 \( \) \[ \] 定界符
+  t = t.replace(/\$+/g, '');                                           // 去掉 $ 定界符
+  t = t.replace(/\\[a-zA-Z]+/g, '');                                   // 其余残留的 \命令
+  t = t.replace(/\s*\{\s*([^{}]*?)\s*\}\s*/g, '$1');                   // 去掉残留花括号，保留里面内容
+  t = t.replace(/\r\n/g, '\n').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  return t.trim();
+}
+
+/* 拆题：理解「大题(一二三) → 题(1.2.3) → 小问((1)(2))」层级，
+ * 每个小问单独成一个可勾选项，显示时带上母题题干。
+ * 返回 [{ id, label, text }]，id 为全局连续序号（不重复）。 */
+function splitQuestions(raw) {
+  const clean = cleanOCRText(raw);
+  if (!clean) return [];
+  const lines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const secRe = /^([一二三四五六七八九十]+)\s*[、.．]/;            // 大题：一、二、
+  const qRe   = /^(?:第\s*)?(\d{1,3})\s*(?:[.．、]|题[.:：]?)\s*/;  // 题：1. 1、 第1题
+  const subRe = /^[（(]\s*(\d{1,2})\s*[）)]\s*/;                   // 小问：(1) （1）
+
+  const questions = [];     // { sec, num, stem, subs:[{sub,text}] }
+  let curSec = '', curQ = null, curSub = null;
+
+  for (const line of lines) {
+    let m;
+    if ((m = line.match(secRe)) && !qRe.test(line)) {            // 大题标题行
+      curSec = m[1]; curQ = null; curSub = null; continue;
+    }
+    if ((m = line.match(qRe))) {                                 // 题
+      curQ = { sec: curSec, num: m[1], stem: line.replace(qRe, '').trim(), subs: [] };
+      questions.push(curQ); curSub = null; continue;
+    }
+    if ((m = line.match(subRe)) && curQ) {                       // 小问
+      curSub = { sub: m[1], text: line.replace(subRe, '').trim() };
+      curQ.subs.push(curSub); continue;
+    }
+    if (curSub) curSub.text += (curSub.text ? '\n' : '') + line; // 续行 → 当前小问
+    else if (curQ) curQ.stem += (curQ.stem ? '\n' : '') + line;  // 续行 → 当前题干
+    else { curQ = { sec: curSec, num: '', stem: line, subs: [] }; questions.push(curQ); } // 题号前零散文字
+  }
+
+  const valid = questions.filter(q => (q.num || q.stem || q.subs.length));
+  if (!valid.length) return [{ id: 1, label: '第1题', text: clean }];
+
+  const multiSec = new Set(valid.map(q => q.sec).filter(Boolean)).size >= 2;
+  const tidy = (s) => String(s || '').replace(/\n{2,}/g, '\n').trim();
+
+  const units = [];
+  let gid = 0;
+  for (const q of valid) {
+    const head = (multiSec && q.sec) ? `${q.sec}、` : '';
+    if (q.subs.length) {
+      for (const s of q.subs) {
+        gid++;
+        const label = `${head}第${q.num || gid}题(${s.sub})`;
+        const text = (q.stem ? tidy(q.stem) + '\n' : '') + `(${s.sub}) ${tidy(s.text)}`;
+        units.push({ id: gid, label, text: text.trim() });
+      }
+    } else {
+      gid++;
+      units.push({ id: gid, label: `${head}第${q.num || gid}题`, text: tidy(q.stem) });
+    }
+  }
+  return units;
+}
+
+/* =========================================================================
+ *  2. Mock 分析器（本地启发式，无需联网）
+ *     输入题目数组，返回每题的分析。接口与未来的 AI 分析器保持一致。
+ * ========================================================================= */
+const mockAnalyzer = {
+  name: '本地示例分析',
+  async analyze(problems) {
+    // 知识点关键词词典（命中即标注）
+    const KP = [
+      [/(负数|相反数|绝对值|有理数|\(-)/, '有理数运算'],
+      [/(乘方|平方|立方|\^|²|³|次方|幂)/, '乘方与幂运算'],
+      [/(方程|解方程|未知数|=.*x|x.*=)/i, '一元一次/二次方程'],
+      [/(不等式|≥|≤|>|<)/, '不等式'],
+      [/(分式|分数|\/|÷|约分|通分)/, '分式与分数运算'],
+      [/(函数|y\s*=|f\(x\)|图象|斜率|截距)/i, '函数'],
+      [/(三角形|角|周长|面积|勾股|相似|全等)/, '几何图形'],
+      [/(概率|可能性|频率)/, '概率统计'],
+      [/(因式分解|提取公因式|公式法|十字相乘)/, '因式分解'],
+      [/(根号|√|开方|二次根式)/, '二次根式'],
+      [/(百分|比例|比|倍)/, '比与比例'],
+    ];
+
+    return problems.map((p) => {
+      const text = `${p.question} ${p.wrongAnswer} ${p.rightAnswer}`;
+      // —— 知识点 ——
+      let kps = KP.filter(([re]) => re.test(text)).map(([, name]) => name);
+      if (!kps.length) kps = ['综合运算'];
+      kps = [...new Set(kps)].slice(0, 3);
+
+      // —— 错误类型（启发式猜测）——
+      let errType = 'method';
+      const w = p.wrongAnswer || '', r = p.rightAnswer || '';
+      const numW = (w.match(/-?\d+(\.\d+)?/g) || []);
+      const numR = (r.match(/-?\d+(\.\d+)?/g) || []);
+      if (w && r && Math.abs(w.length - r.length) <= 3 && numW.length && numR.length
+          && numW.length === numR.length && w.replace(/\s/g,'') !== r.replace(/\s/g,'')) {
+        errType = 'calc';                       // 形态接近、数值不同 → 计算错误
+      } else if (/[<>≥≤]|负|正负|符号/.test(text)) {
+        errType = 'concept';                    // 涉及符号/正负 → 概念不清
+      } else if (!w) {
+        errType = 'method';                     // 没写答案 → 方法没想到
+      } else if (numW.length !== numR.length) {
+        errType = 'read';                       // 用到的数不一致 → 审题失误
+      } else {
+        errType = 'calc';
+      }
+
+      const reason = buildMockReason(errType, kps);
+      return { problem: p, knowledgePoints: kps, errorType: errType, reason };
+    });
+  }
+};
+
+function buildMockReason(errType, kps) {
+  const kp = kps[0] || '本题';
+  const map = {
+    concept: `从错误答案看，对「${kp}」的核心概念理解可能存在偏差（如符号、定义、性质用错）。建议回到课本，重新梳理该知识点的定义与适用条件。`,
+    read:    `错误答案与正确答案使用的条件/数据不一致，疑似审题时漏看或看错条件。建议读题时圈出关键数字与限定词。`,
+    calc:    `解题思路方向正确，但在「${kp}」的具体计算步骤上出错（如符号、进位、约分）。建议放慢计算、分步验算。`,
+    method:  `未找到正确的解题切入点，属于「${kp}」的方法/模型没想到。建议归纳该题型的通用解法并配套练习。`,
+  };
+  return map[errType] + '（本条由本地示例分析生成，接入 AI 后将给出更精准的逐题诊断。）';
+}
+
+/* =========================================================================
+ *  3. 当前启用的分析器（接 AI 后改这里即可）
+ * ========================================================================= */
+let ANALYZER = mockAnalyzer;
+
+/* analyzeProblems：UI 唯一调用入口，永远返回统一结构：
+ *   [{ problem, knowledgePoints:[...], errorType:'concept|read|calc|method', reason }] */
+async function analyzeProblems(problems) {
+  return ANALYZER.analyze(problems);
+}
+
+/* =========================================================================
+ *  3b. 识图（图片 → 题目文字）
+ *  与分析器同样的设计：UI 只调用统一入口 recognizeImage()，当前用本地
+ *  mock 顶着，将来接入「支持读图的 AI 模型」时只需实现 createImageRecognizer()
+ *  里的 callVisionModel()，并把 RECOGNIZER 指向它，UI 不用改。详见文件底部。
+ *
+ *  统一约定：
+ *    输入  image: { file:File, dataURL:string }   （单张图片）
+ *    输出  Promise<string>                          （识别出的题目纯文字）
+ *  说明：返回的文字会直接填入下方输入框，可手动编辑后再走原分析流程。
+ * ========================================================================= */
+const mockRecognizer = {
+  name: '本地示例识图',
+  async recognize(image) {
+    // 占位：不做真实 OCR，模拟一张整卷的识别结果（含 HTML 噪声，用于演示清理+拆题）。
+    // image.file / image.dataURL 此处未使用，接入真模型时才会用到。
+    await new Promise(r => setTimeout(r, 600));
+    LAST_OCR_RAW = '[本地示例] 模拟一张整卷的识别结果';
+    return [
+      '```html',
+      '<h2>七年级数学单元测验</h2>',
+      '<p>1. 计算 (-3)² + (-2)³ = ____</p>',
+      '<p>2. 解方程 2x + 5 = 3x - 1，求 x = ____</p>',
+      '<p>3. 因式分解：x² - 4 = ____</p>',
+      '<p>4. 已知一次函数 y = 2x + 1，当 x = 3 时 y = ____</p>',
+      '<p>5. 化简：3a + 2a - a = ____</p>',
+      '<p>6. 比较大小：-3 ____ -5（填 &gt; 或 &lt;）</p>',
+      '```',
+    ].join('\n');
+  }
+};
+
+/* 当前启用的识图器（接读图 AI 后改这里即可） */
+let RECOGNIZER = mockRecognizer;
+let LAST_OCR_RAW = '';   // 上一次模型返回的原始内容（调试用）
+
+/* recognizeImage：UI 唯一调用入口，永远返回「识别出的题目文字」字符串 */
+async function recognizeImage(image) {
+  return RECOGNIZER.recognize(image);
+}
+
+/* =========================================================================
+ *  3c. 问AI 辅导（引导式）+ 薄弱点总结
+ *  TUTOR.reply(question, history) → 老师对这道题的下一句引导（字符串）
+ *  TUTOR.summarize(items)         → 根据孩子问过的内容总结薄弱点（字符串）
+ *  未填 Key 时用 mockTutor 顶着；填了 Key 由 createTutor 调通义千问。
+ * ========================================================================= */
+const mockTutor = {
+  name: '本地示例辅导',
+  async reply(question, history) {
+    await new Promise(r => setTimeout(r, 500));
+    return '（本地示例·未接 AI）先别急着要答案～\n你能说说这道题你读到哪一步就卡住了吗？' +
+      '比如：要求的是什么？已知哪些条件？\n试着说说你的想法，我再给你下一步提示。' +
+      '（填入上方 API Key 后，这里会变成通义千问的真实引导。）';
+  },
+  async summarize(items) {
+    await new Promise(r => setTimeout(r, 500));
+    const nums = items.map(i => i.label).join('、');
+    return '（本地示例·未接 AI）你这次就 ' + nums + ' 提了问。\n' +
+      '从提问看，常见卡点可能是：1) 不知道第一步从哪下手；2) 运算/符号处理。\n' +
+      '建议：每题先用一句话说清「求什么、已知什么」再动笔。\n' +
+      '（填入 API Key 后，这里会用通义千问根据你真实的提问来总结。）';
+  },
+};
+
+/* =========================================================================
+ *  各科目的「讲题」「总结薄弱点」系统提示词。
+ *  切换科目（数学/英语/语文）时 createTutor 会实时读取当前科目这一套，
+ *  识图、拆题、问AI、总结的整套流程三科通用，加新科目只需在这里再加一项。
+ *  各科错因分类不同，直接写进 sumSys 里。
+ * ========================================================================= */
+const SUBJECTS = {
+  math: {
+    label: '数学',
+    tutorSys:
+      '你是一位很会讲题、有耐心的中小学数学老师，正在一对一帮一个学生弄懂他做错的这道题。' +
+      '你的目标是让他真正听懂、学会，而不是考他。' +
+      '【怎么讲】' +
+      '① 以“讲明白”为主：先用一两句话点出这道题的关键思路或考点，再把解法拆成小步，带着他一步步走；' +
+      '② 每一步都说清“为什么这么做”，需要时举个简单例子或打个比方；用他这个年级能懂的大白话，少用术语；' +
+      '③ 不要一口气把整道题答案全甩出来——每次讲一两步，讲完用一句话问他懂没懂、或请他试着算下一步，再按他的回答继续；' +
+      '④ 他说“不会/不懂”时，别只反问“你卡哪了”，而是直接把当前这一步讲清楚、给个例子，帮他迈过去；' +
+      '⑤ 他算错了，先肯定对的部分，再具体指出错在哪、怎么改；语气温和、多鼓励。' +
+      '【写算式】一律用普通文字（如 x的平方、a/b、根号5、×÷），绝不用 LaTeX，也不要出现 $ 符号或反斜杠公式。' +
+      '【其它】只聊这道数学题，跑题就温和拉回；回答围绕这道题，别长篇大论、别凑字数。',
+    sumSys:
+      '你是学习分析助手。下面是一个学生针对自己的数学错题向老师提出的问题/对话。' +
+      '请【只根据学生提出的问题、暴露出的困惑】来总结他的薄弱点，不要凭题目本身臆测。' +
+      '输出 3-5 条，每条都要：① 关联到具体题号；② 归到四类之一——概念不清 / 审题失误 / 计算错误 / 方法没想到；' +
+      '③ 一句话说清他到底弱在哪。最后用一两句给出具体、可执行的学习建议。' +
+      '【约束】信息不足时只说能确定的，宁可少写也不要编、不要凑数；' +
+      '用 1. 2. 3. 纯文本编号，不要用 markdown 符号，不要复述对话原文，不要客套。',
+  },
+  english: {
+    label: '英语',
+    tutorSys:
+      '你是一位很会讲题、有耐心的中小学英语老师，正在一对一帮一个学生弄懂他做错的这道题。' +
+      '你的目标是让他真正听懂、学会，而不是考他。' +
+      '【怎么讲】' +
+      '① 先用一两句话点出这道题考的语法点、词汇或考点，再把思路拆成小步，带着他一步步走；' +
+      '② 每一步都讲清“为什么”，多举几个简单英文例句帮他体会用法；讲解一律用中文大白话，少用语法术语，必须用时把术语翻成人话；' +
+      '③ 不要一口气把整题答案全甩出来——每次只讲一两步，讲完用一句话问他懂没懂、或请他试着改下一处，再按他的回答继续；' +
+      '④ 他说“不会/不懂”时，别只反问，直接把当前这一步讲清楚、给个例句，帮他迈过去；' +
+      '⑤ 他答错了，先肯定对的部分，再具体指出错在哪、怎么改；语气温和、多鼓励。' +
+      '【格式】英文单词和例句正常书写，讲解以中文为主；不要用 LaTeX，也不要出现 $ 公式符号。' +
+      '【其它】只聊这道英语题，跑题就温和拉回；回答围绕这道题，别长篇大论、别凑字数。',
+    sumSys:
+      '你是学习分析助手。下面是一个学生针对自己的英语错题向老师提出的问题/对话。' +
+      '请【只根据学生提出的问题、暴露出的困惑】来总结他的薄弱点，不要凭题目本身臆测。' +
+      '输出 3-5 条，每条都要：① 关联到具体题号；② 归到五类之一——词汇不熟 / 语法时态 / 句子结构 / 阅读理解 / 翻译表达；' +
+      '③ 一句话说清他到底弱在哪。最后用一两句给出具体、可执行的学习建议。' +
+      '【约束】信息不足时只说能确定的，宁可少写也不要编、不要凑数；' +
+      '用 1. 2. 3. 纯文本编号，不要用 markdown 符号，不要复述对话原文，不要客套。',
+  },
+  chinese: {
+    label: '语文',
+    tutorSys:
+      '你是一位很会讲题、有耐心的中小学语文老师，正在一对一帮一个学生弄懂他做错的这道题。' +
+      '你的目标是让他真正听懂、学会，而不是考他。' +
+      '【怎么讲】' +
+      '① 先用一两句话点出这道题考的是什么（字词、病句、阅读理解、古诗文言文还是作文），再把思路拆成小步，带着他一步步走；' +
+      '② 每一步都讲清“为什么”，紧扣原文或举个例子，用他这个年级能懂的大白话，少用术语；' +
+      '③ 不要一口气把整题答案全甩出来——每次只讲一两步，讲完用一句话问他懂没懂、或请他试着想下一步，再按他的回答继续；' +
+      '④ 他说“不会/不懂”时，别只反问，直接把当前这一步讲清楚、举个例子，帮他迈过去；' +
+      '⑤ 他答错了，先肯定对的部分，再具体指出错在哪、怎么改；语气温和、多鼓励。' +
+      '【格式】用普通文字，不要用 LaTeX 或 $ 公式符号；遇到古诗文言文，先解释关键字词，再说整句意思。' +
+      '【其它】只聊这道语文题，跑题就温和拉回；回答围绕这道题，别长篇大论、别凑字数。',
+    sumSys:
+      '你是学习分析助手。下面是一个学生针对自己的语文错题向老师提出的问题/对话。' +
+      '请【只根据学生提出的问题、暴露出的困惑】来总结他的薄弱点，不要凭题目本身臆测。' +
+      '输出 3-5 条，每条都要：① 关联到具体题号；② 归到五类之一——字词积累 / 病句语法 / 阅读理解 / 古诗文言文 / 作文表达；' +
+      '③ 一句话说清他到底弱在哪。最后用一两句给出具体、可执行的学习建议。' +
+      '【约束】信息不足时只说能确定的，宁可少写也不要编、不要凑数；' +
+      '用 1. 2. 3. 纯文本编号，不要用 markdown 符号，不要复述对话原文，不要客套。',
+  },
+};
+let SUBJECT = 'math';   // 当前科目：math | english | chinese
+
+/* =========================================================================
+ *  年级讲法分级（与科目正交，叠加在 tutorSys 之后）
+ *  依据：教育部《义务教育课程标准(2022)》学段划分 + 皮亚杰认知发展阶段 +
+ *        最近发展区(ZPD)——年级决定“脚手架多少、抽象程度、用词难度”。
+ *  五档正好对齐课标学段：低(1-2)/中(3-4)/高(5-6)/初中(7-9)/高中(10-12)。
+ * ========================================================================= */
+const GRADE_BANDS = {
+  general: { label: '不限年级', guide: '' },   // 默认：不加年级约束，保持通用讲法
+  low: {
+    label: '小学低年级(1-2)',
+    guide:
+      '【面向年级】学生是小学低年级（1-2年级，约6-8岁，以具体形象思维为主，离不开实物支撑）。' +
+      '请多用看得见摸得着的实物、图画、生活里的例子（分糖果、数手指、排队）来讲，别用抽象符号和术语；' +
+      '句子要短、用词要浅、一次只讲一个小点，把每一步拆得很碎；多表扬多鼓励，保护他的信心。',
+  },
+  mid: {
+    label: '小学中年级(3-4)',
+    guide:
+      '【面向年级】学生是小学中年级（3-4年级，约8-10岁，能做简单逻辑推理但仍要依托具体例子）。' +
+      '请先举一个具体例子讲明白，再带他归纳出规律；可用简单的图表，少量必须的术语要立刻翻成大白话；' +
+      '每讲一步问一句让他跟上，多鼓励他自己说出想法。',
+  },
+  high: {
+    label: '小学高年级(5-6)',
+    guide:
+      '【面向年级】学生是小学高年级（5-6年级，约10-12岁，正从具体运算向抽象思维过渡）。' +
+      '可以从具体例子过渡到一般规律，引入用字母表示、简单公式，但每个抽象概念都先用具体情境垫一下；' +
+      '鼓励他先自己尝试一步，你再点拨。',
+  },
+  junior: {
+    label: '初中(7-9)',
+    guide:
+      '【面向年级】学生是初中生（7-9年级，约12-15岁，已具备抽象与假设-演绎推理能力）。' +
+      '可以直接用规范的概念、符号和公式，讲清楚推理的来龙去脉和“为什么”；' +
+      '适当渗透学科通法（如分类讨论、数形结合、归纳类比、文本细读），引导他自己接上推理链条。',
+  },
+  senior: {
+    label: '高中(10-12)',
+    guide:
+      '【面向年级】学生是高中生（10-12年级，抽象逻辑思维较成熟）。' +
+      '可以系统、严谨地讲，使用规范术语和较完整的论证，点出题目背后的通性通法与核心素养（逻辑推理、建模、文本分析、语言运用等）；' +
+      '多让他自己分析，你只在关键处点拨与纠偏。',
+  },
+};
+let GRADE = 'general';   // 当前年级档：general|low|mid|high|junior|senior
+let GRADE_LABEL = '';    // 选中的具体年级文字（如“三年级”），用于告诉 AI 更精确
+
+/* 把当前年级的讲法要求拼成一段，叠加到讲题/总结的系统提示词后面 */
+function gradeGuide() {
+  const g = GRADE_BANDS[GRADE] || GRADE_BANDS.general;
+  if (!g.guide) return '';
+  return '\n\n' + g.guide + (GRADE_LABEL ? '（该学生具体为' + GRADE_LABEL + '，讲解请贴合这个年龄）' : '');
+}
+
+/* =========================================================================
+ *  教材目录库（广州地区用书；单元清单按用户课本「新版」逐册核对，非课文内容，无版权）
+ *  作用：把某册的确切单元目录 + 当前进度喂给 AI，让它照目录讲、按进度判断超纲，
+ *        不靠模型记忆（教材常改版，记忆/网上易错）。加新册只在这里补数据。
+ * ========================================================================= */
+const TEXTBOOKS = {
+  math: {
+    version: '人教版',
+    books: {
+      '3下': { label: '三年级下册', units: ['生活中的运动现象', '除数是一位数的除法', '长方形和正方形', '图形的面积', '数据的收集与整理', '年、月、日的秘密（数学广角）', '小数的初步认识', '复习与关联'] },
+    },
+  },
+  english: {
+    version: '教科版·广州（一年级起点）',
+    books: {
+      '3下': { label: '三年级下册', units: ['Get Up', 'What a Day!', 'Plan My Day', 'Come and Join Us!', 'Our Classroom, Our Call', "I'm on Duty", 'School Rules', 'A Polite Way'] },
+    },
+  },
+  chinese: {
+    version: '统编版',
+    books: {
+      // 语文按「课文」勾选（用户对着课本逐篇核对过的新版目录）
+      '3下': { label: '三年级下册', units: ['古诗三首（绝句·惠崇春江晚景·三衢道中）', '燕子', '荷花', '昆虫备忘录', '守株待兔', '会摇尾巴的狼', '鹿角和鹿腿', '池子与河流', '海底世界', '石峰', '小虾', '古诗三首（元日·清明·九月九日忆山东兄弟）', '纸的发明', '赵州桥', '一幅名扬中外的画', '胡萝卜先生的长胡子', '我变成了一棵树', '童年的水墨画', '肥皂泡', '灰雀', '我不能失信', '火烧云', '暴风雨来临之前', '我们奇妙的世界', '慢性子裁缝和急性子顾客', '漏', '枣核'] },
+    },
+  },
+};
+// 由"年级 + 月份"推出当前是哪一册（2-7月=下册，否则上册）
+function defaultBookKey() {
+  const m = (GRADE_LABEL || '').match(/([一二三四五六])年级|([1-6])年级/);
+  const map = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+  let g = null;
+  if (m) g = m[1] ? map[m[1]] : Number(m[2]);
+  if (!g) return null;
+  const month = new Date().getMonth() + 1;
+  return g + ((month >= 2 && month <= 7) ? '下' : '上');
+}
+// 教材进度按档案命名空间存：{ [subject]: {book, done:[已学单元号]} }（单元可乱序勾选，1-based）
+function loadTB() { return DB.read(pKey('textbook'), {}); }
+function getTBDone(subject, bookKey) {
+  const t = loadTB()[subject];
+  if (!t || t.book !== bookKey) return [];
+  if (Array.isArray(t.done)) return t.done;
+  if (t.unit) { const a = []; for (let i = 1; i <= t.unit; i++) a.push(i); return a; }   // 兼容旧"当前单元"格式
+  return [];
+}
+function setTBDone(subject, bookKey, arr) { const all = loadTB(); all[subject] = { book: bookKey, done: arr }; DB.write(pKey('textbook'), all); }
+function toggleTBUnit(subject, bookKey, u) {
+  const arr = getTBDone(subject, bookKey).slice();
+  const i = arr.indexOf(u);
+  if (i >= 0) arr.splice(i, 1); else arr.push(u);
+  arr.sort((a, b) => a - b);
+  setTBDone(subject, bookKey, arr);
+}
+function markTBLearned(subject, bookKey, u) {   // 确保某单元被标记为已学（记作业时用）
+  const arr = getTBDone(subject, bookKey).slice();
+  if (arr.indexOf(u) < 0) { arr.push(u); arr.sort((a, b) => a - b); setTBDone(subject, bookKey, arr); }
+}
+
+// 拼出"教材 + 确切目录 + 已学/没学单元"叠加到辅导提示词，让 AI 照目录走、按已学情况判断超纲
+function textbookGuide() {
+  const tb = TEXTBOOKS[SUBJECT]; if (!tb) return '';
+  const bookKey = defaultBookKey();
+  const book = bookKey && tb.books[bookKey];
+  if (!book) {
+    return '\n\n【教材】学生用「' + tb.version + '」' + (GRADE_LABEL ? ('，' + GRADE_LABEL) : '') + '。请按课程进度讲，别用还没学到的超纲方法。';
+  }
+  const units = book.units;
+  let s = '\n\n【教材】学生用「' + tb.version + '·' + book.label + '」。该册确切单元目录如下（务必以此为准，不要用记忆里其它版本/年份的目录）：\n'
+    + units.map((u, i) => (i + 1) + '. ' + u).join('；');
+  const done = getTBDone(SUBJECT, bookKey);
+  if (done.length) {
+    const learned = done.map(u => '第' + u + '单元' + units[u - 1]).join('、');
+    const notYet = units.map((u, i) => i + 1).filter(i => done.indexOf(i) < 0).map(i => '第' + i + '单元' + units[i - 1]).join('、');
+    s += '\n【进度】学生已经学过：' + learned + '。';
+    if (notYet) s += '还没学：' + notYet + '——这些单元的内容和方法先别用（避免超纲）。';
+  } else {
+    s += '\n【进度】学生进度未标注；现在临近学期末，可按本册内容讲，但别用下一年级或不在本目录中的超纲方法。';
+  }
+  return s;
+}
+
+function createTutor(config) {
+  // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-plus' }
+  // 讲题/总结的系统提示词按当前科目（SUBJECT）实时取，见上面的 SUBJECTS。
+
+  async function chat(messages, model) {
+    const resp = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+      body: JSON.stringify({ model: model || config.model, messages, temperature: 0.6 }),
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 120));
+    const data = await resp.json();
+    return (data.choices?.[0]?.message?.content ?? data.output ?? '').trim();
+  }
+
+  return {
+    name: '通义千问·' + config.model,
+    // imgURLs: 卷子原图（已缩小）。带上后 AI 能看到题目里的图形，不再只靠识别文字。
+    async reply(question, history, imgURLs) {
+      const build = (withImg) => {
+        const msgs = [{
+          role: 'system',
+          content: SUBJECTS[SUBJECT].tutorSys + gradeGuide() + textbookGuide() + '\n\n【本题】' + question +
+            (withImg ? '\n（下面附了这道题所在的卷子原图，题目里若有图形/数轴/统计图，请结合图片来讲，别只看文字。）' : ''),
+        }];
+        let attached = false;
+        for (const m of history) {
+          if (withImg && m.role === 'user' && !attached && imgURLs && imgURLs.length) {
+            msgs.push({ role: 'user', content: [
+              { type: 'text', text: m.content },
+              ...imgURLs.map(u => ({ type: 'image_url', image_url: { url: u } })),
+            ] });
+            attached = true;
+          } else {
+            msgs.push({ role: m.role, content: m.content });
+          }
+        }
+        return msgs;
+      };
+      if (imgURLs && imgURLs.length) {
+        // 带图：用能看图的视觉模型；失败再回退到纯文字模型（丢图但不至于报错）
+        try { return await chat(build(true), config.visionModel); }
+        catch (e) { return await chat(build(false), config.model); }
+      }
+      return chat(build(false), config.model);
+    },
+    async summarize(items) {
+      const transcript = items.map(it => {
+        const asks = it.messages.filter(m => m.role === 'user').map(m => '  学生问：' + m.content).join('\n');
+        return `【${it.label}】${it.question}\n${asks}`;
+      }).join('\n\n');
+      return chat([{ role: 'system', content: SUBJECTS[SUBJECT].sumSys + gradeGuide() }, { role: 'user', content: transcript }]);
+    },
+  };
+}
+
+let TUTOR = mockTutor;   // 当前辅导引擎（refreshEngines 里按 Key 切换）
+
+/* =========================================================================
+ *  4. UI 渲染
+ * ========================================================================= */
+const $ = (id) => document.getElementById(id);
+
+/* 流程状态 */
+let questions = [];          // 拆出的题目 [{ id, num, text }]
+let selected = new Set();    // 勾选为「做错」的题目 id
+let chats = {};              // 每道错题的问AI对话 { [id]: [{role:'user'|'assistant', content}] }
+let openChats = new Set();   // 当前展开了对话框的题目 id
+
+/* 分屏向导：3 步一屏一显，带切换动画 */
+let curStep = 1, reachedStep = 1;
+const SCREENS = { 1: 'step1', 2: 'step2', 3: 'collection' };
+function goStep(n) {
+  const prev = curStep;
+  const dir = n >= prev ? 'fwd' : 'back';    // 前进=fwd，后退=back
+  curStep = n;
+  reachedStep = Math.max(reachedStep, n);
+
+  const incoming = $(SCREENS[n]);
+  const outgoing = (prev !== n) ? $(SCREENS[prev]) : null;
+  const ANIM = ['in-fwd', 'in-back', 'out-fwd', 'out-back', 'leaving'];
+
+  // 旧页：左/右滑出并淡出，动画结束后彻底隐藏
+  if (outgoing) {
+    outgoing.classList.remove('active', 'in-fwd', 'in-back');
+    outgoing.classList.add('leaving', 'out-' + dir);
+    outgoing.addEventListener('animationend', function done() {
+      outgoing.classList.remove('leaving', 'out-fwd', 'out-back');
+      outgoing.removeEventListener('animationend', done);
+    }, { once: true });
+  }
+
+  // 其它无关屏：清干净，确保隐藏
+  for (const k in SCREENS) {
+    const el = $(SCREENS[k]);
+    if (el !== incoming && el !== outgoing) el.classList.remove('active', ...ANIM);
+  }
+
+  // 新页：从对应方向滑入。active 与 in-* 一起加，避免“先全显示一帧再跳回透明”的闪烁
+  incoming.classList.remove(...ANIM);
+  if (prev !== n) {
+    incoming.classList.add('active', 'in-' + dir);
+    incoming.addEventListener('animationend', function done() {
+      incoming.classList.remove('in-fwd', 'in-back');
+      incoming.removeEventListener('animationend', done);
+    }, { once: true });
+  } else {
+    incoming.classList.add('active');
+  }
+
+  document.body.classList.remove('bg1', 'bg2', 'bg3');
+  document.body.classList.add('bg' + n);     // 每步换一张背景图
+  updateStepper();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function updateStepper() {
+  document.querySelectorAll('#stepper .step').forEach(el => {
+    const n = Number(el.getAttribute('data-step'));
+    el.classList.toggle('active', n === curStep);
+    el.classList.toggle('done', n < curStep);
+    el.classList.toggle('reached', n <= reachedStep);
+  });
+  document.querySelectorAll('#stepper .bar').forEach((b, i) => b.classList.toggle('done', curStep > i + 1));
+}
+
+/* 第二步：渲染题号勾选网格（只显示题号） */
+function renderQuestionChips() {
+  const grid = $('q-grid');
+  grid.innerHTML = questions.map(q => `
+    <div class="qchip${selected.has(q.id) ? ' checked' : ''}" data-id="${q.id}">
+      <span class="qchip-main" data-act="select" data-id="${q.id}">${esc(q.label)}</span>
+      <span class="qchip-eye" data-act="peek" data-id="${q.id}">👁</span>
+    </div>`).join('');
+  updateSelCount();
+}
+
+function updateSelCount() {
+  $('sel-count').textContent = `已选 ${selected.size} 题`;
+}
+
+/* 展开某题内容到预览区 */
+function peekQuestion(id) {
+  const q = questions.find(x => x.id === id);
+  const box = $('q-peek');
+  if (!q) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  if (images.length) {
+    // 有图：给用户看题目原图（点开放大）；识别文字仍在幕后发给 AI
+    box.innerHTML = `<div class="peek-head"><span class="peek-num">${esc(q.label)}</span>👇 题目原图（点开放大）</div>`
+      + `<div class="col-imgs">${images.map(im => `<img class="col-img peek-img" src="${im.dataURL}" alt="题目原图（点开放大）">`).join('')}</div>`;
+  } else {
+    box.innerHTML = `<span class="peek-num">${esc(q.label)}</span>${esc(q.text)}`;
+  }
+}
+
+/* 我的错题集：把勾选的题按题号收拢，每题带「问AI」对话 */
+function renderCollection() {
+  const list = $('collection-list');
+  const chosen = questions
+    .filter(q => selected.has(q.id))
+    .sort((a, b) => a.id - b.id);
+  if (!chosen.length) {
+    list.innerHTML = '<div class="col-empty">还没勾选错题。点「← 上一步」回去，点题号选出你做错的题。</div>';
+    return;
+  }
+  list.innerHTML = chosen.map(q => `
+    <div class="col-item" data-id="${q.id}">
+      <div class="col-row">
+        <span class="col-num">${esc(q.label)}</span>
+        <span class="col-text${images.length ? ' col-hint' : ''}">${images.length ? '👇 看下面的题目原图（点开可放大）' : esc(q.text)}</span>
+        <span class="col-remove" data-id="${q.id}" title="移出错题集">×</span>
+      </div>
+      ${images.length ? `<div class="col-imgs">${images.map(im => `<img class="col-img" src="${im.dataURL}" data-id="${q.id}" alt="题目原图（点开放大）">`).join('')}</div>` : ''}
+      <div class="col-actions">
+        <button class="btn-ask" data-id="${q.id}">💬 问 AI（说说哪里不懂）</button>
+        ${images.length ? `<button class="btn-view" data-act="view" data-id="${q.id}">🖼 看原图</button>` : ''}
+      </div>
+      <div class="chat" data-id="${q.id}" style="display:${openChats.has(q.id) ? 'block' : 'none'}">
+        <div class="chat-log" data-id="${q.id}">${renderChatLog(q.id)}</div>
+        <div class="chat-input-row">
+          <input class="chat-input field" data-id="${q.id}" placeholder="例如：我不懂为什么要移项 / 这题第一步怎么想？" spellcheck="false">
+          <button class="chat-send" data-id="${q.id}">发送</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderChatLog(id) {
+  const msgs = chats[id] || [];
+  if (!msgs.length) return `<div class="chat-empty">说说你哪里不懂，AI 会一步步引导你想出来～</div>`;
+  return msgs.map(m => `<div class="chat-msg ${m.role === 'user' ? 'user' : 'assistant'}">${esc(m.content)}</div>`).join('');
+}
+
+function renderResults(analyses) {
+  const root = $('results');
+  root.innerHTML = analyses.map((a, i) => {
+    const et = ERROR_TYPES[a.errorType] || ERROR_TYPES.method;
+    const p = a.problem;
+    return `
+    <section class="card">
+      <div class="card-title"><span>第 ${esc(p.num || (i + 1))} 题</span><span class="badge-source">${esc(ANALYZER.name)}</span></div>
+      <div class="result-q">${esc(p.question) || '（无题目文字）'}</div>
+      ${p.wrongAnswer ? `<div class="ans-line"><span class="label">我的答案</span><span style="color:var(--bad)">${esc(p.wrongAnswer)}</span></div>` : ''}
+      ${p.rightAnswer ? `<div class="ans-line"><span class="label">正确答案</span><span style="color:var(--good)">${esc(p.rightAnswer)}</span></div>` : ''}
+      <div class="tag-row">
+        ${a.knowledgePoints.map(k => `<span class="tag tag-kp">${esc(k)}</span>`).join('')}
+        <span class="tag tag-err ${et.cls}">${et.label}</span>
+      </div>
+      <div class="reason"><b>诊断：</b>${esc(a.reason)}</div>
+    </section>`;
+  }).join('');
+}
+
+function renderSummary(analyses) {
+  const card = $('summary-card'), body = $('summary-body');
+  if (!analyses.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const total = analyses.length;
+
+  // 错误类型统计
+  const errCount = {};
+  for (const a of analyses) errCount[a.errorType] = (errCount[a.errorType] || 0) + 1;
+  const errBars = Object.keys(ERROR_TYPES)
+    .map(k => ({ k, n: errCount[k] || 0 }))
+    .filter(x => x.n > 0)
+    .sort((a, b) => b.n - a.n)
+    .map(({ k, n }) => {
+      const t = ERROR_TYPES[k];
+      return barHTML(t.label, n, total, t.color);
+    }).join('');
+
+  // 知识点统计
+  const kpCount = {};
+  for (const a of analyses) for (const k of a.knowledgePoints) kpCount[k] = (kpCount[k] || 0) + 1;
+  const kpEntries = Object.entries(kpCount).sort((a, b) => b[1] - a[1]);
+  const maxKp = kpEntries.length ? kpEntries[0][1] : 1;
+  const kpBars = kpEntries.map(([k, n]) => barHTML(k, n, maxKp, 'var(--brand)')).join('');
+
+  // 学习建议
+  const topErr = Object.entries(errCount).sort((a, b) => b[1] - a[1])[0];
+  const topKp = kpEntries[0];
+  const advice = buildAdvice(topErr, topKp, total);
+
+  body.innerHTML = `
+    <div class="summary-block">
+      <div class="summary-h">错误类型分布</div>
+      ${errBars || '<div class="parsed-empty">暂无</div>'}
+    </div>
+    <div class="summary-block">
+      <div class="summary-h">高频知识点（按出现次数）</div>
+      ${kpBars || '<div class="parsed-empty">暂无</div>'}
+    </div>
+    <div class="summary-block">
+      <div class="summary-h">学习建议</div>
+      <div class="advice">${esc(advice)}</div>
+    </div>`;
+}
+
+function barHTML(label, n, denom, color) {
+  const pct = Math.round((n / denom) * 100);
+  return `
+    <div class="bar-item">
+      <div class="bar-head"><span>${esc(label)}</span><span class="count">${n} 题</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+}
+
+function buildAdvice(topErr, topKp, total) {
+  if (!topErr) return '暂无足够数据生成建议。';
+  const errLabel = ERROR_TYPES[topErr[0]].label;
+  const lines = [];
+  lines.push(`本次共分析 ${total} 道错题，最突出的问题是「${errLabel}」（${topErr[1]} 题）。`);
+  const tips = {
+    concept: '说明对基础概念的理解还不牢固。建议先回归课本/笔记，逐条复述定义和性质，再做对应的基础题巩固。',
+    read:    '说明审题环节容易出问题。建议养成读题画关键词的习惯，做完后回头核对题目要求是否答全。',
+    calc:    '说明思路大多正确，主要丢分在计算。建议放慢计算节奏、分步书写并养成验算习惯，专项练习口算与符号处理。',
+    method:  '说明部分题型缺少解题思路。建议按题型整理「通法模板」，配套 2-3 道同类题强化，遇到生题先回忆同类做法。',
+  };
+  lines.push(tips[topErr[0]]);
+  if (topKp && topKp[1] >= 2) lines.push(`知识点上，「${topKp[0]}」出现 ${topKp[1]} 次，是当前最薄弱的环节，建议优先专项突破。`);
+  return lines.join('\n');
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* =========================================================================
+ *  5. 交互绑定
+ * ========================================================================= */
+/* ---- 第一步：上传图片 ---- */
+let images = [];           // [{ id, file, dataURL }]
+let imgSeq = 0;
+
+function addFiles(fileList) {
+  const files = [...(fileList || [])].filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      images.push({ id: ++imgSeq, file, dataURL: reader.result });
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreviews() {
+  const list = $('preview-list');
+  list.innerHTML = images.map(im => `
+    <div class="preview-thumb" data-id="${im.id}">
+      <img src="${im.dataURL}" alt="卷子图片">
+      <span class="remove" data-id="${im.id}">×</span>
+    </div>`).join('');
+  $('btn-recognize').disabled = images.length === 0;
+}
+
+$('preview-list').addEventListener('click', (e) => {
+  const id = e.target.getAttribute('data-id');
+  if (e.target.classList.contains('remove') && id) {
+    images = images.filter(im => String(im.id) !== id);
+    renderPreviews();
+  }
+});
+
+$('file-album').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+
+/* OCR 识别 → 清理 → 拆题 → 进入第二步 */
+$('btn-recognize').addEventListener('click', async () => {
+  if (!images.length) return;
+  const btn = $('btn-recognize');
+  btn.disabled = true;
+  const original = btn.textContent;
+  const texts = [];
+  for (let i = 0; i < images.length; i++) {
+    btn.innerHTML = `<span class="spinner"></span>识别中 ${i + 1}/${images.length}…`;
+    try {
+      const t = await recognizeImage(images[i]);
+      if (t && t.trim()) texts.push(t.trim());
+    } catch (err) {
+      btn.innerHTML = original; btn.disabled = false;
+      alert('第 ' + (i + 1) + ' 张图片识别失败：' + (err.message || err));
+      return;
+    }
+  }
+  btn.innerHTML = original;
+  btn.disabled = false;
+
+  const merged = texts.join('\n\n');
+  // 调试：把模型原始返回 + 抽取后的文字显示出来，方便排查
+  $('ocr-debug').style.display = 'block';
+  $('ocr-debug-pre').textContent =
+    '【模型原始返回】\n' + (LAST_OCR_RAW || '(空)') +
+    '\n\n【抽取后用于拆题的文字】\n' + (merged || '(空)');
+
+  // 若抽取后仍是坐标/没拆出题目，提示换识图模型
+  if (/rotate_rect|pos_list/.test(merged) || !merged.trim()) {
+    alert('这次识别没能拿到纯文字（多半是 qwen-vl-ocr 返回了坐标）。\n' +
+          '建议把上方「识图模型」改成 qwen-vl-max-latest 再试一次。\n' +
+          '（可点开「识别原文」查看模型到底返回了什么）');
+  }
+  loadQuestions(merged);
+});
+
+/* 备用：粘贴文字拆题 */
+$('btn-paste-split').addEventListener('click', () => {
+  const txt = $('paste-input').value.trim();
+  if (!txt) { alert('请先粘贴卷子文字'); return; }
+  loadQuestions(txt);
+});
+
+/* 把整卷文字拆成题目并渲染第二步 */
+function loadQuestions(rawText) {
+  questions = splitQuestions(rawText);
+  selected = new Set();
+  chats = {};
+  openChats = new Set();
+  tutorImages = null;
+  $('weak-summary').style.display = 'none';
+  if (!questions.length) {
+    alert('没有识别到题目，请检查图片是否清晰，或改用粘贴文字。');
+    return;
+  }
+  $('q-peek').style.display = 'none';
+  renderQuestionChips();
+  renderCollection();
+  goStep(2);
+}
+
+/* 向导导航 */
+$('stepper').addEventListener('click', (e) => {
+  const stepEl = e.target.closest('.step');
+  if (stepEl && Number(stepEl.getAttribute('data-step')) <= reachedStep) {
+    goStep(Number(stepEl.getAttribute('data-step')));
+  }
+});
+$('btn-to-collection').addEventListener('click', () => { renderCollection(); goStep(3); });
+$('btn-back-1').addEventListener('click', () => goStep(1));
+$('btn-back-2').addEventListener('click', () => goStep(2));
+
+/* 看卷子原图弹层 */
+function openImgModal() {
+  if (!images.length) { alert('这次没有上传图片（用的是粘贴文字）'); return; }
+  $('img-modal-body').innerHTML = images.map(im => `<img src="${im.dataURL}" alt="卷子原图">`).join('');
+  $('img-modal').style.display = 'flex';
+}
+$('btn-view-step2').addEventListener('click', openImgModal);
+$('img-modal-close').addEventListener('click', () => { $('img-modal').style.display = 'none'; });
+$('img-modal').addEventListener('click', (e) => { if (e.target.id === 'img-modal') $('img-modal').style.display = 'none'; });
+
+/* ---- 第二步：点题号勾选 / 点 👁 预览 ---- */
+$('q-grid').addEventListener('click', (e) => {
+  const act = e.target.getAttribute('data-act');
+  const id = Number(e.target.getAttribute('data-id'));
+  if (!act || !id) return;
+  if (act === 'select') {
+    if (selected.has(id)) selected.delete(id); else selected.add(id);
+    const chip = e.target.closest('.qchip');
+    if (chip) chip.classList.toggle('checked', selected.has(id));
+    updateSelCount();
+    renderCollection();
+  } else if (act === 'peek') {
+    peekQuestion(id);
+    $('q-peek').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+});
+
+/* 第二步预览里点题目原图 → 放大看 */
+$('q-peek').addEventListener('click', (e) => {
+  if (e.target.classList.contains('peek-img')) openImgModal();
+});
+
+/* ---- 我的错题集：移出 / 问AI / 发送 ---- */
+$('collection-list').addEventListener('click', (e) => {
+  const t = e.target;
+  const id = Number(t.getAttribute('data-id'));
+  if (!id) return;
+  if (t.classList.contains('btn-view') || t.classList.contains('col-img')) {
+    openImgModal();
+  } else if (t.classList.contains('col-remove')) {
+    selected.delete(id);
+    openChats.delete(id);
+    const chip = $('q-grid').querySelector(`.qchip[data-id="${id}"]`);
+    if (chip) chip.classList.remove('checked');
+    updateSelCount();
+    renderCollection();
+  } else if (t.classList.contains('btn-ask')) {
+    if (openChats.has(id)) openChats.delete(id); else openChats.add(id);
+    const item = t.closest('.col-item');
+    const panel = item && item.querySelector('.chat');
+    if (panel) panel.style.display = openChats.has(id) ? 'block' : 'none';
+    if (openChats.has(id) && panel) panel.querySelector('.chat-input').focus();
+  } else if (t.classList.contains('chat-send')) {
+    sendChat(id);
+  }
+});
+
+/* 回车发送 */
+$('collection-list').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.classList.contains('chat-input')) {
+    e.preventDefault();
+    sendChat(Number(e.target.getAttribute('data-id')));
+  }
+});
+
+/* 把上传的卷子原图缩小，供「问AI」时连图一起发（让 AI 看到题目里的图形）*/
+let tutorImages = null;   // 缓存缩小后的 dataURL 数组；新上传时置 null
+function downscaleDataURL(dataURL, maxDim = 1100, quality = 0.72) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      try { resolve(c.toDataURL('image/jpeg', quality)); } catch (_) { resolve(dataURL); }
+    };
+    img.onerror = () => resolve(dataURL);
+    img.src = dataURL;
+  });
+}
+async function ensureTutorImages() {
+  if (tutorImages !== null) return tutorImages;
+  tutorImages = images.length ? await Promise.all(images.map(im => downscaleDataURL(im.dataURL))) : [];
+  return tutorImages;
+}
+
+/* 发送一条提问给 AI（带卷子原图的引导式辅导） */
+async function sendChat(id) {
+  const item = $('collection-list').querySelector(`.col-item[data-id="${id}"]`);
+  if (!item) return;
+  const input = item.querySelector('.chat-input');
+  const log = item.querySelector('.chat-log');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  const q = questions.find(x => x.id === id);
+  if (!chats[id]) chats[id] = [];
+  chats[id].push({ role: 'user', content: text });
+  input.value = '';
+  log.innerHTML = renderChatLog(id) + `<div class="chat-msg assistant pending"><span class="spinner"></span>老师思考中…</div>`;
+  log.scrollTop = log.scrollHeight;
+  try {
+    const imgs = await ensureTutorImages();
+    const reply = await TUTOR.reply(q.text, chats[id], imgs);
+    chats[id].push({ role: 'assistant', content: reply || '（没有返回内容）' });
+  } catch (err) {
+    chats[id].push({ role: 'assistant', content: '（出错了：' + (err.message || err) + '）' });
+  }
+  log.innerHTML = renderChatLog(id);
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ---- 总结薄弱点：根据孩子问过的内容总结 ---- */
+$('btn-summarize').addEventListener('click', async () => {
+  const items = questions
+    .filter(q => selected.has(q.id) && chats[q.id] && chats[q.id].some(m => m.role === 'user'))
+    .map(q => ({ label: q.label, question: q.text, messages: chats[q.id] }));
+  if (!items.length) { alert('先对至少一道错题「问 AI」说说哪里不懂，再来总结～'); return; }
+  const box = $('weak-summary');
+  box.style.display = 'block';
+  $('btn-copy-summary').style.display = 'none';
+  box.innerHTML = `<span class="spinner"></span>正在根据你问的内容总结…`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  try {
+    box.textContent = await TUTOR.summarize(items);
+    $('btn-copy-summary').style.display = 'inline-block';
+  } catch (err) {
+    box.textContent = '总结失败：' + (err.message || err);
+  }
+});
+
+/* 复制总结 */
+$('btn-copy-summary').addEventListener('click', async () => {
+  const text = $('weak-summary').textContent || '';
+  if (!text.trim()) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = $('btn-copy-summary'); const o = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => { btn.textContent = o; }, 1500);
+  } catch (err) {
+    alert('复制失败，请手动选择文本。\n\n' + text);
+  }
+});
+
+/* ---- 复制整本错题集 ---- */
+$('btn-copy').addEventListener('click', async () => {
+  const chosen = questions
+    .filter(q => selected.has(q.id))
+    .sort((a, b) => a.id - b.id);
+  if (!chosen.length) { alert('错题集还是空的'); return; }
+  const text = chosen.map(q => `${q.label}：${q.text}`).join('\n\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = $('btn-copy'); const o = btn.textContent;
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => { btn.textContent = o; }, 1500);
+  } catch (err) {
+    alert('复制失败，请手动选择文本。\n\n' + text);
+  }
+});
+
+/* ---- 重新上传：清空一切 ---- */
+$('btn-restart').addEventListener('click', () => {
+  images = []; questions = []; selected = new Set(); chats = {}; openChats = new Set();
+  tutorImages = null; reachedStep = 1;
+  renderPreviews();
+  $('q-peek').style.display = 'none';
+  $('weak-summary').style.display = 'none';
+  $('btn-copy-summary').style.display = 'none';
+  $('paste-input').value = '';
+  goStep(1);
+});
+
+/* =========================================================================
+ *  6. 文本分析：通义千问（阿里云百炼 OpenAI 兼容模式）
+ *  接口文档：百炼 OpenAI 兼容地址 https://dashscope.aliyuncs.com/compatible-mode/v1
+ *  约定：每题让模型只输出严格 JSON：
+ *    { knowledgePoints: string[], errorType: 'concept'|'read'|'calc'|'method', reason: string }
+ *  其中 errorType 对应：概念不清/审题失误/计算错误/方法没想到。
+ * ------------------------------------------------------------------------- */
+function createAIAnalyzer(config) {
+  // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-plus', name:'...' }
+  const SYS_PROMPT =
+    '你是中小学数学错题分析助手。根据题目、学生错误答案、正确答案，判断：' +
+    '1) 本题考查的知识点(knowledgePoints, 1-3个简短名词组成的数组)；' +
+    '2) 错误类型(errorType)，只能从 concept(概念不清)/read(审题失误)/calc(计算错误)/method(方法没想到) 中选一个；' +
+    '3) 简短诊断(reason, 50字内)。' +
+    '严格只输出一个 JSON 对象，形如 {"knowledgePoints":["..."],"errorType":"calc","reason":"..."}，不要解释、不要 markdown。';
+
+  async function callModel(problem) {
+    const userMsg =
+      `题目：${problem.question}\n我的答案：${problem.wrongAnswer}\n正确答案：${problem.rightAnswer}`;
+    const resp = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+      body: JSON.stringify({
+        model: config.model,                       // 如 qwen-plus / qwen-turbo / qwen-max
+        messages: [
+          { role: 'system', content: SYS_PROMPT },
+          { role: 'user', content: userMsg },
+        ],
+        temperature: 0.2,
+        response_format: { type: 'json_object' },  // 百炼兼容模式：强制返回 JSON
+      }),
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 120));
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content ?? data.output ?? '';
+    return JSON.parse(extractJSON(content));
+  }
+
+  return {
+    name: config.name || 'AI 分析',
+    async analyze(problems) {
+      const out = [];
+      for (const p of problems) {
+        try {
+          const r = await callModel(p);
+          out.push({
+            problem: p,
+            knowledgePoints: Array.isArray(r.knowledgePoints) ? r.knowledgePoints : [String(r.knowledgePoints || '综合')],
+            errorType: ERROR_TYPES[r.errorType] ? r.errorType : 'method',
+            reason: r.reason || '',
+          });
+        } catch (e) {
+          // 单题失败时回退到本地分析，保证整体不中断
+          const [fallback] = await mockAnalyzer.analyze([p]);
+          fallback.reason = '（AI 调用失败，已回退本地分析）' + fallback.reason;
+          out.push(fallback);
+        }
+      }
+      return out;
+    },
+  };
+}
+
+// 从模型返回中容错提取 JSON 片段
+function extractJSON(text) {
+  const m = String(text).match(/\{[\s\S]*\}/);
+  return m ? m[0] : '{}';
+}
+
+/* =========================================================================
+ *  7. 识图：通义千问 qwen-vl-ocr（阿里云百炼 OpenAI 兼容模式）
+ *  注意：qwen-vl-ocr 的识别结果常带文字坐标，返回形如
+ *    {"pos_list":[{"rotate_rect":[x,y,w,h,angle],"text":"这一行的文字"}, ...]}
+ *  我们用 extractOcrText() 把其中每行的 text 抽出来拼成纯文字，丢掉坐标。
+ *
+ *  约定（与 recognizeImage 一致）：
+ *    输入  image = { file: File, dataURL: 'data:image/...;base64,xxxx' }
+ *    输出  Promise<string>  —— 识别出的题目纯文字（逐行）
+ * ------------------------------------------------------------------------- */
+
+/* 从 qwen-vl-ocr 返回里抽取纯文字：
+ * - 若是带坐标的 JSON（pos_list/rotate_rect），取每项的 text 字段按行拼接；
+ * - 若本身就是纯文本，原样返回。 */
+function extractOcrText(content) {
+  const raw = String(content == null ? '' : content).trim();
+  if (!raw) return '';
+  const jsonStr = (raw.match(/\{[\s\S]*\}|\[[\s\S]*\]/) || [null])[0];
+  if (jsonStr && /pos_list|rotate_rect|"text"\s*:|"word/i.test(jsonStr)) {
+    try {
+      const lines = collectTextLines(JSON.parse(jsonStr));
+      if (lines.length) return lines.join('\n');
+    } catch (_) { /* 解析失败则按纯文本处理 */ }
+  }
+  return raw;
+}
+
+/* 递归收集对象/数组里的文字字段（text/word/value/content/ocr），保持出现顺序 */
+function collectTextLines(node, out = []) {
+  if (node == null) return out;
+  if (Array.isArray(node)) { node.forEach(n => collectTextLines(n, out)); return out; }
+  if (typeof node === 'object') {
+    const t = node.text ?? node.word ?? node.value ?? node.content ?? node.ocr;
+    if (typeof t === 'string' && t.trim()) out.push(t.trim());
+    for (const k of Object.keys(node)) {
+      if (node[k] && typeof node[k] === 'object') collectTextLines(node[k], out);
+    }
+  }
+  return out;
+}
+
+function createImageRecognizer(config) {
+  // config: { endpoint:'.../chat/completions', apiKey:'sk-...', model:'qwen-vl-ocr', name:'...' }
+  const OCR_PROMPT =
+    '请识别这张试卷图片中的全部文字，按图中的行/题逐行输出纯文本，每道题前保留它原本的题号。' +
+    '只要文字本身，不要输出任何坐标、HTML 标签、代码符号或 markdown 标记，也不要解释或补充答案。' +
+    '数学符号、上标、分数、根号尽量用普通字符原样保留（如 x²、a/b、根号5），不要转成 LaTeX 或 $ 公式。';
+
+  async function callVisionModel(image) {
+    // 识别前先压图（最长边 1600px、质量 0.82）：手机原图常有几千像素/好几 MB，
+    // 压一下文字依旧清晰，但上传数据量大减，识别明显更快。压缩结果缓存到 image 上避免重复算。
+    if (!image._ocrURL) image._ocrURL = await downscaleDataURL(image.dataURL, 1600, 0.82);
+    // 图片内容项；min_pixels/max_pixels 只有 qwen-vl-ocr 专用模型才认，
+    // 通用 VL 模型（qwen-vl-plus / qwen-vl-max）带上会报 InvalidParameter，故按模型判断。
+    const imgItem = { type: 'image_url', image_url: { url: image._ocrURL } };
+    if (/ocr/i.test(config.model)) {
+      imgItem.min_pixels = 28 * 28 * 4;
+      imgItem.max_pixels = 28 * 28 * 1280;
+    }
+    const resp = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{
+          role: 'user',
+          content: [imgItem, { type: 'text', text: OCR_PROMPT }],
+        }],
+      }),
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' ' + (await resp.text()).slice(0, 120));
+    const data = await resp.json();
+    const content = data.choices?.[0]?.message?.content ?? data.output ?? '';
+    LAST_OCR_RAW = typeof content === 'string' ? content : JSON.stringify(content);  // 存原文供调试
+    return extractOcrText(content);            // 抽出纯文字，丢掉坐标
+  }
+
+  return {
+    name: config.name || 'AI 识图',
+    async recognize(image) {
+      return (await callVisionModel(image)).trim();
+    },
+  };
+}
+
+/* =========================================================================
+ *  8. 模式（正式版 / 测试版）+ 引擎接线
+ *
+ *  ▸ 测试版(test)：显示设置卡，用户自己填 Key/模型/接口（key 暴露在浏览器，仅自测）。
+ *  ▸ 正式版(app) ：隐藏设置卡，前端只调你自己的后端，Key 藏在后端，用户零输入。
+ *
+ *  >>> 正式版上线只需一步：把 PROD_API_BASE 填成你的后端地址即可 <<<
+ *  例如：'https://你的域名/api/compatible-mode/v1'（后端负责加 Key 并转发到百炼）。
+ *  留空时，正式版用本地示例(mock) 跑，方便先看“用户零输入”的干净界面。
+ * ------------------------------------------------------------------------- */
+/* 正式版后端地址：直接指向你部署在函数计算上的接口（绝对地址）。
+ * 这样网页放在任何地方（本地双击 / 任意静态托管）都能调到你的后端，
+ * 接口走 fetch 返回 JSON，不受 .fcapp.run “HTML 强制下载”限制的影响。 */
+const PROD_API_BASE = 'https://math-helper-orkhhetpzo.cn-hangzhou.fcapp.run/compatible-mode/v1';
+
+/* 上线开关：true=保留测试版入口（自测用）；false=隐藏切换条和设置卡、强制正式版（软删除）。
+ * 上线时改成 false 即可一键关掉测试版；等彻底确认后再做代码层面的删除。 */
+const ALLOW_TEST_MODE = true;
+
+const qwen = {
+  base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  apiKey: '',
+  textModel: 'qwen3.7-max',
+  ocrModel: 'qwen-vl-plus',
+  visionModel: 'qwen-vl-max-latest',   // 问AI 遇到带图的题时改用它：能看懂题里的图形/数轴/统计图
+};
+
+let MODE = 'app';   // 'app' 正式版 | 'test' 测试版
+
+/* 按当前模式决定：用真实接口还是本地示例 */
+function refreshEngines() {
+  let ep = null, key = '';
+  if (MODE === 'test') {
+    if (qwen.apiKey) { ep = qwen.base.replace(/\/+$/, '') + '/chat/completions'; key = qwen.apiKey; }
+  } else { // app 正式版：走后端（后端持有 Key），前端不带 Key
+    if (PROD_API_BASE) { ep = PROD_API_BASE.replace(/\/+$/, '') + '/chat/completions'; key = ''; }
+  }
+  if (ep) {
+    ANALYZER   = createAIAnalyzer({ endpoint: ep, apiKey: key, model: qwen.textModel, name: 'AI 分析' });
+    RECOGNIZER = createImageRecognizer({ endpoint: ep, apiKey: key, model: qwen.ocrModel, name: 'AI 识图' });
+    TUTOR      = createTutor({ endpoint: ep, apiKey: key, model: qwen.textModel, visionModel: qwen.visionModel });
+    if (MODE === 'test') $('key-status').textContent = '已启用通义千问';
+  } else {
+    ANALYZER = mockAnalyzer;
+    RECOGNIZER = mockRecognizer;
+    TUTOR = mockTutor;
+    if (MODE === 'test') $('key-status').textContent = '未填写 · 用本地示例';
+  }
+  $('recog-source').textContent = RECOGNIZER.name;
+}
+
+/* 切换模式：显示/隐藏设置卡、更新网址参数、重连引擎 */
+function applyMode(mode) {
+  MODE = (ALLOW_TEST_MODE && mode === 'test') ? 'test' : 'app';   // 关掉测试版时强制正式版
+  $('settings-card').style.display = (MODE === 'test') ? 'block' : 'none';
+  [...document.querySelectorAll('#mode-switch .mode-btn')].forEach(b =>
+    b.classList.toggle('active', b.getAttribute('data-mode') === MODE));
+  // 同步到网址，方便分享/记住当前模式
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('mode', MODE);
+    history.replaceState(null, '', u);
+  } catch (_) {}
+  refreshEngines();
+}
+
+$('mode-switch').addEventListener('click', (e) => {
+  const m = e.target.getAttribute('data-mode');
+  if (m) applyMode(m);
+});
+
+/* 切换科目：只换 AI 讲题/总结用的提示词，识图/拆题/流程都不动 */
+function applySubject(s) {
+  SUBJECT = SUBJECTS[s] ? s : 'math';
+  [...document.querySelectorAll('#subject-switch .mode-btn')].forEach(b =>
+    b.classList.toggle('active', b.getAttribute('data-subject') === SUBJECT));
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('subject', SUBJECT);
+    history.replaceState(null, '', u);
+  } catch (_) {}
+  renderTextbook();   // 换科目 → 教材进度卡跟着换（renderTextbook 内有 try 保护，初始化早期调用安全）
+}
+$('subject-switch').addEventListener('click', (e) => {
+  const s = e.target.getAttribute('data-subject');
+  if (s) applySubject(s);
+});
+
+/* 选年级：记下年级档(影响讲法)和具体年级文字，写进网址 */
+function applyGrade(sel) {
+  GRADE = GRADE_BANDS[sel.value] ? sel.value : 'general';
+  GRADE_LABEL = (GRADE === 'general') ? '' : (sel.options[sel.selectedIndex].text || '');
+  try {
+    const u = new URL(location.href);
+    u.searchParams.set('grade', GRADE);
+    history.replaceState(null, '', u);
+  } catch (_) {}
+}
+$('grade-select').addEventListener('change', (e) => {
+  applyGrade(e.target);
+  const p = curProfile(); if (p) { p.grade = GRADE; p.gradeLabel = GRADE_LABEL; saveProfiles(); }   // 年级记到当前孩子
+  renderTextbook(); renderHome();
+});
+
+$('api-key').addEventListener('input', (e) => { qwen.apiKey = e.target.value.trim(); refreshEngines(); });
+$('text-model').addEventListener('change', (e) => { qwen.textModel = e.target.value.trim() || 'qwen3.7-max'; refreshEngines(); });
+$('ocr-model').addEventListener('change', (e) => { qwen.ocrModel = e.target.value.trim() || 'qwen-vl-plus'; refreshEngines(); });
+$('api-base').addEventListener('input', (e) => { qwen.base = e.target.value.trim().replace(/\/+$/, '') || qwen.base; refreshEngines(); });
+
+// 关掉测试版时，隐藏顶部切换条
+if (!ALLOW_TEST_MODE) $('mode-switch').style.display = 'none';
+
+// 网址参数可临时指定模型，方便对比测试：?ocr=qwen-vl-ocr  或  ?text=qwen3.7-plus
+const _sp = new URLSearchParams(location.search);
+if (_sp.get('ocr'))  qwen.ocrModel  = _sp.get('ocr').trim();
+if (_sp.get('text')) qwen.textModel = _sp.get('text').trim();
+
+// 初始模式：网址 ?mode=test 进测试版，否则默认正式版（测试版被关时永远进正式版）
+applyMode(_sp.get('mode') === 'test' ? 'test' : 'app');
+// 初始科目：网址 ?subject=english/chinese 可直接进对应科目，默认数学
+applySubject(SUBJECTS[_sp.get('subject')] ? _sp.get('subject') : 'math');
+// 初始年级：网址 ?grade=mid 等可直达；下拉选中对应档的第一个年级
+(function initGrade() {
+  const sel = $('grade-select');
+  const g0 = _sp.get('grade');
+  if (g0 && GRADE_BANDS[g0]) sel.value = g0;   // 选中该档第一个匹配项
+  applyGrade(sel);
+})();
+document.body.classList.add('bg1');   // 初始背景（第一步）
+
+/* =========================================================================
+ *  本地档案 + 每日作业（全部存在浏览器 localStorage，按档案ID分区）
+ *  设计：所有用户数据都挂在 pKey()='ma:p:<档案id>:<名字>' 下。将来若要上云
+ *  账号，只需把某个档案的数据整包同步到服务器即可，地基不用返工。
+ * ========================================================================= */
+const DB = {
+  read(key, fb) { try { const v = localStorage.getItem(key); return v == null ? fb : JSON.parse(v); } catch (_) { return fb; } },
+  write(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { console.warn('本地存储失败（可能已满）', e); return false; } },
+  remove(key) { try { localStorage.removeItem(key); } catch (_) {} },
+};
+
+/* ---- 档案（谁在用）---- */
+const PROFILE_EMOJIS = ['🦊','🐼','🐯','🐰','🐨','🦁','🐵','🐶','🐱','🦄','🐹','🐧'];
+let profiles = DB.read('ma:profiles', []);
+let currentPid = DB.read('ma:current', '');
+
+function genId() { return 'u' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); }
+function saveProfiles() { DB.write('ma:profiles', profiles); DB.write('ma:current', currentPid); }
+function curProfile() { return profiles.find(p => p.id === currentPid) || null; }
+function pKey(name) { return 'ma:p:' + currentPid + ':' + name; }   // 当前档案命名空间下的存储键
+
+function ensureProfile() {
+  if (!profiles.length) {
+    const p = { id: genId(), name: '我的', emoji: PROFILE_EMOJIS[0] };
+    profiles.push(p); currentPid = p.id; saveProfiles();
+  } else if (!curProfile()) {
+    currentPid = profiles[0].id; saveProfiles();
+  }
+}
+function switchProfile(id) {
+  if (!profiles.find(p => p.id === id)) return;
+  currentPid = id; saveProfiles();
+  renderProfile(); closeProfileMenu();
+  const p = curProfile(); setGradeSelect(p && p.gradeLabel ? p.gradeLabel : ''); applyGrade($('grade-select'));   // 恢复这个孩子的年级
+  renderTextbook(); renderHomework(); renderHome();
+}
+function addProfile() {
+  const name = (prompt('给这个小朋友起个名字：') || '').trim();
+  if (!name) return;
+  const used = new Set(profiles.map(p => p.emoji));
+  const emoji = PROFILE_EMOJIS.find(e => !used.has(e)) || PROFILE_EMOJIS[profiles.length % PROFILE_EMOJIS.length];
+  const p = { id: genId(), name, emoji };
+  profiles.push(p); switchProfile(p.id);
+}
+function renameProfile(id) {
+  const p = profiles.find(x => x.id === id); if (!p) return;
+  const name = (prompt('改名字：', p.name) || '').trim();
+  if (name) { p.name = name; saveProfiles(); renderProfile(); renderProfileMenu(); }
+}
+function deleteProfile(id) {
+  const p = profiles.find(x => x.id === id); if (!p) return;
+  if (profiles.length <= 1) { alert('至少要留一个档案～'); return; }
+  if (!confirm('删除「' + p.name + '」？TA 的作业和记录会一起删掉，不能恢复。')) return;
+  DB.remove('ma:p:' + id + ':homework');
+  profiles = profiles.filter(x => x.id !== id);
+  if (currentPid === id) currentPid = profiles[0].id;
+  saveProfiles(); renderProfile(); renderProfileMenu(); renderHomework();
+}
+
+function renderProfile() {
+  const p = curProfile(); if (!p) return;
+  if ($('home-avatar')) $('home-avatar').textContent = p.emoji;
+  if ($('home-name')) $('home-name').textContent = p.name;
+  renderMeProfiles();
+}
+// 「我的」里的档案管理列表
+function renderMeProfiles() {
+  if (!$('me-profiles')) return;
+  $('me-profiles').innerHTML = profiles.map(p => `
+    <div class="me-prof${p.id === currentPid ? ' active' : ''}" data-act="switch" data-id="${p.id}">
+      <span class="mp-emoji">${p.emoji}</span>
+      <span class="mp-name">${esc(p.name)}${p.id === currentPid ? '（当前）' : ''}</span>
+      <span class="mp-act" data-act="rename" data-id="${p.id}">✏️ 改名</span>
+      <span class="mp-act" data-act="del" data-id="${p.id}">🗑 删除</span>
+    </div>`).join('');
+}
+$('me-profiles').addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if (act === 'switch') switchProfile(id);
+  else if (act === 'rename') renameProfile(id);
+  else if (act === 'del') deleteProfile(id);
+});
+$('me-add-profile').addEventListener('click', addProfile);
+
+/* ---- 数据备份：导出/导入（把所有 ma: 开头的本地数据打包成 .json）---- */
+function exportData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf('ma:') === 0) data[k] = localStorage.getItem(k);
+  }
+  const json = JSON.stringify({ _app: '错题学习助手', _ver: 1, _date: todayStr(), data }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = '错题助手备份_' + todayStr() + '.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+}
+function importData(file) {
+  const r = new FileReader();
+  r.onload = () => {
+    let data;
+    try { const blob = JSON.parse(r.result); data = blob && blob.data; } catch (_) {}
+    if (!data || typeof data !== 'object') { alert('这个文件不是有效的备份（应该是导出的 .json）。'); return; }
+    const keys = Object.keys(data).filter(k => k.indexOf('ma:') === 0);
+    if (!keys.length) { alert('备份里没有数据。'); return; }
+    if (!confirm('导入会用备份【覆盖】当前所有档案 / 作业 / 进度，确定吗？')) return;
+    const rm = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('ma:') === 0) rm.push(k); }
+    rm.forEach(k => localStorage.removeItem(k));
+    keys.forEach(k => localStorage.setItem(k, data[k]));
+    alert('✅ 导入成功，数据已恢复，页面将刷新。');
+    location.reload();
+  };
+  r.onerror = () => alert('读取文件失败');
+  r.readAsText(file);
+}
+$('btn-export').addEventListener('click', exportData);
+$('import-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) importData(f); });
+function renderProfileMenu() {
+  $('profile-menu').innerHTML = profiles.map(p => `
+    <div class="pm-item${p.id === currentPid ? ' active' : ''}" data-act="switch" data-id="${p.id}">
+      <span class="pm-emoji">${p.emoji}</span>
+      <span class="pm-name">${esc(p.name)}</span>
+      <span class="pm-del" data-act="rename" data-id="${p.id}" title="改名">✏️</span>
+      <span class="pm-del" data-act="del" data-id="${p.id}" title="删除">🗑</span>
+    </div>`).join('') +
+    `<div class="pm-item pm-add" data-act="add">➕ 新建小朋友</div>`;
+}
+let profileMenuOpen = false;
+function openProfileMenu() { renderProfileMenu(); $('profile-menu').style.display = 'block'; profileMenuOpen = true; }
+function closeProfileMenu() { $('profile-menu').style.display = 'none'; profileMenuOpen = false; }
+function toggleProfileMenu() { profileMenuOpen ? closeProfileMenu() : openProfileMenu(); }
+
+$('hh-profile').addEventListener('click', toggleProfileMenu);
+$('profile-menu').addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  if (act === 'switch') switchProfile(id);
+  else if (act === 'rename') renameProfile(id);
+  else if (act === 'del') deleteProfile(id);
+  else if (act === 'add') addProfile();
+});
+document.addEventListener('click', (e) => {
+  if (profileMenuOpen && !e.target.closest('#hh-profile') && !e.target.closest('#profile-menu')) closeProfileMenu();
+});
+
+/* ---- 视图路由：home | mistakes | homework | progress | me ---- */
+function go(view) {
+  ['home', 'mistakes', 'homework', 'progress', 'me'].forEach(v => {
+    const el = $('view-' + v); if (el) el.classList.toggle('active', v === view);
+  });
+  const tab = (view === 'me') ? 'me' : 'home';   // 作业/进度/错题都属于"首页区"，统一高亮首页
+  [...document.querySelectorAll('.bn-item')].forEach(b => b.classList.toggle('active', b.dataset.nav === tab));
+  try { window.scrollTo(0, 0); } catch (_) {}
+  if (view === 'home') renderHome();
+  else if (view === 'homework') renderHomework();
+  else if (view === 'progress') renderProgress();
+  else if (view === 'mistakes') renderTextbook();
+}
+// 底部导航
+$('bottom-nav').addEventListener('click', (e) => {
+  const it = e.target.closest('.bn-item'); if (!it) return;
+  go(it.dataset.nav);
+});
+// 首页彩色卡 + 吉祥物建议气泡（都用 data-go 跳转）
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('[data-go]'); if (!g) return;
+  go(g.dataset.go);
+});
+
+/* ---- 教材进度「记忆 + 每日复查」：一上线问有没有新学的，只补新学的，不用每次全勾 ---- */
+function tbProgressSummary() {
+  const bk = defaultBookKey(); const parts = [];
+  [['math', '数学'], ['english', '英语'], ['chinese', '语文']].forEach(([key, lab]) => {
+    const tb = TEXTBOOKS[key]; const book = bk && tb && tb.books[bk]; if (!book) return;
+    parts.push(lab + ' ' + getTBDone(key, bk).length + '/' + book.units.length);
+  });
+  return parts.join('、');
+}
+function setTbCheckToday() { DB.write(pKey('tbCheck'), todayStr()); }
+function renderTbCheck() {
+  const card = $('tb-check'); if (!card) return;
+  const bk = defaultBookKey();
+  const hasCatalog = ['math', 'english', 'chinese'].some(k => { const tb = TEXTBOOKS[k]; return bk && tb && tb.books[bk]; });
+  const due = hasCatalog && (DB.read(pKey('tbCheck'), '') !== todayStr());   // 当天问过就不再问
+  card.style.display = due ? 'block' : 'none';
+  if (!due) return;
+  $('tbc-panel').style.display = 'none'; $('tbc-panel').innerHTML = '';
+  $('tbc-buttons').style.display = 'flex';
+  const total = ['math', 'english', 'chinese'].reduce((s, k) => { const tb = TEXTBOOKS[k]; const book = bk && tb && tb.books[bk]; return s + (book ? getTBDone(k, bk).length : 0); }, 0);
+  $('tbc-say').textContent = total
+    ? ('上次记录：' + tbProgressSummary() + '。这几天有没有新学的课文 / 单元？有就点「添加」补上，没有就保持不变。')
+    : '先把已经学过的课文 / 单元标一下吧～以后每次只补「新学的」就行，不用全勾。';
+}
+function renderTbcPanel() {
+  const bk = defaultBookKey(); let html = '';
+  [['math', '📐 数学'], ['english', '🔤 英语'], ['chinese', '📖 语文']].forEach(([key, label]) => {
+    const tb = TEXTBOOKS[key]; const book = bk && tb && tb.books[bk]; if (!book) return;
+    const done = getTBDone(key, bk);
+    const todo = book.units.map((u, i) => ({ u: u, i: i + 1 })).filter(x => done.indexOf(x.i) < 0);
+    html += '<div class="tbp-block"><div class="tbp-head">' + label + (todo.length ? ' · 还没学的（点一下 = 标为学过）' : '') + '</div>';
+    html += todo.length
+      ? ('<div class="unit-pick">' + todo.map(x => '<span class="unit-chip" data-key="' + key + '" data-book="' + bk + '" data-unit="' + x.i + '">' + x.i + '. ' + esc(x.u) + '</span>').join('') + '</div>')
+      : '<div class="hint">已全部学过 🎉</div>';
+    html += '</div>';
+  });
+  html += '<button class="btn-primary btn-sm" id="tbc-done" style="width:100%;margin-top:4px;">完成</button>';
+  $('tbc-panel').innerHTML = html;
+}
+$('tbc-add').addEventListener('click', () => { $('tbc-buttons').style.display = 'none'; renderTbcPanel(); $('tbc-panel').style.display = 'block'; });
+$('tbc-none').addEventListener('click', () => { setTbCheckToday(); renderHome(); });
+$('tbc-panel').addEventListener('click', (e) => {
+  if (e.target.closest('#tbc-done')) { setTbCheckToday(); renderHome(); renderTextbook(); return; }
+  const c = e.target.closest('.unit-chip'); if (!c) return;
+  toggleTBUnit(c.dataset.key, c.dataset.book, Number(c.dataset.unit));
+  c.classList.toggle('done', getTBDone(c.dataset.key, c.dataset.book).indexOf(Number(c.dataset.unit)) >= 0);
+});
+
+/* ---- 首页 Hub 动态内容 ---- */
+function renderHome() {
+  if (!$('home-sub')) return;
+  $('home-sub').textContent = (GRADE_LABEL || '点这里设年级') + ' · 广州';
+  const items = getDayItems(todayStr());
+  const undone = items.filter(i => !i.done).length;
+  $('hub-hw-sub').textContent = items.length ? (undone ? undone + ' 项没做完' : '全部完成 🎉') : '今天还没记';
+  $('hub-pg-sub').textContent = weekDoneText();
+  $('mascot-say').textContent = items.length
+    ? (undone ? ('今天还有 ' + undone + ' 项作业没做完，要不先做掉？') : '今天作业全做完啦，太棒了！要不要复习两道错题？')
+    : '新的一天～先记一下今天的作业吧，我帮你盯着进度。';
+  renderTbCheck();   // 顺便决定要不要弹出"教材进度复查"
+}
+function weekDoneText() {
+  const all = loadHomework(); let d = 0, t = 0;
+  for (let i = 0; i < 7; i++) { const it = all[shiftDate(todayStr(), -i)] || []; d += it.filter(x => x.done).length; t += it.length; }
+  return t ? ('近7天 ' + d + '/' + t + ' 完成') : '看打卡趋势';
+}
+/* ---- 进度视图：近 7 天作业完成 ---- */
+function renderProgress() {
+  if (!$('progress-body')) return;
+  renderTextbook();   // 顺便渲染本视图的「教材进度」区
+  const all = loadHomework(); let rows = '';
+  for (let i = 6; i >= 0; i--) {
+    const date = shiftDate(todayStr(), -i);
+    const items = all[date] || [];
+    const done = items.filter(x => x.done).length;
+    const pct = items.length ? Math.round(done / items.length * 100) : 0;
+    const label = i === 0 ? '今天' : (i === 1 ? '昨天' : date.slice(5));
+    rows += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+      + '<span style="width:46px;font-size:12px;color:var(--ink-dim);">' + label + '</span>'
+      + '<div style="flex:1;height:10px;background:var(--bg-soft);border-radius:5px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#5AA84F,#76c46b);"></div></div>'
+      + '<span style="width:54px;text-align:right;font-size:12px;color:var(--ink-dim);">' + (items.length ? done + '/' + items.length : '—') + '</span></div>';
+  }
+  $('progress-body').innerHTML = rows;
+}
+
+/* ---- 从教材选单元 → 生成作业项 + 自动更新教材进度 ---- */
+const HW_SUBJ_KEY = { '语文': 'chinese', '数学': 'math', '英语': 'english' };
+$('hw-unit-btn').addEventListener('click', () => {
+  const box = $('hw-unit-pick');
+  if (box.style.display === 'block') { box.style.display = 'none'; return; }
+  const key = HW_SUBJ_KEY[$('hw-add-subject').value];
+  const bk = defaultBookKey();
+  const tb = key && TEXTBOOKS[key]; const book = bk && tb && tb.books[bk];
+  if (!book) { box.innerHTML = '<div class="hint">这个科目/年级还没有教材目录（语数英·三下已内嵌；其它拍课本目录页可补）。</div>'; box.style.display = 'block'; return; }
+  box.innerHTML = book.units.map((u, i) => `<span class="unit-chip" data-key="${key}" data-book="${bk}" data-unit="${i + 1}">第${i + 1}单元 ${esc(u)}</span>`).join('');
+  box.style.display = 'block';
+});
+$('hw-unit-pick').addEventListener('click', (e) => {
+  const c = e.target.closest('.unit-chip'); if (!c) return;
+  const key = c.dataset.key, bk = c.dataset.book, u = Number(c.dataset.unit);
+  const uname = TEXTBOOKS[key].books[bk].units[u - 1];
+  addHomeworkItems($('hw-add-subject').value, ['第' + u + '单元 ' + uname]);
+  markTBLearned(key, bk, u);   // 顺便把这个单元标记为"已学"
+  $('hw-unit-pick').style.display = 'none';
+  renderTextbook(); renderHome();
+});
+
+/* ---- 每日作业 ---- */
+const HW_SUBJECTS = ['语文', '数学', '英语', '其他'];
+const HW_TAG_STYLE = {
+  '语文': 'background:#FBE9E7;color:#C0563E', '数学': 'background:#E9F1FF;color:#2E6BD6',
+  '英语': 'background:#EAF7EC;color:#3C8C44', '其他': 'background:#F0ECF8;color:#7558B0',
+};
+function ymd(d) { const p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function todayStr() { return ymd(new Date()); }
+function shiftDate(s, days) { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + days); return ymd(d); }
+let hwDate = todayStr();
+
+function loadHomework() { return DB.read(pKey('homework'), {}); }   // { 'YYYY-MM-DD': [ {id,subject,text,done} ] }
+function saveHomeworkDay(date, items) { const all = loadHomework(); all[date] = items; DB.write(pKey('homework'), all); }
+function getDayItems(date) { return loadHomework()[date] || []; }
+function addHomeworkItems(subject, texts) {
+  const items = getDayItems(hwDate);
+  texts.map(t => (t || '').trim()).filter(Boolean).forEach(t => items.push({ id: genId(), subject, text: t, done: false }));
+  saveHomeworkDay(hwDate, items); renderHomework();
+}
+function toggleHwDone(id) {
+  const items = getDayItems(hwDate); const it = items.find(x => x.id === id); if (!it) return;
+  it.done = !it.done; saveHomeworkDay(hwDate, items); renderHomework();
+}
+function removeHwItem(id) { saveHomeworkDay(hwDate, getDayItems(hwDate).filter(x => x.id !== id)); renderHomework(); }
+
+function renderHomework() {
+  if (!$('hw-date')) return;
+  $('hw-date').value = hwDate;
+  const items = getDayItems(hwDate);
+  const done = items.filter(i => i.done).length;
+  const pct = items.length ? Math.round(done / items.length * 100) : 0;
+  $('hw-progress').textContent = items.length ? `完成 ${done}/${items.length}` : '今天还没记作业';
+  $('hw-bar-fill').style.width = pct + '%';
+  const list = $('hw-list');
+  if (!items.length) { list.innerHTML = `<div class="hw-empty">还没有作业～<br>在上面手动添加，或点 📷 拍一张老师发的作业自动拆成清单。</div>`; return; }
+  const groups = {};
+  items.forEach(i => { (groups[i.subject] = groups[i.subject] || []).push(i); });
+  list.innerHTML = HW_SUBJECTS.filter(s => groups[s]).map(s => `
+    <div class="hw-group">
+      <h4>${s}</h4>
+      ${groups[s].map(i => `
+        <div class="hw-item${i.done ? ' done' : ''}" data-id="${i.id}">
+          <span class="hw-check" data-act="toggle" data-id="${i.id}">✓</span>
+          <span class="subject-tag" style="${HW_TAG_STYLE[i.subject] || HW_TAG_STYLE['其他']}">${i.subject}</span>
+          <span class="hw-text">${esc(i.text)}</span>
+          <span class="hw-del" data-act="del" data-id="${i.id}">✕</span>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+$('hw-add-btn').addEventListener('click', () => {
+  const v = $('hw-add-input').value;
+  if (!v.trim()) return;
+  addHomeworkItems($('hw-add-subject').value, [v]);
+  $('hw-add-input').value = '';
+});
+$('hw-add-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('hw-add-btn').click(); });
+$('hw-date').addEventListener('change', (e) => { hwDate = e.target.value || todayStr(); renderHomework(); });
+$('hw-prev').addEventListener('click', () => { hwDate = shiftDate(hwDate, -1); renderHomework(); });
+$('hw-next').addEventListener('click', () => { hwDate = shiftDate(hwDate, 1); renderHomework(); });
+$('hw-today').addEventListener('click', () => { hwDate = todayStr(); renderHomework(); });
+$('hw-list').addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  if (el.dataset.act === 'toggle') toggleHwDone(el.dataset.id);
+  else if (el.dataset.act === 'del') removeHwItem(el.dataset.id);
+});
+
+// 拍照 → 复用识图 OCR → 按行拆成作业项
+function fileToDataURL(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); }); }
+$('hw-photo').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const subj = $('hw-add-subject').value;
+  const label = $('hw-photo-label'); const old = label.textContent; label.textContent = '识别中…';
+  try {
+    const dataURL = await fileToDataURL(file);
+    const raw = await recognizeImage({ file, dataURL });
+    const lines = cleanOCRText(raw).split(/\n+/)
+      .map(s => s.replace(/^[\s\-•·.、)）\d]+/, '').trim())   // 去掉行首的序号/项目符号
+      .filter(s => s.length >= 2);
+    if (!lines.length) alert('没识别到内容，换张清楚点的图试试～');
+    else addHomeworkItems(subj, lines);
+  } catch (err) { alert('识别失败：' + (err.message || err)); }
+  finally { label.textContent = old; }
+});
+
+/* ---- 教材进度卡（按当前科目 + 当前孩子的年级显示）---- */
+function setGradeSelect(label) {
+  const sel = $('grade-select');
+  const opt = [...sel.options].find(o => o.text === label);
+  sel.selectedIndex = opt ? opt.index : 0;
+}
+// 教材进度（放在「进度」视图）：每科一条进度条 + 可勾选的单元（已学的打勾高亮，可乱序勾选）
+function renderTextbook() {
+  try {
+    if (!$('tb-progress')) return;
+    const subs = [['math', '📐 数学'], ['english', '🔤 英语'], ['chinese', '📖 语文']];
+    const bk = defaultBookKey();
+    let html = '';
+    subs.forEach(([key, label]) => {
+      const tb = TEXTBOOKS[key]; const book = bk && tb && tb.books[bk];
+      if (!book) return;
+      const n = book.units.length;
+      const done = getTBDone(key, bk);
+      const pct = Math.round(done.length / n * 100);
+      html += '<div class="tbp-block">'
+        + '<div class="tbp-head">' + label + ' · ' + tb.version + '·' + book.label + '<span class="tbp-cur">已学 ' + done.length + '/' + n + '</span></div>'
+        + '<div class="tbp-bar"><div class="tbp-fill" style="width:' + pct + '%"></div></div>'
+        + '<div class="unit-pick">'
+        + book.units.map((u, i) => { const on = done.indexOf(i + 1) >= 0; return '<span class="unit-chip' + (on ? ' done' : '') + '" data-key="' + key + '" data-book="' + bk + '" data-unit="' + (i + 1) + '">' + (on ? '✓ ' : '') + (i + 1) + '. ' + esc(u) + '</span>'; }).join('')
+        + '</div></div>';
+    });
+    $('tb-progress').innerHTML = html || '<div class="hint">当前年级还没有内嵌的教材目录（语数英·三下已内嵌；其它拍课本目录页可补）。</div>';
+  } catch (_) {}
+}
+$('tb-progress').addEventListener('click', (e) => {
+  const c = e.target.closest('.unit-chip'); if (!c) return;
+  toggleTBUnit(c.dataset.key, c.dataset.book, Number(c.dataset.unit));   // 勾选/取消该单元
+  renderTextbook(); renderHome();
+});
+
+/* ---- 初始化：档案 + 年级 + 教材 + 分区 + 作业 ---- */
+ensureProfile();
+renderProfile();
+{ const p = curProfile(); setGradeSelect(p && p.gradeLabel ? p.gradeLabel : ''); applyGrade($('grade-select')); }   // 应用当前孩子的年级（档案优先）
+renderTextbook();
+renderHomework();
+go('home');   // 进入首页 Hub
+
+/* ===== Twemoji：把所有 emoji 换成 Twitter 彩色卡通图，统一好看 =====
+ * 动态渲染（错题本、对话、预览…）后用 MutationObserver 自动重新替换；
+ * 替换时先断开监听避免自触发死循环。没加载到 twemoji（如离线）就用系统 emoji。*/
+(function setupTwemoji() {
+  if (!window.twemoji) return;
+  const opts = { folder: 'svg', ext: '.svg', base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/' };
+  const run = () => { try { twemoji.parse(document.body, opts); } catch (_) {} };
+  run();
+  const mo = new MutationObserver(() => {
+    mo.disconnect();
+    run();
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+})();
+</script>
+</body>
+</html>
