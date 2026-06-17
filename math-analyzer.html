@@ -978,6 +978,13 @@
   @keyframes stThink { 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.05) rotate(-2deg) } }
   @keyframes stFade { 0%,100%{ opacity:.6 } 50%{ opacity:1 } }
   @media (prefers-reduced-motion: reduce) { .buddy-big[class*="st-"] { animation:none !important; } }
+  /* 点宠物有反应 + 星星粒子 */
+  .buddy-big { cursor:pointer; }
+  .buddy-big.poke { animation:pokeJump .5s ease !important; }
+  @keyframes pokeJump { 0%{ transform:scale(1) } 30%{ transform:scale(1.12) translateY(-9px) } 60%{ transform:scale(.96) } 100%{ transform:scale(1) } }
+  .lvup-card { position:relative; overflow:hidden; }
+  .fox-star { position:absolute; bottom:32%; pointer-events:none; z-index:6; will-change:transform,opacity; animation:starRise 1.3s ease-out forwards; }
+  @keyframes starRise { 0%{ opacity:0; transform:translateY(0) scale(.4) } 20%{ opacity:1 } 100%{ opacity:0; transform:translateY(-105px) scale(1.15) } }
   /* ===== 成长阶段卡 ===== */
   .growth-card2 { display:flex; align-items:center; gap:12px; background:var(--card); border:var(--card-border); border-radius:var(--inner-radius); box-shadow:var(--card-shadow); padding:12px; margin-bottom:14px; }
   .gc-img { width:64px; height:64px; flex:0 0 auto; object-fit:contain; }
@@ -3414,7 +3421,7 @@ function showLevelUp(li) {
   const p = petOf(selectedPetId());
   if ($('lvup-pet')) $('lvup-pet').innerHTML = p ? petFace(p.id) : '🎉';
   if ($('lvup-lv')) $('lvup-lv').textContent = 'Lv.' + li.level + ' ' + li.name;
-  if ($('levelup-modal')) $('levelup-modal').style.display = 'flex';
+  if ($('levelup-modal')) { $('levelup-modal').style.display = 'flex'; const c = $('levelup-modal').querySelector('.lvup-card'); setTimeout(function () { spawnStars(c, 16); }, 100); }
 }
 function checkLevelUp(li) {
   const seen = DB.read(pKey('lvSeen'), 0);
@@ -3551,7 +3558,7 @@ function renderHome() {
     // 宠物主角（狐狸：状态表情 + 文案气泡 + 动画；其它：单图）
     '<div class="buddy-stage" style="--tint:' + p.tint + '">'
     + (isFox ? '<div class="state-bubble">' + esc(FOX_STATES[stKey].msg) + '</div>' : '')
-    + '<div class="buddy-big ' + (isFox ? FOX_STATES[stKey].anim : '') + '">'
+    + '<div class="buddy-big ' + (isFox ? FOX_STATES[stKey].anim : '') + '" id="home-pet-big" onclick="petPoke(this)">'
     + (isFox ? '<img class="pa-img" alt="" src="' + FOX_STATES[stKey].img + '">' : petFace(id))
     + '</div>'
     + '<div class="pet-name-row"><span class="pet-name">' + esc(s.petName) + '</span>'
@@ -3586,11 +3593,33 @@ function renderHome() {
     + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>'
     + '<button class="btn-ghost btn-sm" style="width:100%;margin-top:8px;opacity:.7;" onclick="testLevelUp()">🧪 测试：升一级（点几下看狐狸换成长阶段）</button>';
   animateBar($('home-xpfill'), pct);
+  if (isFox && stKey === 'celebrate') { const big = $('home-pet-big'); if (big) setTimeout(function () { spawnStars(big, 12); }, 200); }
   checkLevelUp(li);   // 升级 → 弹窗 + 解锁阶段
 }
 // 测试按钮：一键升一级（补满当前级所需经验+1），方便快速看狐狸换成长阶段
 function testLevelUp() { const li = levelInfo(totalXP()); DB.write(pKey('bonusXP'), DB.read(pKey('bonusXP'), 0) + (li.need - li.into + 1)); renderHome(); }
 function testAddXP(n) { DB.write(pKey('bonusXP'), DB.read(pKey('bonusXP'), 0) + (n || 15)); renderHome(); }
+/* ---- 动态效果：星星粒子 + 点宠物有反应 ---- */
+function spawnStars(host, n) {
+  if (!host) return; n = n || 9;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('span'); s.className = 'fox-star'; s.textContent = (i % 3 === 0) ? '⭐' : '✨';
+    s.style.left = (10 + Math.random() * 80) + '%';
+    s.style.fontSize = (12 + Math.random() * 14) + 'px';
+    s.style.animationDelay = (Math.random() * 0.35) + 's';
+    host.appendChild(s);
+    setTimeout(function () { s.remove(); }, 1500);
+  }
+}
+const POKE_LINES = ['嘿嘿，好痒～', '再陪我玩一下！', '我们一起加油呀！', '今天也要开心哦！', '摸摸头，超开心！', '最喜欢你啦！'];
+function petPoke(el) {
+  if (!el) return;
+  el.classList.remove('poke'); void el.offsetWidth; el.classList.add('poke');
+  setTimeout(function () { el.classList.remove('poke'); }, 520);
+  spawnStars(el, 6);
+  const b = document.querySelector('.state-bubble');
+  if (b) { const old = b.getAttribute('data-msg') || b.textContent; b.setAttribute('data-msg', old); b.textContent = POKE_LINES[Math.floor(Math.random() * POKE_LINES.length)]; setTimeout(function () { b.textContent = old; }, 1600); }
+}
 // 今日路径：小狐狸排好今天该做的几件事（作业用真数据，听写/错题为引导步骤）
 function renderTodayPath() {
   const el = $('today-path'); if (!el) return;
