@@ -958,6 +958,31 @@
   .pet-stat .ps-k { font-size:11.5px; color:var(--ink-dim); font-weight:600; }
   .pet-stat .ps-v { font-size:15px; font-weight:800; color:var(--ink); margin-top:4px; }
   .skill-box { font-size:15px; font-weight:800; color:var(--brand-ink); background:var(--brand-soft); border:1px solid #C3E2BD; border-radius:12px; padding:12px 14px; }
+  /* ===== 狐狸状态文案气泡 + 8 种状态动画 ===== */
+  .state-bubble { display:inline-block; max-width:88%; margin:0 auto 6px; background:#fff; border:1px solid var(--line); box-shadow:0 4px 12px rgba(120,100,70,.12); border-radius:14px; padding:8px 14px; font-size:13.5px; font-weight:700; color:var(--ink); position:relative; }
+  .state-bubble::after { content:''; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); border:7px solid transparent; border-top-color:#fff; }
+  .buddy-big.st-float    { animation:stFloat 3s ease-in-out infinite; }
+  .buddy-big.st-pop      { animation:stPop .6s ease; }
+  .buddy-big.st-bounce   { animation:stBounce 1s ease infinite; }
+  .buddy-big.st-wave     { animation:stWave 1.4s ease-in-out infinite; transform-origin:bottom center; }
+  .buddy-big.st-celebrate{ animation:stCele .7s ease infinite; }
+  .buddy-big.st-shake    { animation:stShake 1.2s ease-in-out infinite; }
+  .buddy-big.st-think    { animation:stThink 2.4s ease-in-out infinite; }
+  .buddy-big.st-fade     { animation:stFade 2.6s ease-in-out infinite; }
+  @keyframes stFloat { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-7px) } }
+  @keyframes stPop { 0%{ transform:scale(1) } 45%{ transform:scale(1.16) } 100%{ transform:scale(1) } }
+  @keyframes stBounce { 0%,100%{ transform:translateY(0) } 30%{ transform:translateY(-12px) } 50%{ transform:translateY(0) } }
+  @keyframes stWave { 0%,100%{ transform:rotate(0) } 25%{ transform:rotate(-7deg) } 75%{ transform:rotate(7deg) } }
+  @keyframes stCele { 0%,100%{ transform:translateY(0) scale(1) } 40%{ transform:translateY(-10px) scale(1.06) } }
+  @keyframes stShake { 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-5px) } 75%{ transform:translateX(5px) } }
+  @keyframes stThink { 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.05) rotate(-2deg) } }
+  @keyframes stFade { 0%,100%{ opacity:.6 } 50%{ opacity:1 } }
+  @media (prefers-reduced-motion: reduce) { .buddy-big[class*="st-"] { animation:none !important; } }
+  /* ===== 成长阶段卡 ===== */
+  .growth-card2 { display:flex; align-items:center; gap:12px; background:var(--card); border:var(--card-border); border-radius:var(--inner-radius); box-shadow:var(--card-shadow); padding:12px; margin-bottom:14px; }
+  .gc-img { width:64px; height:64px; flex:0 0 auto; object-fit:contain; }
+  .gc-name { font-size:14px; font-weight:800; color:var(--brand-ink); }
+  .gc-desc { font-size:12.5px; color:var(--ink-dim); line-height:1.5; margin-top:3px; }
   .skill-box .hint { font-weight:600; }
   /* ===== 宠物之家（页6）===== */
   .house-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
@@ -1402,7 +1427,7 @@
   <div id="view-me" class="view">
     <div class="view-title">👤 我的</div>
     <div class="fox-guide"><img class="fg-fox-img" data-func="level" src="icons/pets/ic-fox-level.png" alt="小狐狸"><span class="fg-text"><b>我的小天地</b>管理小朋友、备份数据～</span></div>
-    <div class="hint" style="text-align:center;margin:-4px 0 12px;opacity:.6;">build 0617b-mvp · 看到这行=已是最新版（动态图标+6页流程）</div>
+    <div class="hint" style="text-align:center;margin:-4px 0 12px;opacity:.6;">build 0617-fox-mvp · 看到这行=已是最新版（动态图标+6页流程）</div>
     <section class="card">
       <div class="card-title"><span>👨‍👩‍👧 小朋友档案</span></div>
       <div id="me-profiles"></div>
@@ -1478,7 +1503,7 @@
   </section>
 
   <footer>
-    <span class="pn">小狐狸</span>学习助手 · build 0617b
+    <span class="pn">小狐狸</span>学习助手 · build 0617-fox
   </footer>
 
   <!-- 底部导航：首页 / 学习 / 成长 / 我的 -->
@@ -3199,13 +3224,53 @@ function totalXP() {
   Object.keys(hw).forEach(d => { const it = hw[d] || []; xp += it.filter(x => x.done).length * 5; if (it.length && it.every(x => x.done)) checkin++; });
   xp += checkin * 20;                                  // 每天全做完 +20
   const tb = loadTB(); Object.keys(tb).forEach(s => { const t = tb[s]; if (t && Array.isArray(t.done)) xp += t.done.length * 3; });  // 每学一单元/课文 +3
+  xp += DB.read(pKey('bonusXP'), 0);                   // 测试按钮加的经验
   return xp;
 }
 const LV_NAMES = ['学习萌新', '勤学小狐', '机灵小狐', '小学霸', '学习能手', '学习达人', '超级学霸', '闪耀学神'];
 function levelInfo(xp) {
-  let lvl = 1, acc = 0, need = 100;
-  while (xp >= acc + need && lvl < 99) { acc += need; lvl++; need = 100 + (lvl - 1) * 50; }
+  let lvl = 1, acc = 0, need = 100;   // maxXP = 100 + (level-1)*30（对齐资料包 calculateMaxXP）
+  while (xp >= acc + need && lvl < 99) { acc += need; lvl++; need = 100 + (lvl - 1) * 30; }
   return { level: lvl, into: xp - acc, need: need, name: LV_NAMES[Math.min(lvl - 1, LV_NAMES.length - 1)] };
+}
+/* ===== 狐狸成长系统（资料包 v1：4 成长阶段 + 8 状态；本地 mock，结构与其它动物分离、可扩展）===== */
+const FOX_GROWTH = [
+  { stage: 'stage1', name: '幼年期',   range: 'Lv.1 - Lv.3',  img: 'assets/pets/fox/growth/fox_stage_1.png', desc: '刚开始学习的小狐狸，正在陪你一起探索新知识。' },
+  { stage: 'stage2', name: '成长初期', range: 'Lv.4 - Lv.6',  img: 'assets/pets/fox/growth/fox_stage_2.png', desc: '小狐狸已经学会制定小目标，正在陪你完成每日计划。' },
+  { stage: 'stage3', name: '进阶期',   range: 'Lv.7 - Lv.10', img: 'assets/pets/fox/growth/fox_stage_3.png', desc: '小狐狸开始懂得安排时间，和你一起有计划地进步。' },
+  { stage: 'stage4', name: '高级形态', range: 'Lv.11 及以上', img: 'assets/pets/fox/growth/fox_stage_4.png', desc: '小狐狸已经成长为学习规划小导师，正在陪你走向更远的目标。' },
+];
+function foxStageIndex(level) { return level <= 3 ? 0 : level <= 6 ? 1 : level <= 10 ? 2 : 3; }
+const FOX_STATES = {
+  idle:      { name: '平静',   img: 'assets/pets/fox/states/fox_idle.png',      msg: '今天也一起加油吧！',                     anim: 'st-float' },
+  smile:     { name: '开心',   img: 'assets/pets/fox/states/fox_smile.png',     msg: '任务完成啦，做得不错！',                 anim: 'st-pop' },
+  happy:     { name: '高兴',   img: 'assets/pets/fox/states/fox_happy.png',     msg: '今天的学习很棒！',                       anim: 'st-bounce' },
+  wave:      { name: '欢迎',   img: 'assets/pets/fox/states/fox_wave.png',      msg: '欢迎回来，我等你好久啦！',               anim: 'st-wave' },
+  celebrate: { name: '庆祝',   img: 'assets/pets/fox/states/fox_celebrate.png', msg: '连续坚持太厉害啦！',                     anim: 'st-celebrate' },
+  cheer:     { name: '加油中', img: 'assets/pets/fox/states/fox_cheer.png',     msg: '再坚持一下，你一定可以！',               anim: 'st-shake' },
+  think:     { name: '思考中', img: 'assets/pets/fox/states/fox_think.png',     msg: '让我想一想，怎么帮你更好地理解这道题。', anim: 'st-think' },
+  sad:       { name: '想你啦', img: 'assets/pets/fox/states/fox_sad.png',       msg: '好久没见你啦，小狐狸有点想你。',         anim: 'st-fade' },
+};
+// 距上次学习的天数（最近一天有"完成作业"算学习过；今天有就 0）
+function daysSinceLastStudy() {
+  const hw = loadHomework();
+  for (let i = 0; i < 90; i++) { const it = hw[shiftDate(todayStr(), -i)] || []; if (it.some(x => x.done)) return i; }
+  return 99;
+}
+// 按学习行为算当前狐狸状态（优先级照资料包"十一、状态触发规则"）
+function foxStateKey(opts) {
+  opts = opts || {};
+  const items = getDayItems(todayStr()), undone = items.filter(x => !x.done).length;
+  const ds = daysSinceLastStudy(), streak = streakCount(), didTask = items.some(x => x.done);
+  if (opts.hasLevelUp) return 'celebrate';
+  if (opts.analyzing) return 'think';
+  if (ds >= 3) return 'sad';
+  if (ds >= 1) return 'cheer';
+  if (streak >= 3 && didTask) return 'celebrate';
+  if (items.length && undone === 0) return 'happy';
+  if (didTask) return 'smile';
+  if (opts.firstOpen) return 'wave';
+  return 'idle';
 }
 function countUp(el, target, suffix) {
   if (!el) return; suffix = suffix || '';
@@ -3343,7 +3408,15 @@ function showLevelUp(li) {
 }
 function checkLevelUp(li) {
   const seen = DB.read(pKey('lvSeen'), 0);
-  if (li.level > seen) { if (seen > 0) showLevelUp(li); DB.write(pKey('lvSeen'), li.level); }
+  if (li.level > seen) {
+    if (seen > 0) {
+      showLevelUp(li);
+      const stSeen = DB.read(pKey('stageSeen'), 0), st = foxStageIndex(li.level);
+      if (st > stSeen) setTimeout(() => showToast('🌟 解锁新阶段：' + FOX_GROWTH[st].name), 500);   // 跨 Lv4/7/11
+    }
+    DB.write(pKey('lvSeen'), li.level);
+    DB.write(pKey('stageSeen'), foxStageIndex(li.level));
+  }
 }
 /* ---- 页1：选择学习伙伴 ---- */
 let _selPending = null;
@@ -3448,6 +3521,14 @@ function renderHome() {
   const prof = curProfile();
   if ($('hero-greet')) $('hero-greet').textContent = foxState().greet;
   if ($('home-name')) $('home-name').textContent = prof ? prof.name : '小朋友';
+  const li = levelInfo(totalXP());
+  const prevSeen = DB.read(pKey('lvSeen'), 0);
+  const hasLevelUp = li.level > prevSeen && prevSeen > 0;
+  const firstOpen = DB.read(pKey('lastOpen'), '') !== todayStr(); DB.write(pKey('lastOpen'), todayStr());
+  const isFox = (id === 'fox');                 // 狐狸有 4 成长阶段图 + 8 状态表情（资料包）；其它动物用单图
+  const stKey = isFox ? foxStateKey({ firstOpen: firstOpen, hasLevelUp: hasLevelUp }) : null;
+  const idx = foxStageIndex(li.level);
+  const stageName = isFox ? FOX_GROWTH[idx].name : s.growthStage;
   const pct = Math.round(s.currentXP / s.maxXP * 100);
   const items = getDayItems(todayStr()), done = items.filter(x => x.done).length;
   const tasks = [
@@ -3457,18 +3538,25 @@ function renderHome() {
     // { func: 'mistakes', name: '错题讲解', sub: '拍卷子，AI 一步步教你', go: 'mistakes' },
   ];
   $('home-body').innerHTML =
-    // 宠物主角
+    // 宠物主角（狐狸：状态表情 + 文案气泡 + 动画；其它：单图）
     '<div class="buddy-stage" style="--tint:' + p.tint + '">'
-    + '<div class="buddy-big">' + petFace(id) + '</div>'
+    + (isFox ? '<div class="state-bubble">' + esc(FOX_STATES[stKey].msg) + '</div>' : '')
+    + '<div class="buddy-big ' + (isFox ? FOX_STATES[stKey].anim : '') + '">'
+    + (isFox ? '<img class="pa-img" alt="" src="' + FOX_STATES[stKey].img + '">' : petFace(id))
+    + '</div>'
     + '<div class="pet-name-row"><span class="pet-name">' + esc(s.petName) + '</span>'
     + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
-    + '<div class="pet-stage-name">' + p.name + ' · ' + s.growthStage + ' · Lv.' + s.level + ' ' + levelInfo(totalXP()).name + '</div>'
+    + '<div class="pet-stage-name">' + p.name + ' · ' + stageName + ' · Lv.' + li.level + ' ' + li.name + '</div>'
     + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="home-xpfill"></div></div>'
     + '<div class="pet-xp-text">' + s.currentXP + ' / ' + s.maxXP + ' XP</div>'
     + '</div>'
+    // 成长阶段卡（狐狸）：阶段图 + 阶段名/等级范围 + 说明
+    + (isFox ? '<div class="growth-card2"><img class="gc-img" src="' + FOX_GROWTH[idx].img + '" alt="">'
+        + '<div class="gc-txt"><div class="gc-name">' + FOX_GROWTH[idx].name + ' · ' + FOX_GROWTH[idx].range + '</div>'
+        + '<div class="gc-desc">' + FOX_GROWTH[idx].desc + '</div></div></div>' : '')
     // 状态行：心情 / 连续 / 今日任务
     + '<div class="pet-stat-row">'
-    + '<div class="pet-stat"><div class="ps-k">当前心情</div><div class="ps-v">' + s.mood + '</div></div>'
+    + '<div class="pet-stat"><div class="ps-k">当前心情</div><div class="ps-v">' + (isFox ? FOX_STATES[stKey].name || s.mood : s.mood) + '</div></div>'
     + '<div class="pet-stat"><div class="ps-k">连续学习</div><div class="ps-v">🔥 ' + s.streakDays + ' 天</div></div>'
     + '<div class="pet-stat"><div class="ps-k">今日任务</div><div class="ps-v">' + (s.todayTotal ? s.todayDone + ' / ' + s.todayTotal : '未记') + '</div></div>'
     + '</div>'
@@ -3480,10 +3568,13 @@ function renderHome() {
     // 技能 + 入口
     + '<div class="pet-road" style="margin-top:14px;"><div class="pr-title">✨ ' + esc(s.petName) + ' 的技能</div><div class="skill-box">' + p.skill + '</div></div>'
     + '<div class="row"><button class="btn-ghost" style="flex:1;" onclick="go(\'pethouse\')">🏠 宠物之家</button>'
-    + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>';
+    + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>'
+    + '<button class="btn-ghost btn-sm" style="width:100%;margin-top:8px;opacity:.7;" onclick="testAddXP(15)">🧪 测试：完成一次任务 +15 经验</button>';
   animateBar($('home-xpfill'), pct);
-  checkLevelUp(levelInfo(totalXP()));   // 升级 → 弹窗
+  checkLevelUp(li);   // 升级 → 弹窗 + 解锁阶段
 }
+// 测试按钮：加经验，跑通"经验↑→升级→换阶段"闭环（资料包验收用）
+function testAddXP(n) { DB.write(pKey('bonusXP'), DB.read(pKey('bonusXP'), 0) + (n || 15)); renderHome(); }
 // 今日路径：小狐狸排好今天该做的几件事（作业用真数据，听写/错题为引导步骤）
 function renderTodayPath() {
   const el = $('today-path'); if (!el) return;
