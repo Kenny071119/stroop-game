@@ -985,6 +985,14 @@
   .lvup-card { position:relative; overflow:hidden; }
   .fox-star { position:absolute; bottom:32%; pointer-events:none; z-index:6; will-change:transform,opacity; animation:starRise 1.3s ease-out forwards; }
   @keyframes starRise { 0%{ opacity:0; transform:translateY(0) scale(.4) } 20%{ opacity:1 } 100%{ opacity:0; transform:translateY(-105px) scale(1.15) } }
+  /* ===== 满阶(Lv.11+)光效 ===== */
+  .buddy-stage.prestige { position:relative; background:linear-gradient(160deg,#FFF6DA,#FFFEF8 82%); }
+  .buddy-stage.prestige::before { content:''; position:absolute; top:14px; left:50%; width:190px; height:190px; transform:translateX(-50%); border-radius:50%; pointer-events:none; z-index:0; background:radial-gradient(circle, rgba(255,210,90,.55), rgba(255,210,90,0) 68%); animation:auraPulse 2.6s ease-in-out infinite; }
+  @keyframes auraPulse { 0%,100%{ transform:translateX(-50%) scale(1); opacity:.5 } 50%{ transform:translateX(-50%) scale(1.16); opacity:.95 } }
+  .buddy-stage.prestige .state-bubble, .buddy-stage.prestige .buddy-big, .buddy-stage.prestige .pet-name-row, .buddy-stage.prestige .pet-stage-name, .buddy-stage.prestige .xp-bar, .buddy-stage.prestige .pet-xp-text, .buddy-stage.prestige .pres-badge { position:relative; z-index:1; }
+  .pres-badge { display:inline-block; background:linear-gradient(135deg,#FFD45E,#F2A03C); color:#7A4A00; font-weight:800; font-size:12.5px; padding:4px 13px; border-radius:999px; box-shadow:0 3px 10px rgba(242,160,60,.4); margin-bottom:8px; }
+  .pb-stars { color:#fff; letter-spacing:2px; text-shadow:0 1px 1px rgba(0,0,0,.15); }
+  @media (prefers-reduced-motion: reduce) { .buddy-stage.prestige::before { animation:none !important; } }
   /* ===== 成长阶段卡 ===== */
   .growth-card2 { display:flex; align-items:center; gap:12px; background:var(--card); border:var(--card-border); border-radius:var(--inner-radius); box-shadow:var(--card-shadow); padding:12px; margin-bottom:14px; }
   .gc-img { width:64px; height:64px; flex:0 0 auto; object-fit:contain; }
@@ -3546,6 +3554,8 @@ function renderHome() {
   const stKey = isFox ? foxStateKey({ firstOpen: firstOpen, hasLevelUp: hasLevelUp }) : null;
   const idx = foxStageIndex(li.level);
   const stageName = isFox ? FOX_GROWTH[idx].name : s.growthStage;
+  const tier = (isFox && li.level >= 11) ? Math.min(Math.floor((li.level - 11) / 5) + 1, 5) : 0;   // 满阶(Lv11+)星级：每5级升一星，封顶5星
+  const stars = '★'.repeat(tier);
   const pct = Math.round(s.currentXP / s.maxXP * 100);
   const items = getDayItems(todayStr()), done = items.filter(x => x.done).length;
   const tasks = [
@@ -3556,14 +3566,15 @@ function renderHome() {
   ];
   $('home-body').innerHTML =
     // 宠物主角（狐狸：状态表情 + 文案气泡 + 动画；其它：单图）
-    '<div class="buddy-stage" style="--tint:' + p.tint + '">'
+    '<div class="buddy-stage' + (tier ? ' prestige' : '') + '" style="--tint:' + p.tint + ';--tier:' + tier + '">'
+    + (tier ? '<div class="pres-badge">✨ 闪耀 Lv.' + li.level + ' <span class="pb-stars">' + stars + '</span></div>' : '')
     + (isFox ? '<div class="state-bubble">' + esc(FOX_STATES[stKey].msg) + '</div>' : '')
-    + '<div class="buddy-big ' + (isFox ? FOX_STATES[stKey].anim : '') + '" id="home-pet-big" onclick="petPoke(this)">'
+    + '<div class="buddy-big' + (tier ? ' aura' : '') + ' ' + (isFox ? FOX_STATES[stKey].anim : '') + '" id="home-pet-big" onclick="petPoke(this)">'
     + (isFox ? '<img class="pa-img" alt="" src="' + FOX_STATES[stKey].img + '">' : petFace(id))
     + '</div>'
     + '<div class="pet-name-row"><span class="pet-name">' + esc(s.petName) + '</span>'
     + '<button class="pet-rename" onclick="renamePet()">✏️</button></div>'
-    + '<div class="pet-stage-name">' + p.name + ' · ' + stageName + ' · Lv.' + li.level + ' ' + li.name + '</div>'
+    + '<div class="pet-stage-name">' + p.name + ' · ' + stageName + (tier ? ' ' + stars : '') + ' · Lv.' + li.level + ' ' + li.name + '</div>'
     + '<div class="xp-bar" style="margin-top:12px;"><div class="xp-fill" id="home-xpfill"></div></div>'
     + '<div class="pet-xp-text">' + s.currentXP + ' / ' + s.maxXP + ' XP</div>'
     + '</div>'
