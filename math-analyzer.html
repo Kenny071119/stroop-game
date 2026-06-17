@@ -930,6 +930,9 @@
   .study-card:nth-child(2) .sc-ico-img { animation-delay:.6s; }
   .study-card:nth-child(3) .sc-ico-img { animation-delay:1.2s; }
   .task-entry:active .te-ico-img, .study-card:active .sc-ico-img { animation:icoPop .5s; }
+  /* 点击任意图标的弹动反馈（盖过浮动动画）*/
+  .tap-pop { animation:tapPop .38s ease !important; }
+  @keyframes tapPop { 0%{ transform:scale(1) } 35%{ transform:scale(1.28) } 68%{ transform:scale(.9) } 100%{ transform:scale(1) } }
   .home-pet-ava .hpa-img, .buddy-big .pa-img, .joined-pet .pa-img { animation:petbob 3s ease-in-out infinite; }
   .badge-item.got .badge-img { animation:icoFloat 3.2s ease-in-out infinite; }
   .dex-item:active .pa-emoji, .pf-food:active { animation:icoPop .45s; }
@@ -3631,6 +3634,14 @@ function petPoke(el) {
   const b = document.querySelector('.state-bubble');
   if (b) { const old = b.getAttribute('data-msg') || b.textContent; b.setAttribute('data-msg', old); b.textContent = POKE_LINES[Math.floor(Math.random() * POKE_LINES.length)]; setTimeout(function () { b.textContent = old; }, 1600); }
 }
+/* ---- 全局：点任意图标/卡片 → 图标弹一下（单纯点击反馈，无粒子）---- */
+const TAP_SEL = 'img, .bn-item, .task-entry, .study-card, .hub-card, [data-go], [data-func], .pf-food, .dex-item, .house-slot, .sr-step, .petsel-card, .badge-item, .pet-rename, .te-arrow';
+document.addEventListener('click', function (e) {
+  const t = e.target.closest(TAP_SEL); if (!t) return;
+  const im = t.querySelector('img') || t;
+  im.classList.remove('tap-pop'); void im.offsetWidth; im.classList.add('tap-pop');
+  setTimeout(function () { im.classList.remove('tap-pop'); }, 380);
+}, true);
 // 今日路径：小狐狸排好今天该做的几件事（作业用真数据，听写/错题为引导步骤）
 function renderTodayPath() {
   const el = $('today-path'); if (!el) return;
