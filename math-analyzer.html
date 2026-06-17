@@ -983,6 +983,16 @@
   .gc-img { width:64px; height:64px; flex:0 0 auto; object-fit:contain; }
   .gc-name { font-size:14px; font-weight:800; color:var(--brand-ink); }
   .gc-desc { font-size:12.5px; color:var(--ink-dim); line-height:1.5; margin-top:3px; }
+  /* 成长之路：4 阶段一览 */
+  .stage-road { display:flex; gap:8px; }
+  .sr-step { flex:1; text-align:center; }
+  .sr-art { position:relative; width:100%; aspect-ratio:1; border-radius:12px; background:var(--bg-soft); border:1px solid var(--line); overflow:hidden; }
+  .sr-art img { width:100%; height:100%; object-fit:contain; }
+  .sr-step.cur .sr-art { border-color:var(--brand); box-shadow:0 0 0 2px var(--brand); background:var(--brand-soft); }
+  .sr-step.lock { opacity:.5; }
+  .sr-step.lock .sr-art img { filter:grayscale(.9); }
+  .sr-n { font-size:11px; font-weight:800; color:var(--ink); margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sr-r { font-size:10px; color:var(--ink-3); }
   .skill-box .hint { font-weight:600; }
   /* ===== 宠物之家（页6）===== */
   .house-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
@@ -3553,7 +3563,12 @@ function renderHome() {
     // 成长阶段卡（狐狸）：阶段图 + 阶段名/等级范围 + 说明
     + (isFox ? '<div class="growth-card2"><img class="gc-img" src="' + FOX_GROWTH[idx].img + '" alt="">'
         + '<div class="gc-txt"><div class="gc-name">' + FOX_GROWTH[idx].name + ' · ' + FOX_GROWTH[idx].range + '</div>'
-        + '<div class="gc-desc">' + FOX_GROWTH[idx].desc + '</div></div></div>' : '')
+        + '<div class="gc-desc">' + FOX_GROWTH[idx].desc + '</div></div></div>'
+        + '<div class="pet-road"><div class="pr-title">🗺️ 成长之路（4 个阶段，当前高亮）</div><div class="stage-road">'
+        + FOX_GROWTH.map(function (g, i) { return '<div class="sr-step' + (i === idx ? ' cur' : (i < idx ? ' on' : ' lock')) + '">'
+            + '<div class="sr-art"><img src="' + g.img + '" alt=""></div>'
+            + '<div class="sr-n">' + (i <= idx ? g.name : '🔒' + g.name) + '</div><div class="sr-r">' + g.range + '</div></div>'; }).join('')
+        + '</div></div>' : '')
     // 状态行：心情 / 连续 / 今日任务
     + '<div class="pet-stat-row">'
     + '<div class="pet-stat"><div class="ps-k">当前心情</div><div class="ps-v">' + (isFox ? FOX_STATES[stKey].name || s.mood : s.mood) + '</div></div>'
@@ -3569,11 +3584,12 @@ function renderHome() {
     + '<div class="pet-road" style="margin-top:14px;"><div class="pr-title">✨ ' + esc(s.petName) + ' 的技能</div><div class="skill-box">' + p.skill + '</div></div>'
     + '<div class="row"><button class="btn-ghost" style="flex:1;" onclick="go(\'pethouse\')">🏠 宠物之家</button>'
     + '<button class="btn-ghost" style="flex:1;" onclick="_selPending=selectedPetId();go(\'petselect\')">🔄 换伙伴</button></div>'
-    + '<button class="btn-ghost btn-sm" style="width:100%;margin-top:8px;opacity:.7;" onclick="testAddXP(15)">🧪 测试：完成一次任务 +15 经验</button>';
+    + '<button class="btn-ghost btn-sm" style="width:100%;margin-top:8px;opacity:.7;" onclick="testLevelUp()">🧪 测试：升一级（点几下看狐狸换成长阶段）</button>';
   animateBar($('home-xpfill'), pct);
   checkLevelUp(li);   // 升级 → 弹窗 + 解锁阶段
 }
-// 测试按钮：加经验，跑通"经验↑→升级→换阶段"闭环（资料包验收用）
+// 测试按钮：一键升一级（补满当前级所需经验+1），方便快速看狐狸换成长阶段
+function testLevelUp() { const li = levelInfo(totalXP()); DB.write(pKey('bonusXP'), DB.read(pKey('bonusXP'), 0) + (li.need - li.into + 1)); renderHome(); }
 function testAddXP(n) { DB.write(pKey('bonusXP'), DB.read(pKey('bonusXP'), 0) + (n || 15)); renderHome(); }
 // 今日路径：小狐狸排好今天该做的几件事（作业用真数据，听写/错题为引导步骤）
 function renderTodayPath() {
